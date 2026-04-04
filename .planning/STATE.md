@@ -1,7 +1,7 @@
 # STATE: review-my-shit (rms)
 
-**Last updated:** 2026-04-03
-**Status:** Active — Phase 1 pending
+**Last updated:** 2026-04-04
+**Status:** Active — Phase 1 ready to plan
 
 ---
 
@@ -23,7 +23,7 @@
 |-------|-------|
 | Current phase | Phase 1: Foundation |
 | Current plan | None (phase not yet planned) |
-| Status | Not started |
+| Status | Context gathered — ready to plan |
 | Blocking issues | None |
 
 ```
@@ -64,13 +64,14 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 | Decision | Rationale | Phase |
 |----------|-----------|-------|
 | 7-phase structure derived from dependency ordering | Schemas → Reviewer → Validator → Writer → Orchestration → Fix → Hardening is the only safe build order | Roadmap |
-| Start with Option A (pure prompt files) | Zero install overhead; validate `subtask: true` isolation empirically before adding Node.js layer | Phase 1 TBD |
-| Deterministic finding IDs | LLM-generated UUIDs collide; ID format must be locked in Phase 1 (e.g., `{date}-{counter}`) | Phase 1 TBD |
+| Hybrid Node.js architecture | Command files are thin entry points; Node.js orchestrator uses Vercel AI SDK for three isolated generateText calls | Phase 1 |
+| npm package distribution | `npx rms@latest` for global install; `rms install` writes editor command files; mirrors GSD install pattern | Phase 1 |
+| Both editors from day 1 | `.opencode/commands/` AND `.cursor/commands/` written in parallel; no AGENTS.md at repo root | Phase 1 |
+| Finding ID format: `{DIM}-{NNNNN}` | Dimension prefix + 5-digit zero-padded global counter (e.g., `SEC-00001`); assigned by orchestrator, not LLM | Phase 1 |
+| XML-tagged pipeline files | All pipeline files use XML blocks (INPUT, REVIEWER, VALIDATOR, REPORT); enables direct parsing by `/fix` | Phase 1 |
 
 ### Open Questions
 
-- **Option A vs B:** Can `subtask: true` in OpenCode mechanically isolate validator context? Settled by Phase 1 live test.
-- **Finding ID format:** Exact scheme (e.g., `{YYYYMMDD}-{NNN}`) to be locked in Phase 1.
 - **Focus area suppression depth:** Does "focus: security" genuinely suppress style findings or merely de-emphasize? Tested in Phase 2.
 - **Cursor isolation strength:** Prompt-enforced only — how much weaker than OpenCode's mechanical isolation? Quantified in Phase 7.
 
@@ -85,8 +86,6 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 ### Todos
 
 - [ ] Plan Phase 1 (`/gsd-plan-phase 1`)
-- [ ] Lock Option A vs B architectural decision (Phase 1 live test)
-- [ ] Lock finding ID format (Phase 1)
 
 ---
 
@@ -94,24 +93,23 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 
 ### Context for Next Session
 
-Phase 1 (Foundation) is the current target. Key Phase 1 deliverables:
-- File schemas defined: `INPUT.md`, `REVIEWER.md`, `VALIDATOR.md`, `REPORT.md`
-- Slash command invocation confirmed in OpenCode AND Cursor
-- `subtask: true` isolation empirically tested (not just assumed)
-- Deterministic finding ID format documented
-- `.reviews/` added to `.gitignore` on first run
+Phase 1 discuss-phase is complete. All architectural decisions are locked in `.planning/phases/01-foundation/01-CONTEXT.md`. Key decisions:
 
-**Critical path item:** Slash command discovery in OpenCode (chronic failure mode — must test before building anything else).
+- **Architecture:** Hybrid Node.js — thin command files call `!node` into a Vercel AI SDK orchestrator
+- **Distribution:** npm package; `npx rms@latest` + `rms install`
+- **Editors:** Both `.opencode/commands/` and `.cursor/commands/` from day 1
+- **Finding IDs:** `{DIM}-{NNNNN}` format, assigned by orchestrator, global counter in `.reviews/`
+- **File format:** XML-tagged blocks throughout pipeline (INPUT, REVIEWER, VALIDATOR, REPORT)
 
 ### How to Resume
 
 ```
 1. Read .planning/STATE.md (this file)
-2. Read .planning/ROADMAP.md → Phase 1 detail
+2. Read .planning/phases/01-foundation/01-CONTEXT.md for locked decisions
 3. Run /gsd-plan-phase 1
 ```
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-03 after roadmap creation*
+*Last updated: 2026-04-04 after discuss-phase 1 completed*
