@@ -9,8 +9,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Review Pipeline
 
-- [ ] **PIPE-01**: User can invoke `/review` as a slash command in OpenCode
-- [ ] **PIPE-02**: User can invoke `/review` as a slash command in Cursor
+- [x] **PIPE-01**: User can invoke `/review` as a slash command in OpenCode
+- [x] **PIPE-02**: User can invoke `/review` as a slash command in Cursor
 - [ ] **PIPE-03**: Primary reviewer agent analyzes code across all 11 dimensions in a fully isolated context window
 - [ ] **PIPE-04**: Validator agent receives only the reviewer's structured output (not reasoning or chain-of-thought) and independently challenges each finding
 - [ ] **PIPE-05**: Writer agent synthesizes reviewer and validator output into a final severity-grouped report
@@ -91,8 +91,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PIPE-01 | Phase 1 | Pending |
-| PIPE-02 | Phase 1 | Pending |
+| PIPE-01 | Phase 1 | Complete |
+| PIPE-02 | Phase 1 | Complete |
 | PIPE-03 | Phase 2 | Pending |
 | PIPE-04 | Phase 3 | Pending |
 | PIPE-05 | Phase 4 | Pending |
