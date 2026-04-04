@@ -30,7 +30,14 @@
   3. `subtask: true` isolation is empirically confirmed: a validator seeded with a known-false finding challenges it (not confirms it)
   4. Finding ID format is documented and deterministic — two runs on the same diff produce the same IDs
   5. `.reviews/` appears in `.gitignore` on first run with no manual step required
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Project scaffold: npm package, TypeScript, CLI entrypoint, session module
+- [ ] 01-02-PLAN.md — Zod schemas for all pipeline files + finding ID generation module
+- [ ] 01-03-PLAN.md — Installer (`rms install`) + OpenCode/Cursor command template files
+- [ ] 01-04-PLAN.md — Install into repo, verify command discovery in both editors (checkpoint)
+
 **UI hint**: no
 
 ### Phase 2: Reviewer Agent
@@ -114,7 +121,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/? | Not started | - |
+| 1. Foundation | 4/4 plans | Not started | - |
 | 2. Reviewer Agent | 0/? | Not started | - |
 | 3. Validator Agent | 0/? | Not started | - |
 | 4. Writer Agent | 0/? | Not started | - |
