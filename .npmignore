@@ -1,0 +1,7 @@
+.planning/
+src/
+*.md
+!dist/README.md
+.gitignore
+.npmignore
+tsconfig.json
