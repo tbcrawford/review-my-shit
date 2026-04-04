@@ -14,7 +14,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **PIPE-03**: Primary reviewer agent analyzes code across all 11 dimensions in a fully isolated context window
 - [ ] **PIPE-04**: Validator agent receives only the reviewer's structured output (not reasoning or chain-of-thought) and independently challenges each finding
 - [ ] **PIPE-05**: Writer agent synthesizes reviewer and validator output into a final severity-grouped report
-- [ ] **PIPE-06**: All three agents run with fully isolated context — no shared conversation history between roles
+- [x] **PIPE-06**: All three agents run with fully isolated context — no shared conversation history between roles
 
 ### Diff Input
 
@@ -29,7 +29,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **REPT-02**: Findings are grouped by severity in descending order: critical → high → medium → low → info
 - [ ] **REPT-03**: Each finding includes: file path, line reference, explanation of the problem and its consequence, actionable suggestion, and a stable finding ID
 - [ ] **REPT-04**: Full audit trail: `.reviews/<session>/` contains role-specific intermediate files (reviewer output, validator verdicts) alongside the final report
-- [ ] **REPT-05**: Finding IDs are deterministic and stable within a review session (not randomly LLM-generated)
+- [x] **REPT-05**: Finding IDs are deterministic and stable within a review session (not randomly LLM-generated)
 - [x] **REPT-06**: `.reviews/` is added to `.gitignore` automatically on first run
 
 ### Fix Command
@@ -96,7 +96,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-03 | Phase 2 | Pending |
 | PIPE-04 | Phase 3 | Pending |
 | PIPE-05 | Phase 4 | Pending |
-| PIPE-06 | Phase 1 | Pending |
+| PIPE-06 | Phase 1 | Complete |
 | DIFF-01 | Phase 5 | Pending |
 | DIFF-02 | Phase 2 | Pending |
 | DIFF-03 | Phase 5 | Pending |
@@ -105,7 +105,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REPT-02 | Phase 4 | Pending |
 | REPT-03 | Phase 4 | Pending |
 | REPT-04 | Phase 4 | Pending |
-| REPT-05 | Phase 1 | Pending |
+| REPT-05 | Phase 1 | Complete |
 | REPT-06 | Phase 1 | Complete |
 | FIX-01 | Phase 6 | Pending |
 | FIX-02 | Phase 6 | Pending |

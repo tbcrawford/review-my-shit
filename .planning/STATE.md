@@ -3,19 +3,19 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-04T13:00:00.000Z"
+last_updated: "2026-04-04T13:04:23.655Z"
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 25
+  completed_plans: 2
+  percent: 50
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-04
-**Status:** Executing Phase 01 — Plan 2 of 4
+**Status:** Executing Phase 01 — Plan 3 of 4
 
 ---
 
@@ -34,17 +34,17 @@ progress:
 ## Current Position
 
 Phase: 01 (Foundation) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 | Field | Value |
 |-------|-------|
 | Current phase | Phase 1: Foundation |
-| Current plan | Plan 02 (slash command installer) |
-| Status | Plan 01 complete — executing Plan 02 |
+| Current plan | Plan 03 (slash command installer) |
+| Status | Plan 02 complete — executing Plan 03 |
 | Blocking issues | None |
 
 ```
-Progress: [███░░░░░░░] 25% — Plan 1/4 complete in Phase 1
+Progress: [█████░░░░░] 50% — Plan 2/4 complete in Phase 1
 ```
 
 ---
@@ -53,7 +53,7 @@ Progress: [███░░░░░░░] 25% — Plan 1/4 complete in Phase 1
 
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
-| 1 | Foundation | In Progress (1/4 plans) | - |
+| 1 | Foundation | In Progress (2/4 plans) | - |
 | 2 | Reviewer Agent | Not started | - |
 | 3 | Validator Agent | Not started | - |
 | 4 | Writer Agent | Not started | - |
@@ -68,8 +68,8 @@ Progress: [███░░░░░░░] 25% — Plan 1/4 complete in Phase 1
 | Metric | Value |
 |--------|-------|
 | Phases complete | 0 / 7 |
-| Plans complete | 1 / 4 |
-| Requirements covered | 2 / 23 |
+| Plans complete | 2 / 4 |
+| Requirements covered | 4 / 23 |
 | Requirements validated | 0 / 23 |
 
 ### Execution History
@@ -77,6 +77,7 @@ Progress: [███░░░░░░░] 25% — Plan 1/4 complete in Phase 1
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 2 min | 3 tasks | 7 files |
+| Phase 01 P02 | 2 min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -93,6 +94,8 @@ Progress: [███░░░░░░░] 25% — Plan 1/4 complete in Phase 1
 | node:test built-in for session tests | Zero extra deps; built into Node ≥18; keeps test runner out of devDependencies | 01-01 |
 | package name: rms | Mirrors usage convention across all planning docs; shorter than review-my-shit for CLI ergonomics | 01-01 |
 | NodeNext ESM module resolution | Required for proper ESM .js imports throughout codebase; chosen from day 1 to avoid later migration | 01-01 |
+| DIMENSION_ABBREV re-exports DIMENSIONS from schemas | Single source of truth — prevents drift between schemas.ts and finding-id.ts | 01-02 |
+| Finding ID counter not concurrent-safe by design | Single-threaded orchestrator; documented constraint prevents future confusion | 01-02 |
 
 ### Open Questions
 
@@ -117,16 +120,16 @@ Progress: [███░░░░░░░] 25% — Plan 1/4 complete in Phase 1
 
 ### Context for Next Session
 
-Plan 01-01 complete. npm package scaffolded, session module implemented with tests, CLI entrypoint wired. Commits: 281eecf, fca0855, f0e5de5, 7c38b39.
+Plan 01-02 complete. Zod schemas for all four pipeline file types implemented and tested. Finding ID generation module (`nextFindingId`) with persistent `.reviews/.counter` implemented and tested. Commits: [schemas RED], 3c7b49c, [finding-id RED], dcf5e17.
 
-Next: Plan 02 — slash command installer (`rms install` writes `.opencode/commands/` and `.cursor/commands/` files).
+Next: Plan 03 — slash command installer (`rms install` writes `.opencode/commands/` and `.cursor/commands/` files).
 
-Key context for Plan 02:
+Key context for Plan 03:
+- **Schemas:** `src/schemas.ts` exports all Zod schemas + types. Import via `import { FindingSchema, DIMENSIONS } from './schemas.js'`
+- **Finding IDs:** `src/finding-id.ts` exports `nextFindingId(dimension, reviewsDir)` → `{DIM}-{NNNNN}`
 - **Architecture:** Hybrid Node.js — thin command files call `!node` into a Vercel AI SDK orchestrator
 - **Distribution:** npm package; `npx rms@latest` + `rms install`
 - **Editors:** Both `.opencode/commands/` and `.cursor/commands/` from day 1
-- **Finding IDs:** `{DIM}-{NNNNN}` format, assigned by orchestrator, global counter in `.reviews/`
-- **File format:** XML-tagged blocks throughout pipeline (INPUT, REVIEWER, VALIDATOR, REPORT)
 - **Session module:** `createSession(projectRoot, slug)` → `SessionInfo` — use this in review commands
 
 ### How to Resume
@@ -134,11 +137,11 @@ Key context for Plan 02:
 ```
 1. Read .planning/STATE.md (this file)
 2. Read .planning/phases/01-foundation/01-CONTEXT.md for locked decisions
-3. Read .planning/phases/01-foundation/01-01-SUMMARY.md for what Plan 01 built
-4. Execute Plan 02: /gsd:execute-phase 01 02
+3. Read .planning/phases/01-foundation/01-02-SUMMARY.md for what Plan 02 built
+4. Execute Plan 03: /gsd:execute-phase 01 03
 ```
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-04 after 01-01 (npm bootstrap) complete*
+*Last updated: 2026-04-04 after 01-02 (schemas + finding-id) complete*

@@ -34,7 +34,7 @@
 
 Plans:
 - [x] 01-01-PLAN.md — Project scaffold: npm package, TypeScript, CLI entrypoint, session module
-- [ ] 01-02-PLAN.md — Zod schemas for all pipeline files + finding ID generation module
+- [x] 01-02-PLAN.md — Zod schemas for all pipeline files + finding ID generation module
 - [ ] 01-03-PLAN.md — Installer (`rms install`) + OpenCode/Cursor command template files
 - [ ] 01-04-PLAN.md — Install into repo, verify command discovery in both editors (checkpoint)
 
@@ -121,7 +121,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 1/4 plans | In Progress | - |
+| 1. Foundation | 2/4 | In Progress|  |
 | 2. Reviewer Agent | 0/? | Not started | - |
 | 3. Validator Agent | 0/? | Not started | - |
 | 4. Writer Agent | 0/? | Not started | - |
