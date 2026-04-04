@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import { install } from './installer.js';
 
 const program = new Command();
 
@@ -11,8 +12,10 @@ program
 program
   .command('install')
   .description('Install rms slash commands into the current project')
-  .action(() => {
-    console.log('install — not yet implemented');
+  .action(async () => {
+    const projectRoot = process.cwd();
+    console.log(`Installing rms commands into ${projectRoot}...`);
+    await install(projectRoot);
   });
 
 program
