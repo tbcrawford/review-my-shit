@@ -30,7 +30,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **REPT-03**: Each finding includes: file path, line reference, explanation of the problem and its consequence, actionable suggestion, and a stable finding ID
 - [ ] **REPT-04**: Full audit trail: `.reviews/<session>/` contains role-specific intermediate files (reviewer output, validator verdicts) alongside the final report
 - [ ] **REPT-05**: Finding IDs are deterministic and stable within a review session (not randomly LLM-generated)
-- [ ] **REPT-06**: `.reviews/` is added to `.gitignore` automatically on first run
+- [x] **REPT-06**: `.reviews/` is added to `.gitignore` automatically on first run
 
 ### Fix Command
 
@@ -43,7 +43,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **QUAL-01**: System is language agnostic — no language-specific assumptions baked into agent prompts or tooling
 - [ ] **QUAL-02**: Reviewer covers all 11 dimensions: bugs & logic errors, security, performance, style & conventions, test coverage, architecture, error handling & resilience, data integrity, API & interface contracts, dependency & environment risk, code & documentation consistency
-- [ ] **QUAL-03**: Tool has no external service dependencies beyond the GitHub API for PR diffs — uses whatever model the editor has configured
+- [x] **QUAL-03**: Tool has no external service dependencies beyond the GitHub API for PR diffs — uses whatever model the editor has configured
 
 ---
 
@@ -106,14 +106,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REPT-03 | Phase 4 | Pending |
 | REPT-04 | Phase 4 | Pending |
 | REPT-05 | Phase 1 | Pending |
-| REPT-06 | Phase 1 | Pending |
+| REPT-06 | Phase 1 | Complete |
 | FIX-01 | Phase 6 | Pending |
 | FIX-02 | Phase 6 | Pending |
 | FIX-03 | Phase 6 | Pending |
 | FIX-04 | Phase 6 | Pending |
 | QUAL-01 | Phase 2 | Pending |
 | QUAL-02 | Phase 2 | Pending |
-| QUAL-03 | Phase 1 | Pending |
+| QUAL-03 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 23 total
