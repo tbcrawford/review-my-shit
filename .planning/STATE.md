@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-04-06T20:15:45.151Z"
+status: complete
+last_updated: "2026-04-06T21:00:00.000Z"
 progress:
   total_phases: 9
-  completed_phases: 4
-  total_plans: 16
-  completed_plans: 10
-  percent: 71
+  completed_phases: 9
+  total_plans: 18
+  completed_plans: 18
+  percent: 100
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** Executing Phase 9
+**Status:** COMPLETE — All 9 phases done. v1.0 milestone shipped.
 
 ---
 
@@ -33,18 +33,17 @@ progress:
 
 ## Current Position
 
-Phase: 9 (unified-rms-review-command-that-prompts-user-for-review-scope-when-no-context-is-provided) — EXECUTING
-Plan: 1 of 2
-All 8 phases done. v1.0 milestone complete + per-agent model selection shipped.
+Phase: 9 — COMPLETE
+All 9 phases done. v1.0 milestone fully shipped.
 
 | Field | Value |
 |-------|-------|
-| Current phase | Phase 8: Per-Agent Model Selection — COMPLETE |
-| Status | All success criteria met; 149 tests passing |
+| Current phase | Phase 9: Unified /rms-review Command — COMPLETE |
+| Status | All success criteria met; 152 tests passing |
 | Blocking issues | None |
 
 ```
-Progress: [███████░░░] 71% (10/14 plans — gsd-tools sees 14 total, 10 summaries)
+Progress: [██████████] 100% (18/18 plans)
 ```
 
 ---
@@ -53,7 +52,7 @@ Progress: [███████░░░] 71% (10/14 plans — gsd-tools sees 1
 
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
-| 1 | Foundation | In Progress (checkpoint pending) | - |
+| 1 | Foundation | Complete | 2026-04-06 |
 | 2 | Reviewer Agent | Complete | 2026-04-06 |
 | 3 | Validator Agent | Complete | 2026-04-06 |
 | 4 | Writer Agent | Complete | 2026-04-06 |
@@ -61,6 +60,7 @@ Progress: [███████░░░] 71% (10/14 plans — gsd-tools sees 1
 | 6 | Fix Command | Complete | 2026-04-06 |
 | 7 | Cross-Editor Hardening | Complete | 2026-04-06 |
 | 8 | Per-Agent Model Selection | Complete | 2026-04-06 |
+| 9 | Unified /rms-review Command | Complete | 2026-04-06 |
 
 ---
 
@@ -68,8 +68,8 @@ Progress: [███████░░░] 71% (10/14 plans — gsd-tools sees 1
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 8 / 8 (all phases complete) |
-| Plans complete | 10 / 14 |
+| Phases complete | 9 / 9 (all phases complete) |
+| Plans complete | 18 / 18 |
 | Requirements covered | 23 / 23 |
 | Requirements validated | 23 / 23 |
 
@@ -91,8 +91,8 @@ Progress: [███████░░░] 71% (10/14 plans — gsd-tools sees 1
 | Phase 05 P02 | ~20 min | 3 tasks | 6 files |
 | Phase 06 P01 | ~15 min | 2 tasks | 2 files |
 | Phase 06 P02 | ~10 min | 2 tasks | 6 files |
-| Phase 08 P01 | ~8 min | 2 tasks | 3 files |
-| Phase 08 P02 | ~5 min | 2 tasks | 5 files |
+| Phase 09 P01 | ~10 min | 4 tasks | 2 files |
+| Phase 09 P02 | ~3 min | 3 tasks | 3 files |
 
 ### Accumulated Context
 
@@ -139,9 +139,9 @@ Progress: [███████░░░] 71% (10/14 plans — gsd-tools sees 1
 | Session data survives `/new` in OpenCode | CLI owns all filesystem state; `.reviews/` files are safe across session reloads — documented in AGENTS.md | 07-01 |
 | Cursor command templates hardened | Build hint, severity-grouped presentation, session ID guidance, GITHUB_TOKEN error guidance added to cursor templates | 07-02 |
 | `cp -r src/templates dist/` (not `dist/templates`) | macOS `cp -r` creates `dist/templates/templates/` double-nesting when destination dir exists; fixed in package.json build script | 07-02 |
-| Optional path arg in loadRmsConfig/saveRmsConfig | Enables testing without patching homedir — cleaner than mutable override variable | 08-01 |
-| resolveModels() returns three typed model instances | reviewer/validator/writer each get separate model; writerModelId is plain string | 08-02 |
-| parseSpec helper is inline inside settings action | No top-level function needed; closure access to AgentModelSpec type | 08-02 |
+| `rms review` scope routing | D-01: no-args outputs structured scope-prompt; `local`/`pr` route to shared helpers; unknown scope exits 1 | 09-01 |
+| `runLocalReview`/`runPrReview` helpers | Extracted from existing command action bodies — no pipeline logic changed; DRY refactor only | 09-01 |
+| Destination name `rms-review.md` (with prefix) | Mirrors `rms-settings.md` convention; avoids collision with `review-local.md` / `review-pr.md` | 09-02 |
 
 ### Open Questions
 
@@ -155,7 +155,7 @@ None — all questions resolved.
 
 ### Todos
 
-None — all 7 phases complete. v1.0 milestone done.
+None — all 9 phases complete. v1.0 milestone done.
 
 ---
 
@@ -163,24 +163,22 @@ None — all 7 phases complete. v1.0 milestone done.
 
 ### Context for Next Session
 
-Phase 8 complete. All 8 phases done. 149 tests pass. Per-agent model selection fully shipped.
+All 9 phases complete. v1.0 milestone fully shipped. 152 tests pass.
 
-Key Phase 8 artifacts:
+Key Phase 9 artifacts:
 
-- `src/schemas.ts`: extended with `AgentModelSpecSchema` and `RmsConfigSchema`
-- `src/config.ts`: new module with `getConfigPath`, `loadRmsConfig`, `saveRmsConfig`, `resolveAgentModel`
-- `src/config.test.ts`: 10 new tests (all passing)
-- `src/index.ts`: `resolveModels()` replaces `resolveModel()`; `settings` sub-command added
-- `src/installer.ts`: 8 entries (was 6); adds opencode-settings.md + cursor-settings.md
-- `src/templates/opencode-settings.md`: OpenCode /rms-settings command template
-- `src/templates/cursor-settings.md`: Cursor /rms-settings command template
-- `AGENTS.md`: Per-Agent Model Configuration section + updated env vars table
+- `src/index.ts`: `runLocalReview()` + `runPrReview()` helpers extracted; `review` sub-command added
+- `src/index.test.ts`: 3 new routing unit tests (152 total passing)
+- `src/templates/opencode-review.md`: OpenCode `/rms-review` command template
+- `src/templates/cursor-review.md`: Cursor `/rms-review` command template with scope-prompt handling
+- `src/installer.ts`: 10 INSTALLS entries (was 8); adds rms-review for both editors
+- `.opencode/commands/rms-review.md` + `.cursor/commands/rms-review.md`: installed and ready
 
 ### How to Resume
 
-No resumption needed — all phases complete.
+No resumption needed — all phases complete. v1.0 shipped.
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 8 Plan 02 complete (rms settings command — resolveModels(), settings sub-command, 2 new templates — 149 tests passing)*
+*Last updated: 2026-04-06 after Phase 9 complete (unified /rms-review command — runLocalReview/runPrReview helpers, review sub-command, 2 new editor templates, 10-entry installer — 152 tests passing)*
