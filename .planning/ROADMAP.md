@@ -195,6 +195,17 @@ Plans:
 - [x] 08-01-PLAN.md — Config layer: RmsConfigSchema in schemas.ts, src/config.ts (loadRmsConfig, saveRmsConfig, resolveAgentModel) with TDD
 - [x] 08-02-PLAN.md — Integration: wire per-agent models into index.ts, add rms settings CLI sub-command, add editor templates, update AGENTS.md
 
+### Phase 9: Unified /rms-review command that prompts user for review scope when no context is provided
+
+**Goal:** Add a unified `rms review` CLI sub-command that outputs an interactive scope-selection prompt when invoked with no arguments, and routes to the existing local or PR review pipeline when called with `local` or `pr <number>`. Wire both editors with `/rms-review` templates and update the installer.
+**Requirements**: TBD
+**Depends on:** Phase 8
+**Plans:** 2 plans
+
+Plans:
+- [ ] 09-01-PLAN.md — `review` sub-command in src/index.ts: extract runLocalReview + runPrReview helpers, scope routing, interactive prompt output, tests
+- [ ] 09-02-PLAN.md — Editor templates (opencode-review.md, cursor-review.md) + installer update (2 new entries → 10 total)
+
 ---
 
 *Roadmap created: 2026-04-03*
