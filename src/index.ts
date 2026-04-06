@@ -62,6 +62,226 @@ async function resolveModels(): Promise<{
 }
 
 // ---------------------------------------------------------------------------
+// Shared pipeline helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Runs the full local-diff review pipeline.
+ * Extracted from the `review-local` action body — no pipeline logic changed.
+ */
+async function runLocalReview(opts: { projectRoot: string; focus?: string }): Promise<void> {
+  const { projectRoot, focus } = opts;
+
+  // Step 1: Get and preprocess the local diff
+  const { diff, stats } = await getLocalDiff(projectRoot);
+
+  if (!diff.trim()) {
+    console.error('No changes to review. Stage or modify files first.');
+    process.exit(1);
+  }
+
+  if (stats.strippedFiles.length > 0) {
+    console.log(
+      `Preprocessing stripped ${stats.strippedFiles.length} file(s): ${stats.strippedFiles.join(', ')}`,
+    );
+  }
+
+  // Step 2: Create session (nanoid suffix prevents same-day collision)
+  const session = await createSession(projectRoot, `local-${nanoid(4)}`);
+  console.log(`Review session: ${session.reviewId}`);
+  console.log(`Output: .reviews/${session.reviewId}/`);
+
+  // Step 3: Write INPUT.md
+  await writeInputFile({
+    sessionDir: session.sessionDir,
+    reviewId: session.reviewId,
+    timestamp: session.timestamp,
+    scope: 'local-diff',
+    focus,
+    diff,
+  });
+
+  // Step 4: Run reviewer
+  // Model is resolved from config file or environment variables — provider agnostic (QUAL-03).
+  // Priority: ~/.config/rms/config.json > AI_SDK_PROVIDER + AI_SDK_MODEL env vars
+  const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
+  const reviewsDir = join(projectRoot, '.reviews');
+
+  console.log('Running reviewer...');
+  const result = await runReviewer({
+    session,
+    diff,
+    focus,
+    model: reviewerModel,
+    reviewsDir,
+  });
+
+  // Step 5: Run validator
+  const inputMdPath = join(session.sessionDir, 'INPUT.md');
+  await verifyFileExists(result.reviewerMdPath, 'REVIEWER.md');
+  console.log('Running validator...');
+  const validatorResult = await runValidator({
+    session,
+    reviewerMdPath: result.reviewerMdPath,
+    inputMdPath,
+    model: validatorModel,
+  });
+
+  // Step 6: Run writer (deterministic — no LLM call)
+  const modelId = writerModelId;
+  const inputMdContent = await readFile(inputMdPath, 'utf8');
+  await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
+  console.log('Running writer...');
+  const writerResult = await runWriter({
+    session,
+    findings: result.findings,
+    verdicts: validatorResult.verdicts,
+    validatorRawContent: validatorResult.rawContent,
+    inputMdContent,
+    dimensionsCovered: result.dimensionsCovered,
+    modelId,
+    reviewsDir,
+  });
+
+  // Step 7: Report results
+  const challenged = validatorResult.verdicts.filter(v => v.verdict === 'challenged').length;
+  const escalated = validatorResult.verdicts.filter(v => v.verdict === 'escalated').length;
+  console.log(`\nReview complete:`);
+  console.log(`  Findings: ${result.findingCount}`);
+  console.log(`  Verdicts: ${validatorResult.verdictCount} (${challenged} challenged, ${escalated} escalated)`);
+  if (writerResult.counterFindingCount > 0) {
+    console.log(`  Counter-findings surfaced: ${writerResult.counterFindingCount}`);
+  }
+  console.log(`  Total findings in report: ${writerResult.findingCount}`);
+  console.log(`\nAudit trail:`);
+  console.log(`  INPUT.md:     .reviews/${session.reviewId}/INPUT.md`);
+  console.log(`  REVIEWER.md:  .reviews/${session.reviewId}/REVIEWER.md`);
+  console.log(`  VALIDATOR.md: .reviews/${session.reviewId}/VALIDATOR.md`);
+  console.log(`  REPORT.md:    .reviews/${session.reviewId}/REPORT.md`);
+}
+
+/**
+ * Runs the full PR-diff review pipeline.
+ * Extracted from the `review-pr` action body — no pipeline logic changed.
+ */
+async function runPrReview(opts: { projectRoot: string; prNumber: number; focus?: string }): Promise<void> {
+  const { projectRoot, prNumber, focus } = opts;
+
+  const token = process.env['GITHUB_TOKEN'];
+  if (!token) {
+    console.error(
+      'GITHUB_TOKEN environment variable is not set. Required for PR diff fetching.',
+    );
+    process.exit(1);
+  }
+
+  // Auto-detect owner/repo from git remote origin
+  let repoSlug: string;
+  try {
+    repoSlug = await detectRepoSlug(projectRoot);
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+
+  // Fetch PR diff from GitHub
+  let prDiff: Awaited<ReturnType<typeof getPrDiff>>;
+  try {
+    prDiff = await getPrDiff(prNumber, token, repoSlug);
+  } catch (err) {
+    console.error(err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  }
+
+  const { diff, stats, branch } = prDiff;
+
+  if (!diff.trim()) {
+    console.error(`PR #${prNumber} has no reviewable changes after preprocessing.`);
+    process.exit(1);
+  }
+
+  if (stats.strippedFiles.length > 0) {
+    console.log(
+      `Preprocessing stripped ${stats.strippedFiles.length} file(s): ${stats.strippedFiles.join(', ')}`,
+    );
+  }
+
+  // Session slug: pr-{number}-{branch} — branch sanitized by createSession
+  const session = await createSession(projectRoot, `pr-${prNumber}-${branch}`);
+  console.log(`Review session: ${session.reviewId}`);
+  console.log(`Output: .reviews/${session.reviewId}/`);
+
+  // Write INPUT.md with PR metadata
+  await writeInputFile({
+    sessionDir: session.sessionDir,
+    reviewId: session.reviewId,
+    timestamp: session.timestamp,
+    scope: 'pr-diff',
+    focus,
+    diff,
+    prNumber,
+    repoSlug,
+    branch,
+  });
+
+  // Resolve model
+  const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
+  const reviewsDir = join(projectRoot, '.reviews');
+
+  // Run pipeline — identical to review-local from here
+  console.log('Running reviewer...');
+  const result = await runReviewer({
+    session,
+    diff,
+    focus,
+    model: reviewerModel,
+    reviewsDir,
+  });
+
+  const inputMdPath = join(session.sessionDir, 'INPUT.md');
+  await verifyFileExists(result.reviewerMdPath, 'REVIEWER.md');
+  console.log('Running validator...');
+  const validatorResult = await runValidator({
+    session,
+    reviewerMdPath: result.reviewerMdPath,
+    inputMdPath,
+    model: validatorModel,
+  });
+
+  const modelId = writerModelId;
+  const inputMdContent = await readFile(inputMdPath, 'utf8');
+  await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
+  console.log('Running writer...');
+  const writerResult = await runWriter({
+    session,
+    findings: result.findings,
+    verdicts: validatorResult.verdicts,
+    validatorRawContent: validatorResult.rawContent,
+    inputMdContent,
+    dimensionsCovered: result.dimensionsCovered,
+    modelId,
+    reviewsDir,
+  });
+
+  // Report results
+  const challenged = validatorResult.verdicts.filter(v => v.verdict === 'challenged').length;
+  const escalated = validatorResult.verdicts.filter(v => v.verdict === 'escalated').length;
+  console.log(`\nReview complete:`);
+  console.log(`  PR: #${prNumber} (${repoSlug})`);
+  console.log(`  Findings: ${result.findingCount}`);
+  console.log(`  Verdicts: ${validatorResult.verdictCount} (${challenged} challenged, ${escalated} escalated)`);
+  if (writerResult.counterFindingCount > 0) {
+    console.log(`  Counter-findings surfaced: ${writerResult.counterFindingCount}`);
+  }
+  console.log(`  Total findings in report: ${writerResult.findingCount}`);
+  console.log(`\nAudit trail:`);
+  console.log(`  INPUT.md:     .reviews/${session.reviewId}/INPUT.md`);
+  console.log(`  REVIEWER.md:  .reviews/${session.reviewId}/REVIEWER.md`);
+  console.log(`  VALIDATOR.md: .reviews/${session.reviewId}/VALIDATOR.md`);
+  console.log(`  REPORT.md:    .reviews/${session.reviewId}/REPORT.md`);
+}
+
+// ---------------------------------------------------------------------------
 // CLI program
 // ---------------------------------------------------------------------------
 
@@ -86,94 +306,7 @@ program
   .description('Run a code review on local git diff')
   .option('--focus <area>', 'Focus area (e.g., security, performance)')
   .action(async (opts: { focus?: string }) => {
-    const projectRoot = process.cwd();
-
-    // Step 1: Get and preprocess the local diff
-    const { diff, stats } = await getLocalDiff(projectRoot);
-
-    if (!diff.trim()) {
-      console.error('No changes to review. Stage or modify files first.');
-      process.exit(1);
-    }
-
-    if (stats.strippedFiles.length > 0) {
-      console.log(
-        `Preprocessing stripped ${stats.strippedFiles.length} file(s): ${stats.strippedFiles.join(', ')}`,
-      );
-    }
-
-    // Step 2: Create session (nanoid suffix prevents same-day collision)
-    const session = await createSession(projectRoot, `local-${nanoid(4)}`);
-    console.log(`Review session: ${session.reviewId}`);
-    console.log(`Output: .reviews/${session.reviewId}/`);
-
-    // Step 3: Write INPUT.md
-    await writeInputFile({
-      sessionDir: session.sessionDir,
-      reviewId: session.reviewId,
-      timestamp: session.timestamp,
-      scope: 'local-diff',
-      focus: opts.focus,
-      diff,
-    });
-
-    // Step 4: Run reviewer
-    // Model is resolved from config file or environment variables — provider agnostic (QUAL-03).
-    // Priority: ~/.config/rms/config.json > AI_SDK_PROVIDER + AI_SDK_MODEL env vars
-    const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
-    const reviewsDir = join(projectRoot, '.reviews');
-
-    console.log('Running reviewer...');
-    const result = await runReviewer({
-      session,
-      diff,
-      focus: opts.focus,
-      model: reviewerModel,
-      reviewsDir,
-    });
-
-    // Step 5: Run validator
-    const inputMdPath = join(session.sessionDir, 'INPUT.md');
-    await verifyFileExists(result.reviewerMdPath, 'REVIEWER.md');
-    console.log('Running validator...');
-    const validatorResult = await runValidator({
-      session,
-      reviewerMdPath: result.reviewerMdPath,
-      inputMdPath,
-      model: validatorModel,
-    });
-
-    // Step 6: Run writer (deterministic — no LLM call)
-    const modelId = writerModelId;
-    const inputMdContent = await readFile(inputMdPath, 'utf8');
-    await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
-    console.log('Running writer...');
-    const writerResult = await runWriter({
-      session,
-      findings: result.findings,
-      verdicts: validatorResult.verdicts,
-      validatorRawContent: validatorResult.rawContent,
-      inputMdContent,
-      dimensionsCovered: result.dimensionsCovered,
-      modelId,
-      reviewsDir,
-    });
-
-    // Step 7: Report results
-    const challenged = validatorResult.verdicts.filter(v => v.verdict === 'challenged').length;
-    const escalated = validatorResult.verdicts.filter(v => v.verdict === 'escalated').length;
-    console.log(`\nReview complete:`);
-    console.log(`  Findings: ${result.findingCount}`);
-    console.log(`  Verdicts: ${validatorResult.verdictCount} (${challenged} challenged, ${escalated} escalated)`);
-    if (writerResult.counterFindingCount > 0) {
-      console.log(`  Counter-findings surfaced: ${writerResult.counterFindingCount}`);
-    }
-    console.log(`  Total findings in report: ${writerResult.findingCount}`);
-    console.log(`\nAudit trail:`);
-    console.log(`  INPUT.md:     .reviews/${session.reviewId}/INPUT.md`);
-    console.log(`  REVIEWER.md:  .reviews/${session.reviewId}/REVIEWER.md`);
-    console.log(`  VALIDATOR.md: .reviews/${session.reviewId}/VALIDATOR.md`);
-    console.log(`  REPORT.md:    .reviews/${session.reviewId}/REPORT.md`);
+    await runLocalReview({ projectRoot: process.cwd(), focus: opts.focus });
   });
 
 program
@@ -187,121 +320,49 @@ program
       console.error(`Invalid PR number: "${prArg}". Must be a positive integer.`);
       process.exit(1);
     }
+    await runPrReview({ projectRoot: process.cwd(), prNumber, focus: opts.focus });
+  });
 
-    const token = process.env['GITHUB_TOKEN'];
-    if (!token) {
-      console.error(
-        'GITHUB_TOKEN environment variable is not set. Required for PR diff fetching.',
-      );
-      process.exit(1);
-    }
-
+program.command('review')
+  .description('Run a code review (unified entry point — routes to local or pr scope)')
+  .argument('[scope]', 'Scope: "local" or "pr"')
+  .argument('[pr-number]', 'GitHub PR number (required when scope is "pr")')
+  .option('--focus <area>', 'Focus area (e.g., security, performance)')
+  .action(async (scope: string | undefined, prArg: string | undefined, opts: { focus?: string }) => {
     const projectRoot = process.cwd();
 
-    // Auto-detect owner/repo from git remote origin
-    let repoSlug: string;
-    try {
-      repoSlug = await detectRepoSlug(projectRoot);
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err));
-      process.exit(1);
+    // No scope provided — print prompt and exit 0
+    if (!scope) {
+      console.log('[rms] What would you like to review?\n');
+      console.log('  1. local  — Review staged and unstaged git changes in the working tree');
+      console.log('  2. pr     — Review a GitHub Pull Request (you will need to provide the PR number)');
+      console.log('\nRe-invoke with your choice:');
+      console.log('  rms review local [--focus <area>]');
+      console.log('  rms review pr <pr-number> [--focus <area>]');
+      return;
     }
 
-    // Fetch PR diff from GitHub
-    let prDiff: Awaited<ReturnType<typeof getPrDiff>>;
-    try {
-      prDiff = await getPrDiff(prNumber, token, repoSlug);
-    } catch (err) {
-      console.error(err instanceof Error ? err.message : String(err));
-      process.exit(1);
+    if (scope === 'local') {
+      await runLocalReview({ projectRoot, focus: opts.focus });
+      return;
     }
 
-    const { diff, stats, branch } = prDiff;
-
-    if (!diff.trim()) {
-      console.error(`PR #${prNumber} has no reviewable changes after preprocessing.`);
-      process.exit(1);
+    if (scope === 'pr') {
+      if (!prArg) {
+        console.error('[rms] PR number required. Usage: rms review pr <pr-number> [--focus <area>]');
+        process.exit(1);
+      }
+      const prNumber = parseInt(prArg, 10);
+      if (isNaN(prNumber) || prNumber <= 0) {
+        console.error(`Invalid PR number: "${prArg}". Must be a positive integer.`);
+        process.exit(1);
+      }
+      await runPrReview({ projectRoot, prNumber, focus: opts.focus });
+      return;
     }
 
-    if (stats.strippedFiles.length > 0) {
-      console.log(
-        `Preprocessing stripped ${stats.strippedFiles.length} file(s): ${stats.strippedFiles.join(', ')}`,
-      );
-    }
-
-    // Session slug: pr-{number}-{branch} — branch sanitized by createSession
-    const session = await createSession(projectRoot, `pr-${prNumber}-${branch}`);
-    console.log(`Review session: ${session.reviewId}`);
-    console.log(`Output: .reviews/${session.reviewId}/`);
-
-    // Write INPUT.md with PR metadata
-    await writeInputFile({
-      sessionDir: session.sessionDir,
-      reviewId: session.reviewId,
-      timestamp: session.timestamp,
-      scope: 'pr-diff',
-      focus: opts.focus,
-      diff,
-      prNumber,
-      repoSlug,
-      branch,
-    });
-
-    // Resolve model
-    const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
-    const reviewsDir = join(projectRoot, '.reviews');
-
-    // Run pipeline — identical to review-local from here
-    console.log('Running reviewer...');
-    const result = await runReviewer({
-      session,
-      diff,
-      focus: opts.focus,
-      model: reviewerModel,
-      reviewsDir,
-    });
-
-    const inputMdPath = join(session.sessionDir, 'INPUT.md');
-    await verifyFileExists(result.reviewerMdPath, 'REVIEWER.md');
-    console.log('Running validator...');
-    const validatorResult = await runValidator({
-      session,
-      reviewerMdPath: result.reviewerMdPath,
-      inputMdPath,
-      model: validatorModel,
-    });
-
-    const modelId = writerModelId;
-    const inputMdContent = await readFile(inputMdPath, 'utf8');
-    await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
-    console.log('Running writer...');
-    const writerResult = await runWriter({
-      session,
-      findings: result.findings,
-      verdicts: validatorResult.verdicts,
-      validatorRawContent: validatorResult.rawContent,
-      inputMdContent,
-      dimensionsCovered: result.dimensionsCovered,
-      modelId,
-      reviewsDir,
-    });
-
-    // Report results
-    const challenged = validatorResult.verdicts.filter(v => v.verdict === 'challenged').length;
-    const escalated = validatorResult.verdicts.filter(v => v.verdict === 'escalated').length;
-    console.log(`\nReview complete:`);
-    console.log(`  PR: #${prNumber} (${repoSlug})`);
-    console.log(`  Findings: ${result.findingCount}`);
-    console.log(`  Verdicts: ${validatorResult.verdictCount} (${challenged} challenged, ${escalated} escalated)`);
-    if (writerResult.counterFindingCount > 0) {
-      console.log(`  Counter-findings surfaced: ${writerResult.counterFindingCount}`);
-    }
-    console.log(`  Total findings in report: ${writerResult.findingCount}`);
-    console.log(`\nAudit trail:`);
-    console.log(`  INPUT.md:     .reviews/${session.reviewId}/INPUT.md`);
-    console.log(`  REVIEWER.md:  .reviews/${session.reviewId}/REVIEWER.md`);
-    console.log(`  VALIDATOR.md: .reviews/${session.reviewId}/VALIDATOR.md`);
-    console.log(`  REPORT.md:    .reviews/${session.reviewId}/REPORT.md`);
+    console.error(`[rms] Unknown scope: "${scope}". Valid scopes are: local, pr`);
+    process.exit(1);
   });
 
 program
