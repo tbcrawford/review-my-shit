@@ -19,7 +19,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Diff Input
 
 - [ ] **DIFF-01**: User can choose local git diff or PR diff as the review input, selected per invocation
-- [ ] **DIFF-02**: Local diff captures staged and/or uncommitted changes from the working tree
+- [x] **DIFF-02**: Local diff captures staged and/or uncommitted changes from the working tree
 - [ ] **DIFF-03**: PR diff is fetched via GitHub REST API using a user-configured token
 - [ ] **DIFF-04**: User can specify an optional focus area when invoking review (e.g., "focus on security", "focus on architecture")
 
@@ -98,7 +98,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-05 | Phase 4 | Pending |
 | PIPE-06 | Phase 1 | Complete |
 | DIFF-01 | Phase 5 | Pending |
-| DIFF-02 | Phase 2 | Pending |
+| DIFF-02 | Phase 2 | Complete |
 | DIFF-03 | Phase 5 | Pending |
 | DIFF-04 | Phase 5 | Pending |
 | REPT-01 | Phase 4 | Pending |
