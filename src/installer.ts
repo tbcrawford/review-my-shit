@@ -12,6 +12,8 @@ const INSTALLS = [
   { template: 'cursor-review-local.md',   dest: '.cursor/commands/review-local.md' },
   { template: 'cursor-review-pr.md',      dest: '.cursor/commands/review-pr.md' },
   { template: 'cursor-fix.md',            dest: '.cursor/commands/fix.md' },
+  { template: 'opencode-settings.md',    dest: '.opencode/commands/rms-settings.md' },
+  { template: 'cursor-settings.md',      dest: '.cursor/commands/rms-settings.md' },
 ];
 
 export async function install(projectRoot: string): Promise<void> {

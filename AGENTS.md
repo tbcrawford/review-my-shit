@@ -64,6 +64,7 @@ Commands are installed to `.opencode/commands/` via `node dist/index.js install`
 | `/review-local [--focus <dim>]` | Review staged + unstaged local diff | `subtask: true` (mechanical) |
 | `/review-pr <pr-number> [--focus <dim>]` | Review a GitHub PR diff | `subtask: true` (mechanical) |
 | `/fix [<finding-id>] [--session <id>]` | Show or apply a finding | `subtask: true` (mechanical) |
+| `/rms-settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]` | View or set per-agent model config | `subtask: true` (mechanical) |
 
 OpenCode commands use `subtask: true` in frontmatter, which forces execution in a fresh subagent context. The `!node dist/index.js ...` pattern injects the shell output (the Node.js CLI's stdout) directly into the agent's response.
 
@@ -76,6 +77,7 @@ Commands are installed to `.cursor/commands/` via `node dist/index.js install`.
 | `/review-local [--focus <dim>]` | Review staged + unstaged local diff | Prompt-enforced |
 | `/review-pr <pr-number> [--focus <dim>]` | Review a GitHub PR diff | Prompt-enforced |
 | `/fix [<finding-id>] [--session <id>]` | Show or apply a finding | Prompt-enforced |
+| `/rms-settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]` | View or set per-agent model config | Prompt-enforced |
 
 Cursor commands use the terminal to run `node dist/index.js ...` and then present the output. Isolation is prompt-enforced rather than mechanically enforced — the agent is instructed to run the command and present results, but no `subtask: true` equivalent exists in Cursor.
 
@@ -85,11 +87,32 @@ Cursor commands use the terminal to run `node dist/index.js ...` and then presen
 
 | Variable | Required | Default | Purpose |
 |----------|----------|---------|---------|
-| `AI_SDK_PROVIDER` | No | `openai` | AI provider (openai, anthropic, google, etc.) |
-| `AI_SDK_MODEL` | No | `gpt-4o` | Model name passed to the provider |
+| `~/.config/rms/config.json` | No | — | Per-agent model config (preferred over env vars) |
+| `AI_SDK_PROVIDER` | Fallback only | `openai` | AI provider when no config file exists |
+| `AI_SDK_MODEL` | Fallback only | `gpt-4o` | Model ID when no config file exists |
 | `GITHUB_TOKEN` | For `review-pr` only | — | GitHub Personal Access Token for PR diff fetching |
 | `OPENAI_API_KEY` | If provider=openai | — | Standard provider key |
 | `ANTHROPIC_API_KEY` | If provider=anthropic | — | Standard provider key |
+
+---
+
+## Per-Agent Model Configuration
+
+Per-agent model selection is configured via `~/.config/rms/config.json`. Use the `/rms-settings` command to view or set models:
+
+```json
+{
+  "reviewer": { "provider": "anthropic", "model": "claude-opus-4-5" },
+  "validator": { "provider": "anthropic", "model": "claude-sonnet-4-5" },
+  "writer": { "provider": "openai", "model": "gpt-4o" }
+}
+```
+
+**Supported providers:** `openai`, `anthropic`, `google`
+
+If the config file is absent, rms falls back to `AI_SDK_PROVIDER` + `AI_SDK_MODEL` env vars (all three agents use the same model).
+
+Re-run `rms install` after upgrading to pick up the new `/rms-settings` command.
 
 ---
 
