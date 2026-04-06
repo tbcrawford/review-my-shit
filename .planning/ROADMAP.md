@@ -62,7 +62,12 @@ Plans:
   2. Validator challenges at least one injected false-positive finding (empirical independence test passes)
   3. Validator output never references the reviewer's chain-of-thought or session — only its structured findings
   4. Each verdict is one of: confirmed / challenged / escalated — no ambiguous or missing verdicts
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Validator agent module: parseValidatorOutput + runValidator (mirrors reviewer pattern)
+- [ ] 03-02-PLAN.md — Wire validator into review-local pipeline + empirical independence test (D-10)
+
 **UI hint**: no
 
 ### Phase 4: Writer Agent
@@ -123,7 +128,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/4 | In Progress|  |
 | 2. Reviewer Agent | 2/2 | Complete   | 2026-04-06 |
-| 3. Validator Agent | 0/? | Not started | - |
+| 3. Validator Agent | 0/2 | Not started | - |
 | 4. Writer Agent | 0/? | Not started | - |
 | 5. Review Orchestration | 0/? | Not started | - |
 | 6. Fix Command | 0/? | Not started | - |
