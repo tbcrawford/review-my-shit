@@ -15,6 +15,14 @@ import { createSession } from './session.js';
 import { runReviewer } from './reviewer.js';
 import { runValidator } from './validator.js';
 import { runWriter } from './writer.js';
+import {
+  findLatestReportPath,
+  findFindingById,
+  getAllFindings,
+  buildFixContext,
+  formatFixOutput,
+  formatFindingList,
+} from './fixer.js';
 
 // ---------------------------------------------------------------------------
 // Model resolution (provider-agnostic)
@@ -291,10 +299,45 @@ program
 
 program
   .command('fix')
-  .description('Apply a finding by ID, or select interactively')
-  .argument('[finding-id]', 'Finding ID (e.g., SEC-00001)')
-  .action((id: string | undefined) => {
-    console.log(`fix ${id ?? '(interactive)'} — not yet implemented`);
+  .description('Display a finding and its suggestion for the host AI agent to apply')
+  .argument('[finding-id]', 'Finding ID (e.g., SEC-00001) — omit for interactive list')
+  .option('--session <id>', 'Specific review session ID (default: latest)')
+  .action(async (findingId: string | undefined, opts: { session?: string }) => {
+    const projectRoot = process.cwd();
+    const reviewsDir = join(projectRoot, '.reviews');
+
+    if (!findingId) {
+      // Interactive mode: list all findings from the latest (or specified) session
+      const result = await getAllFindings(reviewsDir, opts.session);
+      if (!result) {
+        const sessionHint = opts.session ? `session '${opts.session}'` : 'any session in .reviews/';
+        console.error(`[rms] No REPORT.md found in ${sessionHint}.`);
+        console.error('Run /review first to generate a report.');
+        process.exit(1);
+      }
+
+      console.log(formatFindingList(result.findings, result.sessionId));
+      return;
+    }
+
+    // By-ID mode: find the specific finding, build context, emit for AI agent
+    const reportResult = await findLatestReportPath(reviewsDir, opts.session);
+    if (!reportResult) {
+      const sessionHint = opts.session ? `session '${opts.session}'` : 'any session in .reviews/';
+      console.error(`[rms] No REPORT.md found in ${sessionHint}.`);
+      console.error('Run /review first to generate a report.');
+      process.exit(1);
+    }
+
+    const finding = await findFindingById(reportResult.reportPath, findingId);
+    if (!finding) {
+      console.error(`[rms] Finding '${findingId}' not found in ${reportResult.reportPath}.`);
+      console.error('Use /fix (no ID) to list available findings.');
+      process.exit(1);
+    }
+
+    const ctx = await buildFixContext(projectRoot, reportResult.reportPath, reportResult.sessionId, finding);
+    console.log(formatFixOutput(ctx));
   });
 
 program.parse();

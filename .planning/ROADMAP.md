@@ -13,7 +13,7 @@
 - [x] **Phase 3: Validator Agent** — Implement the adversarial validator and confirm empirical isolation independence (completed 2026-04-06)
 - [x] **Phase 4: Writer Agent** — Synthesize reviewer + validator outputs into a severity-grouped report with full audit trail (completed 2026-04-06)
 - [x] **Phase 5: Review Orchestration** — Wire the `/review` entry command: scope selection, session creation, pipeline sequencing (completed 2026-04-06)
-- [ ] **Phase 6: Fix Command** — Implement `/fix` with by-ID and interactive selection modes
+- [x] **Phase 6: Fix Command** — Implement `/fix` with by-ID and interactive selection modes (completed 2026-04-06)
 - [ ] **Phase 7: Cross-Editor Hardening** — Validate end-to-end in both OpenCode and Cursor; harden edge cases
 
 ---
@@ -112,7 +112,12 @@ Plans:
   2. `/fix` with no arguments presents an interactive list of findings from the latest `REPORT.md` for selection
   3. Fix command detects when the target file has changed since the review and warns the user before proceeding
   4. No fix is ever applied automatically without explicit user action — confirmation prompt always appears
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 06-01-PLAN.md — fixer.ts: parseReportFindings, findFindingById, checkStaleness, formatFixOutput, formatFindingList
+- [x] 06-02-PLAN.md — Wire fix command in index.ts + templates (opencode-fix.md, cursor-fix.md) + installer
+
 **UI hint**: no
 
 ### Phase 7: Cross-Editor Hardening
@@ -138,7 +143,7 @@ Plans:
 | 3. Validator Agent | 2/2 | Complete   | 2026-04-06 |
 | 4. Writer Agent | 2/2 | Complete   | 2026-04-06 |
 | 5. Review Orchestration | 2/2 | Complete   | 2026-04-06 |
-| 6. Fix Command | 0/? | Not started | - |
+| 6. Fix Command | 2/2 | Complete   | 2026-04-06 |
 | 7. Cross-Editor Hardening | 0/? | Not started | - |
 
 ---
@@ -176,4 +181,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 5 complete (review orchestration — review-local + review-pr wired, verifyFileExists, getPrDiff, detectRepoSlug, 99 tests passing)*
+*Last updated: 2026-04-06 after Phase 6 complete (fix command — parseReportFindings, checkStaleness, formatFixOutput, by-ID + interactive modes, 134 tests passing)*

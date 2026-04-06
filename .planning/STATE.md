@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-04-06T21:00:00.000Z"
+last_updated: "2026-04-06T22:00:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
+  completed_phases: 6
+  total_plans: 16
+  completed_plans: 16
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** Phase 5 complete — ready for Phase 6 (Fix Command)
+**Status:** Phase 6 complete — ready for Phase 7 (Cross-Editor Hardening)
 
 ---
 
@@ -26,23 +26,23 @@ progress:
 | Requirements file | `.planning/REQUIREMENTS.md` |
 | Roadmap file | `.planning/ROADMAP.md` |
 | Core value | The reviewer catches problems a developer would miss; the validator catches problems the reviewer would miss — and both are fully auditable. |
-| Current focus | Phase 6: Fix Command — /fix by ID and interactive selection |
+| Current focus | Phase 7: Cross-Editor Hardening — validate end-to-end in both editors |
 
 ---
 
 ## Current Position
 
-Phase: 05 (Review Orchestration) — COMPLETE
-Next: Phase 06 (Fix Command)
+Phase: 06 (Fix Command) — COMPLETE
+Next: Phase 07 (Cross-Editor Hardening)
 
 | Field | Value |
 |-------|-------|
-| Current phase | Phase 5: Review Orchestration — COMPLETE |
-| Status | Verified 5/5 success criteria; 99 tests passing |
+| Current phase | Phase 6: Fix Command — COMPLETE |
+| Status | Verified 4/4 success criteria; 134 tests passing |
 | Blocking issues | None |
 
 ```
-Progress: [████████░░░░░░░░] Phases 1-5 complete (4 fully, 1 at checkpoint), Phase 6 next
+Progress: [██████████░░░░░░] Phases 1-6 complete (5 fully, 1 at checkpoint), Phase 7 next
 ```
 
 ---
@@ -56,7 +56,7 @@ Progress: [████████░░░░░░░░] Phases 1-5 complete
 | 3 | Validator Agent | Complete | 2026-04-06 |
 | 4 | Writer Agent | Complete | 2026-04-06 |
 | 5 | Review Orchestration | Complete | 2026-04-06 |
-| 6 | Fix Command | Not started | - |
+| 6 | Fix Command | Complete | 2026-04-06 |
 | 7 | Cross-Editor Hardening | Not started | - |
 
 ---
@@ -65,10 +65,10 @@ Progress: [████████░░░░░░░░] Phases 1-5 complete
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 5 / 7 (Phase 1 at checkpoint) |
-| Plans complete | 14 / 14 planned so far |
-| Requirements covered | 18 / 23 |
-| Requirements validated | 18 / 23 |
+| Phases complete | 6 / 7 (Phase 1 at checkpoint) |
+| Plans complete | 16 / 16 planned so far |
+| Requirements covered | 22 / 23 |
+| Requirements validated | 22 / 23 |
 
 ### Execution History
 
@@ -86,6 +86,8 @@ Progress: [████████░░░░░░░░] Phases 1-5 complete
 | Phase 04 P02 | ~10 min | 2 tasks | 3 files |
 | Phase 05 P01 | ~20 min | 3 tasks | 8 files |
 | Phase 05 P02 | ~20 min | 3 tasks | 6 files |
+| Phase 06 P01 | ~15 min | 2 tasks | 2 files |
+| Phase 06 P02 | ~10 min | 2 tasks | 6 files |
 
 ### Accumulated Context
 
@@ -118,6 +120,10 @@ Progress: [████████░░░░░░░░] Phases 1-5 complete
 | PR session slug format: `pr-{number}-{branch}` | e.g. `2026-04-06-pr-123-fix-auth`; sanitizeSlug handles slashes automatically | 05-02 |
 | getPrDiff uses two sequential GitHub API calls | First GET /pulls/{n} (JSON) for branch name, then same URL with diff Accept header for raw diff | 05-02 |
 | detectRepoSlug parses both HTTPS and SSH remotes | Regex handles both formats; throws clear error for non-GitHub remotes | 05-02 |
+| Fix command outputs structured context, never edits directly | Host AI agent reads output and asks user for confirmation — never auto-applies | 06-01 |
+| parseReportFindings splits on severity section headers | Regex split on `## Critical/High/Medium/Low/Info`; finds blocks by `---` separator | 06-01 |
+| checkStaleness compares file mtime to REPORT.md mtime | isStale=true when target file mtime > reportMtime; isStale=false if file missing | 06-01 |
+| formatFindingList truncates long explanations at 80 chars | Keeps interactive list readable without truncating the actual fix context | 06-01 |
 
 ### Open Questions
 
@@ -132,7 +138,7 @@ Progress: [████████░░░░░░░░] Phases 1-5 complete
 
 ### Todos
 
-None — Phase 5 complete. Next: `/gsd-discuss-phase 6` or `/gsd-plan-phase 6`.
+None — Phase 6 complete. Next: `/gsd-discuss-phase 7` or `/gsd-plan-phase 7`.
 
 ---
 
@@ -140,28 +146,30 @@ None — Phase 5 complete. Next: `/gsd-discuss-phase 6` or `/gsd-plan-phase 6`.
 
 ### Context for Next Session
 
-Phase 5 complete. Phases 1 (at checkpoint) and 2–5 fully done. Full pipeline now operational: `review-local` and `review-pr` both wired end-to-end. 99 tests pass.
+Phase 6 complete. Phases 1 (at checkpoint) and 2–6 fully done. Full pipeline + fix command operational. 134 tests pass.
 
-Key Phase 5 artifacts:
-- `src/index.ts`: review-local with nanoid suffix slug; review-pr fully wired; verifyFileExists at both handoffs
-- `src/pipeline-io.ts`: getPrDiff, detectRepoSlug, PrDiffResult, verifyFileExists, extended WriteInputOptions
-- `src/pipeline-io.test.ts`: 11 new tests (verifyFileExists ×3, getPrDiff ×6, detectRepoSlug ×2)
-- Command files (.opencode/commands/, .cursor/commands/): all 4 synced to CLI invocations
-- Templates (src/templates/): all 4 updated to match installed commands
+Key Phase 6 artifacts:
+- `src/fixer.ts`: parseReportFindings, findFindingById, listSessionDirs, findLatestReportPath, checkStaleness, buildFixContext, formatFixOutput, formatFindingList
+- `src/fixer.test.ts`: 35 new tests across 8 describe blocks
+- `src/index.ts`: fix command fully wired (by-ID and interactive modes)
+- `src/installer.ts`: fix templates added to INSTALLS array
+- `src/templates/opencode-fix.md`: `!node dist/index.js fix $ARGUMENTS`
+- `src/templates/cursor-fix.md`: prose with confirmation enforcement
+- `.opencode/commands/fix.md` + `.cursor/commands/fix.md`: installed
 
-Phase 6 goal: Fix command — `/fix <finding-id>` and `/fix` (interactive), with confirmation prompt and stale-file detection.
+Phase 7 goal: Cross-editor hardening — validate end-to-end in OpenCode + Cursor, write AGENTS.md, harden edge cases.
 
-Phase 6 requirements: FIX-01, FIX-02, FIX-03, FIX-04
+Phase 7 requirements: PIPE-01, PIPE-02, DIFF-01, QUAL-01
 
 ### How to Resume
 
 ```
 1. Read .planning/STATE.md (this file)
 2. Read .planning/phases/05-review-orchestration/05-CONTEXT.md for Phase 5 decisions
-3. Discuss or plan Phase 6: /gsd-discuss-phase 6 or /gsd-plan-phase 6
+3. Discuss or plan Phase 7: /gsd-discuss-phase 7 or /gsd-plan-phase 7
 ```
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 5 complete (review orchestration — review-local + review-pr wired, 99 tests passing)*
+*Last updated: 2026-04-06 after Phase 6 complete (fix command — fixer.ts, by-ID + interactive modes, staleness detection, 134 tests passing)*
