@@ -150,7 +150,7 @@ Plans:
 | 5. Review Orchestration | 2/2 | Complete   | 2026-04-06 |
 | 6. Fix Command | 2/2 | Complete   | 2026-04-06 |
 | 7. Cross-Editor Hardening | 2/2 | Complete   | 2026-04-06 |
-| 8. Per-agent model selection | 0/2 | Planned    |  |
+| 8. Per-agent model selection | 1/2 | In Progress|  |
 
 ---
 
@@ -189,10 +189,10 @@ Plans:
 **Goal:** Replace the single global `resolveModel()` (env vars only) with per-agent model selection driven by `~/.config/rms/config.json`, with env var fallback for backward compatibility and an `/rms-settings` editor command for configuration.
 **Requirements**: TBD
 **Depends on:** Phase 7
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 08-01-PLAN.md — Config layer: RmsConfigSchema in schemas.ts, src/config.ts (loadRmsConfig, saveRmsConfig, resolveAgentModel) with TDD
+- [x] 08-01-PLAN.md — Config layer: RmsConfigSchema in schemas.ts, src/config.ts (loadRmsConfig, saveRmsConfig, resolveAgentModel) with TDD
 - [ ] 08-02-PLAN.md — Integration: wire per-agent models into index.ts, add rms settings CLI sub-command, add editor templates, update AGENTS.md
 
 ---

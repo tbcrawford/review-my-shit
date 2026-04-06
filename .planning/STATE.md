@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: complete
-last_updated: "2026-04-06T23:00:00.000Z"
+status: executing
+last_updated: "2026-04-06T18:43:02.331Z"
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 18
-  completed_plans: 18
+  total_phases: 8
+  completed_phases: 3
+  total_plans: 14
+  completed_plans: 9
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** ALL PHASES COMPLETE — v1.0 ready
+**Status:** Executing Phase 8 — Plan 2 of 2
 
 ---
 
@@ -32,7 +32,8 @@ progress:
 
 ## Current Position
 
-Phase: 07 (Cross-Editor Hardening) — COMPLETE
+Phase: 8 (per-agent-model-selection-via-json-config-with-rms-settings-command) — EXECUTING
+Plan: 2 of 2
 All 7 phases done. v1.0 milestone complete.
 
 | Field | Value |
@@ -65,8 +66,8 @@ Progress: [████████████████] All 7 phases comple
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 7 / 7 |
-| Plans complete | 18 / 18 |
+| Phases complete | 7 / 8 (phase 8 in progress) |
+| Plans complete | 9 / 14 |
 | Requirements covered | 23 / 23 |
 | Requirements validated | 23 / 23 |
 
@@ -88,8 +89,13 @@ Progress: [████████████████] All 7 phases comple
 | Phase 05 P02 | ~20 min | 3 tasks | 6 files |
 | Phase 06 P01 | ~15 min | 2 tasks | 2 files |
 | Phase 06 P02 | ~10 min | 2 tasks | 6 files |
+| Phase 08 P01 | ~8 min | 2 tasks | 3 files |
 
 ### Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 8 added: Per-agent model selection via JSON config with /rms-settings command
 
 ### Key Decisions Made
 
@@ -129,6 +135,7 @@ Progress: [████████████████] All 7 phases comple
 | Session data survives `/new` in OpenCode | CLI owns all filesystem state; `.reviews/` files are safe across session reloads — documented in AGENTS.md | 07-01 |
 | Cursor command templates hardened | Build hint, severity-grouped presentation, session ID guidance, GITHUB_TOKEN error guidance added to cursor templates | 07-02 |
 | `cp -r src/templates dist/` (not `dist/templates`) | macOS `cp -r` creates `dist/templates/templates/` double-nesting when destination dir exists; fixed in package.json build script | 07-02 |
+| Optional path arg in loadRmsConfig/saveRmsConfig | Enables testing without patching homedir — cleaner than mutable override variable | 08-01 |
 
 ### Open Questions
 
@@ -150,22 +157,19 @@ None — all 7 phases complete. v1.0 milestone done.
 
 ### Context for Next Session
 
-All 7 phases complete. v1.0 milestone done. 139 tests pass.
+Phase 8 in progress. Plan 08-01 complete. 149 tests pass.
 
-Key Phase 7 artifacts:
-- `AGENTS.md`: pipeline overview, isolation model, commands, env vars, editor-specific behaviors
-- `src/reviewer.ts`: diff wrapped in `<diff>` tags + anti-injection instruction
-- `src/validator.ts`: input-md + reviewer-md wrapped in XML tags + anti-injection instruction
-- `src/reviewer.test.ts`: 2 new tests (XML wrapping, anti-injection)
-- `src/validator.test.ts`: 3 new tests (XML wrapping x2, anti-injection)
-- `src/templates/cursor-review-local.md` + `cursor-review-pr.md`: hardened with build hint, error guidance
-- `package.json`: fixed macOS `cp -r` double-nesting bug in build script
+Key Phase 8 Plan 01 artifacts:
+
+- `src/schemas.ts`: extended with `AgentModelSpecSchema` and `RmsConfigSchema`
+- `src/config.ts`: new module with `getConfigPath`, `loadRmsConfig`, `saveRmsConfig`, `resolveAgentModel`
+- `src/config.test.ts`: 10 new tests (all passing)
 
 ### How to Resume
 
-No action required — v1.0 is complete.
+Execute 08-02-PLAN.md (rms settings command — CLI wiring for config).
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 7 complete (cross-editor hardening — prompt injection hardening, AGENTS.md, Cursor template improvements, 139 tests passing — v1.0 DONE)*
+*Last updated: 2026-04-06 after Phase 8 Plan 01 complete (config layer — RmsConfigSchema, loadRmsConfig, saveRmsConfig, resolveAgentModel — 149 tests passing)*
