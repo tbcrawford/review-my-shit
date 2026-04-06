@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-04-06T18:43:02.331Z"
+status: verifying
+last_updated: "2026-04-06T18:48:28.472Z"
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** Executing Phase 8 — Plan 2 of 2
+**Status:** Phase complete — ready for verification
 
 ---
 
@@ -32,18 +32,18 @@ progress:
 
 ## Current Position
 
-Phase: 8 (per-agent-model-selection-via-json-config-with-rms-settings-command) — EXECUTING
-Plan: 2 of 2
-All 7 phases done. v1.0 milestone complete.
+Phase: 8 (per-agent-model-selection-via-json-config-with-rms-settings-command) — COMPLETE
+Plan: 2 of 2 — ALL PLANS DONE
+All 8 phases done. v1.0 milestone complete + per-agent model selection shipped.
 
 | Field | Value |
 |-------|-------|
-| Current phase | Phase 7: Cross-Editor Hardening — COMPLETE |
-| Status | All 4 success criteria met; 139 tests passing |
+| Current phase | Phase 8: Per-Agent Model Selection — COMPLETE |
+| Status | All success criteria met; 149 tests passing |
 | Blocking issues | None |
 
 ```
-Progress: [████████████████] All 7 phases complete — v1.0 DONE
+Progress: [███████░░░] 71% (10/14 plans — gsd-tools sees 14 total, 10 summaries)
 ```
 
 ---
@@ -59,6 +59,7 @@ Progress: [████████████████] All 7 phases comple
 | 5 | Review Orchestration | Complete | 2026-04-06 |
 | 6 | Fix Command | Complete | 2026-04-06 |
 | 7 | Cross-Editor Hardening | Complete | 2026-04-06 |
+| 8 | Per-Agent Model Selection | Complete | 2026-04-06 |
 
 ---
 
@@ -66,8 +67,8 @@ Progress: [████████████████] All 7 phases comple
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 7 / 8 (phase 8 in progress) |
-| Plans complete | 9 / 14 |
+| Phases complete | 8 / 8 (all phases complete) |
+| Plans complete | 10 / 14 |
 | Requirements covered | 23 / 23 |
 | Requirements validated | 23 / 23 |
 
@@ -90,6 +91,7 @@ Progress: [████████████████] All 7 phases comple
 | Phase 06 P01 | ~15 min | 2 tasks | 2 files |
 | Phase 06 P02 | ~10 min | 2 tasks | 6 files |
 | Phase 08 P01 | ~8 min | 2 tasks | 3 files |
+| Phase 08 P02 | ~5 min | 2 tasks | 5 files |
 
 ### Accumulated Context
 
@@ -136,6 +138,8 @@ Progress: [████████████████] All 7 phases comple
 | Cursor command templates hardened | Build hint, severity-grouped presentation, session ID guidance, GITHUB_TOKEN error guidance added to cursor templates | 07-02 |
 | `cp -r src/templates dist/` (not `dist/templates`) | macOS `cp -r` creates `dist/templates/templates/` double-nesting when destination dir exists; fixed in package.json build script | 07-02 |
 | Optional path arg in loadRmsConfig/saveRmsConfig | Enables testing without patching homedir — cleaner than mutable override variable | 08-01 |
+| resolveModels() returns three typed model instances | reviewer/validator/writer each get separate model; writerModelId is plain string | 08-02 |
+| parseSpec helper is inline inside settings action | No top-level function needed; closure access to AgentModelSpec type | 08-02 |
 
 ### Open Questions
 
@@ -157,19 +161,24 @@ None — all 7 phases complete. v1.0 milestone done.
 
 ### Context for Next Session
 
-Phase 8 in progress. Plan 08-01 complete. 149 tests pass.
+Phase 8 complete. All 8 phases done. 149 tests pass. Per-agent model selection fully shipped.
 
-Key Phase 8 Plan 01 artifacts:
+Key Phase 8 artifacts:
 
 - `src/schemas.ts`: extended with `AgentModelSpecSchema` and `RmsConfigSchema`
 - `src/config.ts`: new module with `getConfigPath`, `loadRmsConfig`, `saveRmsConfig`, `resolveAgentModel`
 - `src/config.test.ts`: 10 new tests (all passing)
+- `src/index.ts`: `resolveModels()` replaces `resolveModel()`; `settings` sub-command added
+- `src/installer.ts`: 8 entries (was 6); adds opencode-settings.md + cursor-settings.md
+- `src/templates/opencode-settings.md`: OpenCode /rms-settings command template
+- `src/templates/cursor-settings.md`: Cursor /rms-settings command template
+- `AGENTS.md`: Per-Agent Model Configuration section + updated env vars table
 
 ### How to Resume
 
-Execute 08-02-PLAN.md (rms settings command — CLI wiring for config).
+No resumption needed — all phases complete.
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 8 Plan 01 complete (config layer — RmsConfigSchema, loadRmsConfig, saveRmsConfig, resolveAgentModel — 149 tests passing)*
+*Last updated: 2026-04-06 after Phase 8 Plan 02 complete (rms settings command — resolveModels(), settings sub-command, 2 new templates — 149 tests passing)*
