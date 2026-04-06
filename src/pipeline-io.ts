@@ -3,13 +3,16 @@
  *
  * Provides the file-level I/O layer for the rms pipeline:
  *   1. getLocalDiff — reads both staged and unstaged git diff, runs preprocessor
- *   2. writeInputFile — writes INPUT.md with XML-tagged blocks
- *   3. parseReviewerOutput — parses REVIEWER.md <finding> blocks into Finding objects
- *   4. parseValidatorOutput — parses VALIDATOR.md <verdict> blocks into ValidationVerdict objects
+ *   2. getPrDiff — fetches PR diff from GitHub REST API, runs preprocessor
+ *   3. detectRepoSlug — auto-detects owner/repo from git remote origin
+ *   4. writeInputFile — writes INPUT.md with XML-tagged blocks
+ *   5. parseReviewerOutput — parses REVIEWER.md <finding> blocks into Finding objects
+ *   6. parseValidatorOutput — parses VALIDATOR.md <verdict> blocks into ValidationVerdict objects
+ *   7. verifyFileExists — asserts a file exists; throws descriptive error at pipeline handoffs
  */
 
 import { simpleGit } from 'simple-git';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, writeFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { preprocessDiff, type DiffStats } from './diff-preprocessor.js';
 import { FindingSchema, ValidationVerdictSchema, DIMENSIONS, type Dimension, type Finding, type ValidationVerdict } from './schemas.js';
@@ -61,6 +64,12 @@ export interface WriteInputOptions {
   focus?: string;
   /** Preprocessed diff content — written verbatim, no escaping */
   diff: string;
+  /** Optional PR metadata (pr-diff scope only) */
+  prNumber?: number;
+  /** Optional "owner/repo" slug (pr-diff scope only) */
+  repoSlug?: string;
+  /** Optional head branch name (pr-diff scope only) */
+  branch?: string;
 }
 
 /**
@@ -68,20 +77,30 @@ export interface WriteInputOptions {
  * Returns the path to the written file.
  */
 export async function writeInputFile(opts: WriteInputOptions): Promise<string> {
-  const { sessionDir, reviewId, timestamp, scope, focus, diff } = opts;
+  const { sessionDir, reviewId, timestamp, scope, focus, diff, prNumber, repoSlug, branch } = opts;
 
   // Build frontmatter — include focus line only if defined and non-empty
   const focusFrontmatter = focus && focus.trim() ? `focus: ${focus}\n` : '';
+  const prFrontmatter =
+    prNumber !== undefined
+      ? `prNumber: ${prNumber}\nrepoSlug: ${repoSlug ?? ''}\nbranch: ${branch ?? ''}\n`
+      : '';
+
+  // Build optional PR XML metadata block
+  const prXml =
+    prNumber !== undefined
+      ? `<pr-number>${prNumber}</pr-number>\n<repo>${repoSlug ?? ''}</repo>\n<branch>${branch ?? ''}</branch>\n`
+      : '';
 
   const content = `---
 reviewId: ${reviewId}
 timestamp: ${timestamp}
 scope: ${scope}
-${focusFrontmatter}---
+${focusFrontmatter}${prFrontmatter}---
 
 <scope>${scope}</scope>
 <focus>${focus && focus.trim() ? focus : 'none'}</focus>
-<diff>
+${prXml}<diff>
 ${diff}
 </diff>
 `;
@@ -90,6 +109,164 @@ ${diff}
   await writeFile(outputPath, content, 'utf8');
   return outputPath;
 }
+
+// ---------------------------------------------------------------------------
+// getPrDiff
+// ---------------------------------------------------------------------------
+
+export interface PrDiffResult {
+  /** Preprocessed diff text (lock files and binaries stripped) */
+  diff: string;
+  /** Preprocessing stats */
+  stats: DiffStats;
+  /** PR number */
+  prNumber: number;
+  /** Head branch name (e.g. "fix-auth") — used in session slug */
+  branch: string;
+  /** "owner/repo" — for INPUT.md metadata */
+  repoSlug: string;
+}
+
+/**
+ * Fetches a GitHub PR diff via the REST API and preprocesses it.
+ *
+ * Requires a valid GitHub personal access token with repo read access.
+ * Uses Node.js built-in fetch (Node ≥18 required).
+ *
+ * Error handling:
+ *   - 401/403 → auth failure message
+ *   - 404 → PR not found message
+ *   - Empty diff → explicit error (no silent empty reviews)
+ *   - Network errors → propagated with context
+ */
+export async function getPrDiff(
+  prNumber: number,
+  token: string,
+  repoSlug: string,
+): Promise<PrDiffResult> {
+  const baseUrl = `https://api.github.com/repos/${repoSlug}/pulls/${prNumber}`;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'User-Agent': 'review-my-shit/rms',
+  };
+
+  // Step 1: Fetch PR metadata to get head branch name
+  let branch: string;
+  try {
+    const metaRes = await fetch(baseUrl, {
+      headers: { ...headers, Accept: 'application/vnd.github+json' },
+    });
+
+    if (metaRes.status === 401 || metaRes.status === 403) {
+      throw new Error(
+        `GitHub authentication failed. Set GITHUB_TOKEN with repo read access. (HTTP ${metaRes.status})`,
+      );
+    }
+    if (metaRes.status === 404) {
+      throw new Error(
+        `PR #${prNumber} not found in ${repoSlug}. Check the PR number and GITHUB_TOKEN.`,
+      );
+    }
+    if (!metaRes.ok) {
+      throw new Error(`GitHub API error fetching PR #${prNumber}: HTTP ${metaRes.status}`);
+    }
+
+    const meta = (await metaRes.json()) as { head?: { ref?: string } };
+    branch = meta?.head?.ref ?? `pr-${prNumber}`;
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith('GitHub')) throw err;
+    throw new Error(
+      `Network error fetching PR #${prNumber} metadata from ${repoSlug}: ${String(err)}`,
+    );
+  }
+
+  // Step 2: Fetch raw diff
+  let rawDiff: string;
+  try {
+    const diffRes = await fetch(baseUrl, {
+      headers: { ...headers, Accept: 'application/vnd.github.v3.diff' },
+    });
+
+    if (diffRes.status === 401 || diffRes.status === 403) {
+      throw new Error(
+        `GitHub authentication failed. Set GITHUB_TOKEN with repo read access. (HTTP ${diffRes.status})`,
+      );
+    }
+    if (diffRes.status === 404) {
+      throw new Error(
+        `PR #${prNumber} not found in ${repoSlug}. Check the PR number and GITHUB_TOKEN.`,
+      );
+    }
+    if (!diffRes.ok) {
+      throw new Error(`GitHub API error fetching PR #${prNumber} diff: HTTP ${diffRes.status}`);
+    }
+
+    rawDiff = await diffRes.text();
+  } catch (err) {
+    if (err instanceof Error && err.message.startsWith('GitHub')) throw err;
+    throw new Error(
+      `Network error fetching PR #${prNumber} diff from ${repoSlug}: ${String(err)}`,
+    );
+  }
+
+  if (!rawDiff.trim()) {
+    throw new Error(
+      `PR #${prNumber} diff is empty. It may have no file changes or may already be merged.`,
+    );
+  }
+
+  const { diff, stats } = preprocessDiff(rawDiff);
+
+  return { diff, stats, prNumber, branch, repoSlug };
+}
+
+// ---------------------------------------------------------------------------
+// detectRepoSlug
+// ---------------------------------------------------------------------------
+
+/**
+ * Auto-detects the GitHub "owner/repo" slug from the git remote origin URL.
+ *
+ * Supports both HTTPS and SSH remote formats:
+ *   https://github.com/owner/repo.git → owner/repo
+ *   git@github.com:owner/repo.git     → owner/repo
+ *
+ * Throws a clear error if origin is absent or not a GitHub remote.
+ */
+export async function detectRepoSlug(projectRoot: string): Promise<string> {
+  const git = simpleGit({ baseDir: projectRoot });
+
+  let remoteUrl: string;
+  try {
+    const result = await git.remote(['get-url', 'origin']);
+    remoteUrl = (result ?? '').trim();
+  } catch {
+    throw new Error(
+      'Could not read git remote origin URL. Make sure you are inside a git repository with a remote named "origin".',
+    );
+  }
+
+  if (!remoteUrl) {
+    throw new Error(
+      'No git remote "origin" configured. Add a GitHub remote with: git remote add origin https://github.com/owner/repo.git',
+    );
+  }
+
+  // HTTPS: https://github.com/owner/repo.git or https://github.com/owner/repo
+  const httpsMatch = remoteUrl.match(/https?:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?$/);
+  if (httpsMatch) return httpsMatch[1] as string;
+
+  // SSH: git@github.com:owner/repo.git or git@github.com:owner/repo
+  const sshMatch = remoteUrl.match(/git@github\.com:([^/]+\/[^/]+?)(?:\.git)?$/);
+  if (sshMatch) return sshMatch[1] as string;
+
+  throw new Error(
+    `Remote origin "${remoteUrl}" is not a GitHub URL. PR reviews require a GitHub remote. ` +
+      `Supported formats: https://github.com/owner/repo.git or git@github.com:owner/repo.git`,
+  );
+}
+
+
 
 // ---------------------------------------------------------------------------
 // parseReviewerOutput
@@ -382,4 +559,25 @@ export function parseCounterFindings(rawContent: string): Array<Omit<Finding, 'i
   }
 
   return counterFindings;
+}
+
+// ---------------------------------------------------------------------------
+// verifyFileExists
+// ---------------------------------------------------------------------------
+
+/**
+ * Asserts that a file exists at the given path.
+ * Throws a descriptive error if it does not — used for pipeline handoff checks.
+ *
+ * @param filePath - Absolute path to the file to check
+ * @param label - Human-readable label for the file (e.g., 'REVIEWER.md')
+ */
+export async function verifyFileExists(filePath: string, label: string): Promise<void> {
+  try {
+    await stat(filePath);
+  } catch {
+    throw new Error(
+      `[rms] Pipeline error: ${label} not found at ${filePath}. Previous step may have failed.`,
+    );
+  }
 }

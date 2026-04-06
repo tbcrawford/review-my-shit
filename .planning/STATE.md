@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-04-06T02:00:00.000Z"
+last_updated: "2026-04-06T21:00:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 5
+  total_plans: 14
+  completed_plans: 14
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** Phase 3 complete — ready for Phase 4 (Writer Agent)
+**Status:** Phase 5 complete — ready for Phase 6 (Fix Command)
 
 ---
 
@@ -26,23 +26,23 @@ progress:
 | Requirements file | `.planning/REQUIREMENTS.md` |
 | Roadmap file | `.planning/ROADMAP.md` |
 | Core value | The reviewer catches problems a developer would miss; the validator catches problems the reviewer would miss — and both are fully auditable. |
-| Current focus | Phase 4: Writer Agent — synthesize REVIEWER.md + VALIDATOR.md into REPORT.md |
+| Current focus | Phase 6: Fix Command — /fix by ID and interactive selection |
 
 ---
 
 ## Current Position
 
-Phase: 03 (Validator Agent) — COMPLETE
-Next: Phase 04 (Writer Agent)
+Phase: 05 (Review Orchestration) — COMPLETE
+Next: Phase 06 (Fix Command)
 
 | Field | Value |
 |-------|-------|
-| Current phase | Phase 3: Validator Agent — COMPLETE |
-| Status | Verified 4/4 success criteria |
+| Current phase | Phase 5: Review Orchestration — COMPLETE |
+| Status | Verified 5/5 success criteria; 99 tests passing |
 | Blocking issues | None |
 
 ```
-Progress: [████░░░░░░░░░░░░] Phases 1-3 complete (2 fully, 1 at checkpoint), Phase 4 next
+Progress: [████████░░░░░░░░] Phases 1-5 complete (4 fully, 1 at checkpoint), Phase 6 next
 ```
 
 ---
@@ -54,8 +54,8 @@ Progress: [████░░░░░░░░░░░░] Phases 1-3 complete
 | 1 | Foundation | In Progress (checkpoint pending) | - |
 | 2 | Reviewer Agent | Complete | 2026-04-06 |
 | 3 | Validator Agent | Complete | 2026-04-06 |
-| 4 | Writer Agent | Not started | - |
-| 5 | Review Orchestration | Not started | - |
+| 4 | Writer Agent | Complete | 2026-04-06 |
+| 5 | Review Orchestration | Complete | 2026-04-06 |
 | 6 | Fix Command | Not started | - |
 | 7 | Cross-Editor Hardening | Not started | - |
 
@@ -65,10 +65,10 @@ Progress: [████░░░░░░░░░░░░] Phases 1-3 complete
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 2 / 7 (Phase 1 at checkpoint) |
-| Plans complete | 8 / 8 planned so far |
-| Requirements covered | 10 / 23 |
-| Requirements validated | 10 / 23 |
+| Phases complete | 5 / 7 (Phase 1 at checkpoint) |
+| Plans complete | 14 / 14 planned so far |
+| Requirements covered | 18 / 23 |
+| Requirements validated | 18 / 23 |
 
 ### Execution History
 
@@ -82,8 +82,12 @@ Progress: [████░░░░░░░░░░░░] Phases 1-3 complete
 | Phase 02 P02 | 3 min | 2 tasks | 4 files |
 | Phase 03 P01 | 20 min | 2 tasks | 4 files |
 | Phase 03 P02 | 10 min | 2 tasks | 2 files |
+| Phase 04 P01 | ~15 min | 2 tasks | 4 files |
+| Phase 04 P02 | ~10 min | 2 tasks | 3 files |
+| Phase 05 P01 | ~20 min | 3 tasks | 8 files |
+| Phase 05 P02 | ~20 min | 3 tasks | 6 files |
 
-## Accumulated Context
+### Accumulated Context
 
 ### Key Decisions Made
 
@@ -109,6 +113,11 @@ Progress: [████░░░░░░░░░░░░] Phases 1-3 complete
 | Counter-finding blocks stripped from verdict parser | parseVerdictBlock strips <counter-finding> before key:value parsing; rawContent always preserves them | 03-01 |
 | findingid remapped to findingId post-parse | Lowercase key parser produces 'findingid'; remapped before ValidationVerdictSchema.safeParse() | 03-01 |
 | Every finding gets a verdict (D-07) | If uncertain, default to confirmed with uncertainty noted in rationale | 03-01 |
+| Local session slug uses nanoid(4) suffix | Prevents same-day collision: `2026-04-06-local-a3b7` vs old hardcoded `local` | 05-01 |
+| verifyFileExists at each pipeline handoff | Throws `[rms] Pipeline error: {label} not found at {path}`; prevents silent partial runs | 05-01 |
+| PR session slug format: `pr-{number}-{branch}` | e.g. `2026-04-06-pr-123-fix-auth`; sanitizeSlug handles slashes automatically | 05-02 |
+| getPrDiff uses two sequential GitHub API calls | First GET /pulls/{n} (JSON) for branch name, then same URL with diff Accept header for raw diff | 05-02 |
+| detectRepoSlug parses both HTTPS and SSH remotes | Regex handles both formats; throws clear error for non-GitHub remotes | 05-02 |
 
 ### Open Questions
 
@@ -117,13 +126,13 @@ Progress: [████░░░░░░░░░░░░] Phases 1-3 complete
 
 ### Pitfalls to Watch
 
-1. **Writer finding loss (Pitfall 9):** Writer must not silently drop findings. Verify completeness in Phase 4.
-2. **Counter-finding attribution:** Phase 4 Writer must attribute counter-findings to validator, not reviewer.
-3. **Prompt injection via code under review (confirmed CVE):** Delimiter wrapping required. Address in Phase 2 (deferred to Phase 5 if not done).
+1. **Writer finding loss (Pitfall 9):** Writer must not silently drop findings. Verified in Phase 4 — completeness check passes.
+2. **Counter-finding attribution:** Phase 4 Writer attributes counter-findings to validator, not reviewer. Verified in Phase 4.
+3. **Prompt injection via code under review (confirmed CVE):** Delimiter wrapping required. Address in Phase 7 if not done in Phase 6.
 
 ### Todos
 
-None — Phase 3 complete. Next: `/gsd-discuss-phase 4` or `/gsd-plan-phase 4`.
+None — Phase 5 complete. Next: `/gsd-discuss-phase 6` or `/gsd-plan-phase 6`.
 
 ---
 
@@ -131,27 +140,28 @@ None — Phase 3 complete. Next: `/gsd-discuss-phase 4` or `/gsd-plan-phase 4`.
 
 ### Context for Next Session
 
-Phase 3 complete. Phases 1 (at checkpoint) and 2-3 fully done. Pipeline now: reviewer → validator → (writer TBD).
+Phase 5 complete. Phases 1 (at checkpoint) and 2–5 fully done. Full pipeline now operational: `review-local` and `review-pr` both wired end-to-end. 99 tests pass.
 
-Key Phase 3 artifacts:
-- `src/validator.ts`: VALIDATOR_PROMPT (adversarial, language-agnostic), buildValidatorPrompt, runValidator
-- `src/pipeline-io.ts`: parseValidatorOutput added (mirrors parseReviewerOutput for <verdict> blocks)
-- `src/index.ts`: runValidator wired as Step 5; output shows challenged/escalated counts
-- 9 validator tests + 12 pipeline-io tests all pass; TypeScript clean
+Key Phase 5 artifacts:
+- `src/index.ts`: review-local with nanoid suffix slug; review-pr fully wired; verifyFileExists at both handoffs
+- `src/pipeline-io.ts`: getPrDiff, detectRepoSlug, PrDiffResult, verifyFileExists, extended WriteInputOptions
+- `src/pipeline-io.test.ts`: 11 new tests (verifyFileExists ×3, getPrDiff ×6, detectRepoSlug ×2)
+- Command files (.opencode/commands/, .cursor/commands/): all 4 synced to CLI invocations
+- Templates (src/templates/): all 4 updated to match installed commands
 
-Phase 4 goal: Writer agent synthesizes REVIEWER.md + VALIDATOR.md → REPORT.md (severity-grouped, full audit trail).
+Phase 6 goal: Fix command — `/fix <finding-id>` and `/fix` (interactive), with confirmation prompt and stale-file detection.
 
-Phase 4 requirements: PIPE-05, REPT-01, REPT-02, REPT-03, REPT-04, REPT-05
+Phase 6 requirements: FIX-01, FIX-02, FIX-03, FIX-04
 
 ### How to Resume
 
 ```
 1. Read .planning/STATE.md (this file)
-2. Read .planning/phases/03-validator-agent/03-02-SUMMARY.md for Phase 3 context
-3. Discuss or plan Phase 4: /gsd-discuss-phase 4 or /gsd-plan-phase 4
+2. Read .planning/phases/05-review-orchestration/05-CONTEXT.md for Phase 5 decisions
+3. Discuss or plan Phase 6: /gsd-discuss-phase 6 or /gsd-plan-phase 6
 ```
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 3 complete (validator agent — empirical independence verified)*
+*Last updated: 2026-04-06 after Phase 5 complete (review orchestration — review-local + review-pr wired, 99 tests passing)*

@@ -2,8 +2,15 @@
 import { Command } from 'commander';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
+import { nanoid } from 'nanoid';
 import { install } from './installer.js';
-import { getLocalDiff, writeInputFile } from './pipeline-io.js';
+import {
+  getLocalDiff,
+  getPrDiff,
+  detectRepoSlug,
+  writeInputFile,
+  verifyFileExists,
+} from './pipeline-io.js';
 import { createSession } from './session.js';
 import { runReviewer } from './reviewer.js';
 import { runValidator } from './validator.js';
@@ -79,8 +86,8 @@ program
       );
     }
 
-    // Step 2: Create session
-    const session = await createSession(projectRoot, 'local');
+    // Step 2: Create session (nanoid suffix prevents same-day collision)
+    const session = await createSession(projectRoot, `local-${nanoid(4)}`);
     console.log(`Review session: ${session.reviewId}`);
     console.log(`Output: .reviews/${session.reviewId}/`);
 
@@ -112,6 +119,7 @@ program
 
     // Step 5: Run validator
     const inputMdPath = join(session.sessionDir, 'INPUT.md');
+    await verifyFileExists(result.reviewerMdPath, 'REVIEWER.md');
     console.log('Running validator...');
     const validatorResult = await runValidator({
       session,
@@ -123,6 +131,7 @@ program
     // Step 6: Run writer (deterministic — no LLM call)
     const modelId = process.env['AI_SDK_MODEL'] ?? 'gpt-4o';
     const inputMdContent = await readFile(inputMdPath, 'utf8');
+    await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
     console.log('Running writer...');
     const writerResult = await runWriter({
       session,
@@ -156,9 +165,128 @@ program
   .command('review-pr')
   .description('Run a code review on a GitHub PR diff')
   .argument('<pr-number>', 'GitHub PR number')
-  .option('--focus <area>', 'Focus area')
-  .action((pr: string, opts: { focus?: string }) => {
-    console.log(`review-pr ${pr} — not yet implemented`, opts);
+  .option('--focus <area>', 'Focus area (e.g., security, performance)')
+  .action(async (prArg: string, opts: { focus?: string }) => {
+    const prNumber = parseInt(prArg, 10);
+    if (isNaN(prNumber) || prNumber <= 0) {
+      console.error(`Invalid PR number: "${prArg}". Must be a positive integer.`);
+      process.exit(1);
+    }
+
+    const token = process.env['GITHUB_TOKEN'];
+    if (!token) {
+      console.error(
+        'GITHUB_TOKEN environment variable is not set. Required for PR diff fetching.',
+      );
+      process.exit(1);
+    }
+
+    const projectRoot = process.cwd();
+
+    // Auto-detect owner/repo from git remote origin
+    let repoSlug: string;
+    try {
+      repoSlug = await detectRepoSlug(projectRoot);
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+
+    // Fetch PR diff from GitHub
+    let prDiff: Awaited<ReturnType<typeof getPrDiff>>;
+    try {
+      prDiff = await getPrDiff(prNumber, token, repoSlug);
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : String(err));
+      process.exit(1);
+    }
+
+    const { diff, stats, branch } = prDiff;
+
+    if (!diff.trim()) {
+      console.error(`PR #${prNumber} has no reviewable changes after preprocessing.`);
+      process.exit(1);
+    }
+
+    if (stats.strippedFiles.length > 0) {
+      console.log(
+        `Preprocessing stripped ${stats.strippedFiles.length} file(s): ${stats.strippedFiles.join(', ')}`,
+      );
+    }
+
+    // Session slug: pr-{number}-{branch} — branch sanitized by createSession
+    const session = await createSession(projectRoot, `pr-${prNumber}-${branch}`);
+    console.log(`Review session: ${session.reviewId}`);
+    console.log(`Output: .reviews/${session.reviewId}/`);
+
+    // Write INPUT.md with PR metadata
+    await writeInputFile({
+      sessionDir: session.sessionDir,
+      reviewId: session.reviewId,
+      timestamp: session.timestamp,
+      scope: 'pr-diff',
+      focus: opts.focus,
+      diff,
+      prNumber,
+      repoSlug,
+      branch,
+    });
+
+    // Resolve model
+    const model = await resolveModel();
+    const reviewsDir = join(projectRoot, '.reviews');
+
+    // Run pipeline — identical to review-local from here
+    console.log('Running reviewer...');
+    const result = await runReviewer({
+      session,
+      diff,
+      focus: opts.focus,
+      model,
+      reviewsDir,
+    });
+
+    const inputMdPath = join(session.sessionDir, 'INPUT.md');
+    await verifyFileExists(result.reviewerMdPath, 'REVIEWER.md');
+    console.log('Running validator...');
+    const validatorResult = await runValidator({
+      session,
+      reviewerMdPath: result.reviewerMdPath,
+      inputMdPath,
+      model,
+    });
+
+    const modelId = process.env['AI_SDK_MODEL'] ?? 'gpt-4o';
+    const inputMdContent = await readFile(inputMdPath, 'utf8');
+    await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
+    console.log('Running writer...');
+    const writerResult = await runWriter({
+      session,
+      findings: result.findings,
+      verdicts: validatorResult.verdicts,
+      validatorRawContent: validatorResult.rawContent,
+      inputMdContent,
+      dimensionsCovered: result.dimensionsCovered,
+      modelId,
+      reviewsDir,
+    });
+
+    // Report results
+    const challenged = validatorResult.verdicts.filter(v => v.verdict === 'challenged').length;
+    const escalated = validatorResult.verdicts.filter(v => v.verdict === 'escalated').length;
+    console.log(`\nReview complete:`);
+    console.log(`  PR: #${prNumber} (${repoSlug})`);
+    console.log(`  Findings: ${result.findingCount}`);
+    console.log(`  Verdicts: ${validatorResult.verdictCount} (${challenged} challenged, ${escalated} escalated)`);
+    if (writerResult.counterFindingCount > 0) {
+      console.log(`  Counter-findings surfaced: ${writerResult.counterFindingCount}`);
+    }
+    console.log(`  Total findings in report: ${writerResult.findingCount}`);
+    console.log(`\nAudit trail:`);
+    console.log(`  INPUT.md:     .reviews/${session.reviewId}/INPUT.md`);
+    console.log(`  REVIEWER.md:  .reviews/${session.reviewId}/REVIEWER.md`);
+    console.log(`  VALIDATOR.md: .reviews/${session.reviewId}/VALIDATOR.md`);
+    console.log(`  REPORT.md:    .reviews/${session.reviewId}/REPORT.md`);
   });
 
 program

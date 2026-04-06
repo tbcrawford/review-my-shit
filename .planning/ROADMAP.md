@@ -11,8 +11,8 @@
 - [ ] **Phase 1: Foundation** — Lock schemas, validate slash command invocation, confirm isolation, establish finding ID strategy
 - [x] **Phase 2: Reviewer Agent** — Implement the primary reviewer agent across all 11 dimensions with diff preprocessing (completed 2026-04-06)
 - [x] **Phase 3: Validator Agent** — Implement the adversarial validator and confirm empirical isolation independence (completed 2026-04-06)
-- [ ] **Phase 4: Writer Agent** — Synthesize reviewer + validator outputs into a severity-grouped report with full audit trail
-- [ ] **Phase 5: Review Orchestration** — Wire the `/review` entry command: scope selection, session creation, pipeline sequencing
+- [x] **Phase 4: Writer Agent** — Synthesize reviewer + validator outputs into a severity-grouped report with full audit trail (completed 2026-04-06)
+- [x] **Phase 5: Review Orchestration** — Wire the `/review` entry command: scope selection, session creation, pipeline sequencing (completed 2026-04-06)
 - [ ] **Phase 6: Fix Command** — Implement `/fix` with by-ID and interactive selection modes
 - [ ] **Phase 7: Cross-Editor Hardening** — Validate end-to-end in both OpenCode and Cursor; harden edge cases
 
@@ -80,7 +80,9 @@ Plans:
   3. Report metadata header includes: scope (local/PR), focus area, model, timestamp, dimensions covered
   4. `.reviews/<session>/` contains `REVIEWER.md`, `VALIDATOR.md`, and `REPORT.md` — full audit trail intact
   5. No finding present in `REVIEWER.md` is silently dropped from `REPORT.md` (completeness check passes)
-**Plans**: TBD
+- [x] 04-01-PLAN.md — Writer core: parseCounterFindings + runWriter (deterministic assembly)
+- [x] 04-02-PLAN.md — Wire writer into review-local pipeline + all tests passing
+
 **UI hint**: no
 
 ### Phase 5: Review Orchestration
@@ -93,7 +95,12 @@ Plans:
   3. User can append a focus area (e.g., `/review local --focus security`) and see the reviewer emphasis reflected in the report
   4. If the PR fetch fails or the diff is empty, the command exits with a clear error message rather than producing an empty report
   5. Pipeline fails loudly if a previous step's output file is missing — no silent partial runs
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 05-01-PLAN.md — Wire review-local: session slug collision fix, verifyFileExists at handoffs, command template updates
+- [x] 05-02-PLAN.md — Wire review-pr: getPrDiff, detectRepoSlug, PR metadata in INPUT.md
+
 **UI hint**: no
 
 ### Phase 6: Fix Command
@@ -129,8 +136,8 @@ Plans:
 | 1. Foundation | 3/4 | In Progress|  |
 | 2. Reviewer Agent | 2/2 | Complete   | 2026-04-06 |
 | 3. Validator Agent | 2/2 | Complete   | 2026-04-06 |
-| 4. Writer Agent | 0/? | Not started | - |
-| 5. Review Orchestration | 0/? | Not started | - |
+| 4. Writer Agent | 2/2 | Complete   | 2026-04-06 |
+| 5. Review Orchestration | 2/2 | Complete   | 2026-04-06 |
 | 6. Fix Command | 0/? | Not started | - |
 | 7. Cross-Editor Hardening | 0/? | Not started | - |
 
@@ -169,4 +176,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 3 complete (validator agent — empirical independence verified)*
+*Last updated: 2026-04-06 after Phase 5 complete (review orchestration — review-local + review-pr wired, verifyFileExists, getPrDiff, detectRepoSlug, 99 tests passing)*
