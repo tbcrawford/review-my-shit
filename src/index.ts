@@ -1,11 +1,13 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { join } from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { install } from './installer.js';
 import { getLocalDiff, writeInputFile } from './pipeline-io.js';
 import { createSession } from './session.js';
 import { runReviewer } from './reviewer.js';
 import { runValidator } from './validator.js';
+import { runWriter } from './writer.js';
 
 // ---------------------------------------------------------------------------
 // Model resolution (provider-agnostic)
@@ -118,16 +120,36 @@ program
       model,
     });
 
-    // Step 6: Report results
+    // Step 6: Run writer (deterministic — no LLM call)
+    const modelId = process.env['AI_SDK_MODEL'] ?? 'gpt-4o';
+    const inputMdContent = await readFile(inputMdPath, 'utf8');
+    console.log('Running writer...');
+    const writerResult = await runWriter({
+      session,
+      findings: result.findings,
+      verdicts: validatorResult.verdicts,
+      validatorRawContent: validatorResult.rawContent,
+      inputMdContent,
+      dimensionsCovered: result.dimensionsCovered,
+      modelId,
+      reviewsDir,
+    });
+
+    // Step 7: Report results
     const challenged = validatorResult.verdicts.filter(v => v.verdict === 'challenged').length;
     const escalated = validatorResult.verdicts.filter(v => v.verdict === 'escalated').length;
     console.log(`\nReview complete:`);
     console.log(`  Findings: ${result.findingCount}`);
     console.log(`  Verdicts: ${validatorResult.verdictCount} (${challenged} challenged, ${escalated} escalated)`);
+    if (writerResult.counterFindingCount > 0) {
+      console.log(`  Counter-findings surfaced: ${writerResult.counterFindingCount}`);
+    }
+    console.log(`  Total findings in report: ${writerResult.findingCount}`);
     console.log(`\nAudit trail:`);
-    console.log(`  REVIEWER.md: .reviews/${session.reviewId}/REVIEWER.md`);
+    console.log(`  INPUT.md:     .reviews/${session.reviewId}/INPUT.md`);
+    console.log(`  REVIEWER.md:  .reviews/${session.reviewId}/REVIEWER.md`);
     console.log(`  VALIDATOR.md: .reviews/${session.reviewId}/VALIDATOR.md`);
-    console.log(`\n(Writer agent will be added in Phase 4)`);
+    console.log(`  REPORT.md:    .reviews/${session.reviewId}/REPORT.md`);
   });
 
 program

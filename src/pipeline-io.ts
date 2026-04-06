@@ -165,8 +165,10 @@ export async function parseReviewerOutput(reviewerMdPath: string): Promise<Parse
 /**
  * Parses key:value pairs from a <finding> block body.
  * Handles multi-line explanation and suggestion fields.
+ *
+ * @internal — exported for reuse in parseCounterFindings; not public API
  */
-function parseFindingBlock(blockContent: string): Record<string, string> | null {
+export function parseFindingBlock(blockContent: string): Record<string, string> | null {
   const lines = blockContent.split('\n');
   const result: Record<string, string> = {};
 
@@ -330,4 +332,54 @@ function parseVerdictBlock(blockContent: string): Record<string, string> | null 
 
   if (Object.keys(result).length === 0) return null;
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// parseCounterFindings
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts counter-findings from raw VALIDATOR.md content.
+ *
+ * The validator may include `<counter-finding>` blocks inside challenged
+ * `<verdict>` blocks. This function scans the raw content for those nested
+ * blocks, parses them using `parseFindingBlock`, and returns validated
+ * counter-findings (without IDs — IDs are assigned by the orchestrator).
+ *
+ * Counter-findings that fail schema validation are skipped with a warning.
+ */
+export function parseCounterFindings(rawContent: string): Array<Omit<Finding, 'id'>> {
+  const counterFindings: Array<Omit<Finding, 'id'>> = [];
+
+  // Only extract counter-findings from challenged verdict blocks
+  const verdictBlockRegex = /<verdict>([\s\S]*?)<\/verdict>/g;
+  let verdictMatch: RegExpExecArray | null;
+
+  while ((verdictMatch = verdictBlockRegex.exec(rawContent)) !== null) {
+    const verdictContent = verdictMatch[1] ?? '';
+
+    // Only challenged verdicts can have counter-findings
+    if (!verdictContent.includes('challenged')) continue;
+
+    // Extract nested <counter-finding> blocks
+    const counterBlockRegex = /<counter-finding>([\s\S]*?)<\/counter-finding>/g;
+    let counterMatch: RegExpExecArray | null;
+
+    while ((counterMatch = counterBlockRegex.exec(verdictContent)) !== null) {
+      const blockContent = counterMatch[1] ?? '';
+      const parsed = parseFindingBlock(blockContent);
+
+      if (!parsed) continue;
+
+      const validationResult = FindingSchema.omit({ id: true }).safeParse(parsed);
+      if (!validationResult.success) {
+        console.warn(`[rms] Skipping invalid counter-finding: ${validationResult.error.message}`);
+        continue;
+      }
+
+      counterFindings.push(validationResult.data);
+    }
+  }
+
+  return counterFindings;
 }

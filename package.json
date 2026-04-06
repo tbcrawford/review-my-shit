@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc && cp -r src/templates dist/templates",
     "dev": "tsx src/index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx/esm --test src/*.test.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.66",

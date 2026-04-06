@@ -135,6 +135,8 @@ export interface ValidatorResult {
   verdicts: ValidationVerdict[];
   /** Number of verdicts */
   verdictCount: number;
+  /** Raw VALIDATOR.md content — preserved for Phase 4 counter-finding extraction */
+  rawContent: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -193,5 +195,6 @@ ${validatorText}`;
     validatorMdPath,
     verdicts: parsed.verdicts,
     verdictCount: parsed.verdictCount,
+    rawContent: parsed.rawContent,
   };
 }
