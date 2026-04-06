@@ -10,7 +10,7 @@
 
 - [ ] **Phase 1: Foundation** — Lock schemas, validate slash command invocation, confirm isolation, establish finding ID strategy
 - [x] **Phase 2: Reviewer Agent** — Implement the primary reviewer agent across all 11 dimensions with diff preprocessing (completed 2026-04-06)
-- [ ] **Phase 3: Validator Agent** — Implement the adversarial validator and confirm empirical isolation independence
+- [x] **Phase 3: Validator Agent** — Implement the adversarial validator and confirm empirical isolation independence (completed 2026-04-06)
 - [ ] **Phase 4: Writer Agent** — Synthesize reviewer + validator outputs into a severity-grouped report with full audit trail
 - [ ] **Phase 5: Review Orchestration** — Wire the `/review` entry command: scope selection, session creation, pipeline sequencing
 - [ ] **Phase 6: Fix Command** — Implement `/fix` with by-ID and interactive selection modes
@@ -65,8 +65,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Validator agent module: parseValidatorOutput + runValidator (mirrors reviewer pattern)
-- [ ] 03-02-PLAN.md — Wire validator into review-local pipeline + empirical independence test (D-10)
+- [x] 03-01-PLAN.md — Validator agent module: parseValidatorOutput + runValidator (mirrors reviewer pattern)
+- [x] 03-02-PLAN.md — Wire validator into review-local pipeline + empirical independence test (D-10)
 
 **UI hint**: no
 
@@ -128,7 +128,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/4 | In Progress|  |
 | 2. Reviewer Agent | 2/2 | Complete   | 2026-04-06 |
-| 3. Validator Agent | 0/2 | Not started | - |
+| 3. Validator Agent | 2/2 | Complete   | 2026-04-06 |
 | 4. Writer Agent | 0/? | Not started | - |
 | 5. Review Orchestration | 0/? | Not started | - |
 | 6. Fix Command | 0/? | Not started | - |
@@ -169,4 +169,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-04 after 01-03 complete (installer + OpenCode/Cursor command templates)*
+*Last updated: 2026-04-06 after Phase 3 complete (validator agent — empirical independence verified)*
