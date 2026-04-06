@@ -1,17 +1,18 @@
 /**
- * Pipeline I/O — git diff reader, INPUT.md writer, REVIEWER.md parser.
+ * Pipeline I/O — git diff reader, INPUT.md writer, REVIEWER.md parser, VALIDATOR.md parser.
  *
  * Provides the file-level I/O layer for the rms pipeline:
  *   1. getLocalDiff — reads both staged and unstaged git diff, runs preprocessor
  *   2. writeInputFile — writes INPUT.md with XML-tagged blocks
  *   3. parseReviewerOutput — parses REVIEWER.md <finding> blocks into Finding objects
+ *   4. parseValidatorOutput — parses VALIDATOR.md <verdict> blocks into ValidationVerdict objects
  */
 
 import { simpleGit } from 'simple-git';
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { preprocessDiff, type DiffStats } from './diff-preprocessor.js';
-import { FindingSchema, DIMENSIONS, type Dimension, type Finding } from './schemas.js';
+import { FindingSchema, ValidationVerdictSchema, DIMENSIONS, type Dimension, type Finding, type ValidationVerdict } from './schemas.js';
 
 // ---------------------------------------------------------------------------
 // getLocalDiff
@@ -210,6 +211,122 @@ function parseFindingBlock(blockContent: string): Record<string, string> | null 
   }
 
   flushCurrent();
+
+  if (Object.keys(result).length === 0) return null;
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// parseValidatorOutput
+// ---------------------------------------------------------------------------
+
+export interface ParsedValidatorOutput {
+  /** Parsed verdicts — one per finding */
+  verdicts: ValidationVerdict[];
+  /** Total number of valid parsed verdicts */
+  verdictCount: number;
+  /** Raw file content for downstream consumption */
+  rawContent: string;
+}
+
+/**
+ * Parses a VALIDATOR.md file and extracts structured verdicts.
+ *
+ * The validator writes `<verdict>...</verdict>` blocks with YAML-like key:value
+ * lines inside. Each verdict is validated against ValidationVerdictSchema.
+ * Invalid verdicts are skipped with a console warning.
+ *
+ * Counter-finding blocks inside <verdict> are intentionally NOT parsed here —
+ * they are preserved in rawContent for Phase 4 Writer to extract.
+ */
+export async function parseValidatorOutput(validatorMdPath: string): Promise<ParsedValidatorOutput> {
+  const rawContent = await readFile(validatorMdPath, 'utf8');
+
+  const verdictBlockRegex = /<verdict>([\s\S]*?)<\/verdict>/g;
+  const verdicts: ValidationVerdict[] = [];
+
+  let blockMatch: RegExpExecArray | null;
+  while ((blockMatch = verdictBlockRegex.exec(rawContent)) !== null) {
+    const blockContent = blockMatch[1] ?? '';
+    const parsed = parseVerdictBlock(blockContent);
+
+    if (!parsed) continue;
+
+    const validationResult = ValidationVerdictSchema.safeParse(parsed);
+    if (!validationResult.success) {
+      console.warn(`[rms] Skipping invalid verdict: ${validationResult.error.message}`);
+      continue;
+    }
+
+    verdicts.push(validationResult.data);
+  }
+
+  return {
+    verdicts,
+    verdictCount: verdicts.length,
+    rawContent,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Internal: verdict block parser
+// ---------------------------------------------------------------------------
+
+/**
+ * Parses key:value pairs from a <verdict> block body.
+ * Handles multi-line rationale field.
+ * Strips any nested <counter-finding> blocks before parsing (they are not
+ * part of the verdict schema and are preserved in rawContent for Phase 4).
+ */
+function parseVerdictBlock(blockContent: string): Record<string, string> | null {
+  // Strip nested <counter-finding>...</counter-finding> blocks before parsing
+  const stripped = blockContent.replace(/<counter-finding>[\s\S]*?<\/counter-finding>/g, '');
+
+  const lines = stripped.split('\n');
+  const result: Record<string, string> = {};
+
+  const singleLineFields = new Set(['findingid', 'verdict']);
+  const multiLineFields = new Set(['rationale']);
+
+  let currentField: string | null = null;
+  let currentLines: string[] = [];
+
+  const flushCurrent = () => {
+    if (currentField) {
+      result[currentField] = currentLines.join('\n').trim();
+    }
+    currentField = null;
+    currentLines = [];
+  };
+
+  for (const line of lines) {
+    const keyMatch = line.match(/^(\w+):\s*(.*)/);
+    if (keyMatch) {
+      const key = keyMatch[1]?.toLowerCase() ?? '';
+      const value = keyMatch[2] ?? '';
+
+      if (singleLineFields.has(key) || multiLineFields.has(key)) {
+        flushCurrent();
+        currentField = key;
+        currentLines = [value];
+        continue;
+      }
+    }
+
+    if (currentField && multiLineFields.has(currentField) && line.trim()) {
+      currentLines.push(line);
+    } else if (currentField && singleLineFields.has(currentField)) {
+      flushCurrent();
+    }
+  }
+
+  flushCurrent();
+
+  // Remap 'findingid' key back to 'findingId' for schema compatibility
+  if ('findingid' in result) {
+    result['findingId'] = result['findingid'] as string;
+    delete result['findingid'];
+  }
 
   if (Object.keys(result).length === 0) return null;
   return result;

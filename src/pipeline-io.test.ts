@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdir, rm, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { writeInputFile, parseReviewerOutput } from './pipeline-io.js';
+import { writeInputFile, parseReviewerOutput, parseValidatorOutput } from './pipeline-io.js';
 
 // ---------------------------------------------------------------------------
 // Temp directory helpers
@@ -260,5 +260,157 @@ describe('parseReviewerOutput', () => {
     assert.ok(result.dimensionsWithFindings.includes('PERF'));
     assert.ok(!result.dimensionsWithFindings.includes('BUG'), 'BUG had no findings');
     assert.equal(result.dimensionsWithFindings.length, 2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// parseValidatorOutput tests
+// ---------------------------------------------------------------------------
+
+describe('parseValidatorOutput', () => {
+  test('2 confirmed verdicts: returns array of 2 with correct fields', async () => {
+    const content = `---
+reviewId: test-val-1
+role: validator
+---
+
+<verdict>
+findingId: SEC-00001
+verdict: confirmed
+rationale: The token comparison does use == which is not timing-safe. Confirmed.
+</verdict>
+
+<verdict>
+findingId: PERF-00001
+verdict: confirmed
+rationale: N+1 query pattern is present in the loop. Confirmed.
+</verdict>
+`;
+    const fixturePath = join(tempDir, 'VALIDATOR-2confirmed.md');
+    await writeFile(fixturePath, content, 'utf8');
+
+    const result = await parseValidatorOutput(fixturePath);
+
+    assert.equal(result.verdicts.length, 2);
+    assert.equal(result.verdictCount, 2);
+
+    const secVerdict = result.verdicts.find(v => v.findingId === 'SEC-00001');
+    assert.ok(secVerdict, 'should have SEC-00001 verdict');
+    assert.equal(secVerdict.verdict, 'confirmed');
+    assert.ok(secVerdict.rationale.length > 0, 'rationale should be non-empty');
+
+    const perfVerdict = result.verdicts.find(v => v.findingId === 'PERF-00001');
+    assert.ok(perfVerdict, 'should have PERF-00001 verdict');
+    assert.equal(perfVerdict.verdict, 'confirmed');
+  });
+
+  test('challenged verdict with counter-finding: verdict is challenged, rawContent preserved', async () => {
+    const content = `---
+reviewId: test-val-2
+role: validator
+---
+
+<verdict>
+findingId: SEC-00001
+verdict: challenged
+rationale: PI = 3.14159 is a mathematical constant, not a secret. False positive.
+<counter-finding>
+severity: info
+file: src/math.ts
+line: 1
+dimension: SEC
+explanation: This is not a secret, it is a well-known constant.
+suggestion: No action needed.
+</counter-finding>
+</verdict>
+`;
+    const fixturePath = join(tempDir, 'VALIDATOR-challenged.md');
+    await writeFile(fixturePath, content, 'utf8');
+
+    const result = await parseValidatorOutput(fixturePath);
+
+    assert.equal(result.verdicts.length, 1);
+    assert.equal(result.verdicts[0]?.verdict, 'challenged');
+    assert.equal(result.verdicts[0]?.findingId, 'SEC-00001');
+    // rawContent preserves the counter-finding block
+    assert.ok(result.rawContent.includes('<counter-finding>'), 'rawContent should preserve counter-finding block');
+  });
+
+  test('escalated verdict: returned correctly', async () => {
+    const content = `---
+reviewId: test-val-3
+role: validator
+---
+
+<verdict>
+findingId: SEC-00002
+verdict: escalated
+rationale: The reviewer called this high but it is actually critical — direct SQL injection with no sanitization.
+</verdict>
+`;
+    const fixturePath = join(tempDir, 'VALIDATOR-escalated.md');
+    await writeFile(fixturePath, content, 'utf8');
+
+    const result = await parseValidatorOutput(fixturePath);
+
+    assert.equal(result.verdicts.length, 1);
+    assert.equal(result.verdicts[0]?.verdict, 'escalated');
+    assert.equal(result.verdicts[0]?.findingId, 'SEC-00002');
+  });
+
+  test('malformed verdict (missing findingId) is skipped with warning, does not throw', async () => {
+    const content = `---
+reviewId: test-val-4
+role: validator
+---
+
+<verdict>
+verdict: confirmed
+rationale: No findingId present — should be skipped.
+</verdict>
+
+<verdict>
+findingId: BUG-00001
+verdict: confirmed
+rationale: This one is valid.
+</verdict>
+`;
+    const fixturePath = join(tempDir, 'VALIDATOR-malformed.md');
+    await writeFile(fixturePath, content, 'utf8');
+
+    const result = await parseValidatorOutput(fixturePath);
+
+    // Only the valid verdict should be returned
+    assert.equal(result.verdicts.length, 1);
+    assert.equal(result.verdicts[0]?.findingId, 'BUG-00001');
+  });
+
+  test('unknown verdict value is rejected and skipped with warning', async () => {
+    const content = `---
+reviewId: test-val-5
+role: validator
+---
+
+<verdict>
+findingId: BUG-00002
+verdict: maybe
+rationale: This verdict value is not in the schema.
+</verdict>
+
+<verdict>
+findingId: BUG-00003
+verdict: confirmed
+rationale: This one is valid.
+</verdict>
+`;
+    const fixturePath = join(tempDir, 'VALIDATOR-unknown-verdict.md');
+    await writeFile(fixturePath, content, 'utf8');
+
+    const result = await parseValidatorOutput(fixturePath);
+
+    // 'maybe' verdict should be skipped; only confirmed one kept
+    assert.equal(result.verdicts.length, 1);
+    assert.equal(result.verdicts[0]?.findingId, 'BUG-00003');
+    assert.equal(result.verdicts[0]?.verdict, 'confirmed');
   });
 });
