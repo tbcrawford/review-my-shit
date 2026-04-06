@@ -14,8 +14,8 @@ progress:
 
 # STATE: review-my-shit (rms)
 
-**Last updated:** 2026-04-04
-**Status:** Checkpoint — Plan 04 Task 1 complete, awaiting human verification
+**Last updated:** 2026-04-05
+**Status:** Phase 2 context gathered — ready for planning
 
 ---
 
@@ -27,24 +27,23 @@ progress:
 | Requirements file | `.planning/REQUIREMENTS.md` |
 | Roadmap file | `.planning/ROADMAP.md` |
 | Core value | The reviewer catches problems a developer would miss; the validator catches problems the reviewer would miss — and both are fully auditable. |
-| Current focus | Phase 1: Foundation — schemas, slash command invocation, isolation validation, finding ID strategy |
+| Current focus | Phase 2: Reviewer Agent — implementing the primary reviewer agent across all 11 dimensions |
 
 ---
 
 ## Current Position
 
-Phase: 01 (Foundation) — EXECUTING
-Plan: 4 of 4
+Phase: 02 (Reviewer Agent) — CONTEXT GATHERED
+Plan: TBD
 
 | Field | Value |
 |-------|-------|
-| Current phase | Phase 1: Foundation |
-| Current plan | Plan 04 (slash command discovery test) |
-| Status | Plan 04 Task 1 complete — checkpoint (human verification pending) |
+| Current phase | Phase 2: Reviewer Agent |
+| Status | Context gathered — ready for planning |
 | Blocking issues | None |
 
 ```
-Progress: [█████████░] 88% — Plan 4/4 Task 1 of 2 complete in Phase 1
+Progress: [██░░░░░░░░░░░░░░] Phase 2 context gathered, planning pending
 ```
 
 ---
@@ -53,8 +52,8 @@ Progress: [█████████░] 88% — Plan 4/4 Task 1 of 2 complete
 
 | Phase | Name | Status | Completed |
 |-------|------|--------|-----------|
-| 1 | Foundation | Checkpoint (Plan 4/4 — Task 1 of 2 done) | - |
-| 2 | Reviewer Agent | Not started | - |
+| 1 | Foundation | Complete | ✓ |
+| 2 | Reviewer Agent | Context gathered | - |
 | 3 | Validator Agent | Not started | - |
 | 4 | Writer Agent | Not started | - |
 | 5 | Review Orchestration | Not started | - |
@@ -139,5 +138,26 @@ Awaiting human verification: user must open this repo in OpenCode and Cursor and
 
 ---
 
+### Context for Next Session
+
+Phase 2 context gathered. Decisions captured in `.planning/phases/02-reviewer-agent/02-CONTEXT.md`.
+
+Key Phase 2 decisions:
+- Findings + no-issue confirmations per dimension (D-01)
+- Focus-only mode when `focus:` specified (D-02)
+- Dimension sections with findings in REVIEWER.md (D-04)
+- All-dimensions confirmed when no issues (D-07)
+- Diff preprocessing strips lock files and binary content (D-09)
+
+### How to Resume
+
+```
+1. Read .planning/STATE.md (this file)
+2. Read .planning/phases/02-reviewer-agent/02-CONTEXT.md for Phase 2 decisions
+3. Plan Phase 2: /gsd-plan-phase 2
+```
+
+---
+
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-04 after 01-04 Task 1 complete — checkpoint pending human verification*
+*Last updated: 2026-04-05 after Phase 2 context gathered*
