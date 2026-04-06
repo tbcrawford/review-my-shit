@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-04-06T18:52:20.495Z"
+status: executing
+last_updated: "2026-04-06T20:15:45.151Z"
 progress:
-  total_phases: 8
+  total_phases: 9
   completed_phases: 4
-  total_plans: 14
+  total_plans: 16
   completed_plans: 10
   percent: 71
 ---
@@ -15,7 +15,7 @@ progress:
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** Milestone complete
+**Status:** Executing Phase 9
 
 ---
 
@@ -33,8 +33,8 @@ progress:
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
+Phase: 9 (unified-rms-review-command-that-prompts-user-for-review-scope-when-no-context-is-provided) — EXECUTING
+Plan: 1 of 2
 All 8 phases done. v1.0 milestone complete + per-agent model selection shipped.
 
 | Field | Value |
@@ -99,6 +99,7 @@ Progress: [███████░░░] 71% (10/14 plans — gsd-tools sees 1
 ### Roadmap Evolution
 
 - Phase 8 added: Per-agent model selection via JSON config with /rms-settings command
+- Phase 9 added: Unified /rms-review command that prompts user for review scope when no context is provided
 
 ### Key Decisions Made
 
