@@ -117,3 +117,27 @@ export const ReportFileSchema = z.object({
   findingCount: z.number(),
 });
 export type ReportFile = z.infer<typeof ReportFileSchema>;
+
+// ---------------------------------------------------------------------------
+// Per-agent model config (Phase 8)
+// ---------------------------------------------------------------------------
+
+/**
+ * Specification for a single agent's model: provider + model ID.
+ */
+export const AgentModelSpecSchema = z.object({
+  provider: z.enum(['openai', 'anthropic', 'google']),
+  model: z.string().min(1),
+});
+export type AgentModelSpec = z.infer<typeof AgentModelSpecSchema>;
+
+/**
+ * Full rms config: one AgentModelSpec per pipeline agent.
+ * Loaded from ~/.config/rms/config.json
+ */
+export const RmsConfigSchema = z.object({
+  reviewer: AgentModelSpecSchema,
+  validator: AgentModelSpecSchema,
+  writer: AgentModelSpecSchema,
+});
+export type RmsConfig = z.infer<typeof RmsConfigSchema>;
