@@ -301,28 +301,6 @@ program
     await install(projectRoot);
   });
 
-program
-  .command('review-local')
-  .description('Run a code review on local git diff')
-  .option('--focus <area>', 'Focus area (e.g., security, performance)')
-  .action(async (opts: { focus?: string }) => {
-    await runLocalReview({ projectRoot: process.cwd(), focus: opts.focus });
-  });
-
-program
-  .command('review-pr')
-  .description('Run a code review on a GitHub PR diff')
-  .argument('<pr-number>', 'GitHub PR number')
-  .option('--focus <area>', 'Focus area (e.g., security, performance)')
-  .action(async (prArg: string, opts: { focus?: string }) => {
-    const prNumber = parseInt(prArg, 10);
-    if (isNaN(prNumber) || prNumber <= 0) {
-      console.error(`Invalid PR number: "${prArg}". Must be a positive integer.`);
-      process.exit(1);
-    }
-    await runPrReview({ projectRoot: process.cwd(), prNumber, focus: opts.focus });
-  });
-
 program.command('review')
   .description('Run a code review (unified entry point — routes to local or pr scope)')
   .argument('[scope]', 'Scope: "local" or "pr"')

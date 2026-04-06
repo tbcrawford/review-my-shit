@@ -6,16 +6,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = join(__dirname, 'templates');
 
 const INSTALLS = [
-  { template: 'opencode-review-local.md', dest: '.opencode/commands/review-local.md' },
-  { template: 'opencode-review-pr.md',    dest: '.opencode/commands/review-pr.md' },
-  { template: 'opencode-fix.md',          dest: '.opencode/commands/fix.md' },
-  { template: 'cursor-review-local.md',   dest: '.cursor/commands/review-local.md' },
-  { template: 'cursor-review-pr.md',      dest: '.cursor/commands/review-pr.md' },
-  { template: 'cursor-fix.md',            dest: '.cursor/commands/fix.md' },
-  { template: 'opencode-settings.md',    dest: '.opencode/commands/rms-settings.md' },
-  { template: 'cursor-settings.md',      dest: '.cursor/commands/rms-settings.md' },
-  { template: 'opencode-review.md',      dest: '.opencode/commands/rms-review.md' },
-  { template: 'cursor-review.md',        dest: '.cursor/commands/rms-review.md' },
+  { template: 'opencode-fix.md',       dest: '.opencode/commands/fix.md' },
+  { template: 'cursor-fix.md',         dest: '.cursor/commands/fix.md' },
+  { template: 'opencode-settings.md',  dest: '.opencode/commands/rms-settings.md' },
+  { template: 'cursor-settings.md',    dest: '.cursor/commands/rms-settings.md' },
+  { template: 'opencode-review.md',    dest: '.opencode/commands/rms-review.md' },
+  { template: 'cursor-review.md',      dest: '.cursor/commands/rms-review.md' },
 ];
 
 export async function install(projectRoot: string): Promise<void> {
