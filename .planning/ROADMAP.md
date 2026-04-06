@@ -14,7 +14,7 @@
 - [x] **Phase 4: Writer Agent** — Synthesize reviewer + validator outputs into a severity-grouped report with full audit trail (completed 2026-04-06)
 - [x] **Phase 5: Review Orchestration** — Wire the `/review` entry command: scope selection, session creation, pipeline sequencing (completed 2026-04-06)
 - [x] **Phase 6: Fix Command** — Implement `/fix` with by-ID and interactive selection modes (completed 2026-04-06)
-- [ ] **Phase 7: Cross-Editor Hardening** — Validate end-to-end in both OpenCode and Cursor; harden edge cases
+- [x] **Phase 7: Cross-Editor Hardening** — Validate end-to-end in both OpenCode and Cursor; harden edge cases (completed 2026-04-06)
 
 ---
 
@@ -129,7 +129,12 @@ Plans:
   2. Full review pipeline runs end-to-end in Cursor: local diff → `REPORT.md` in `.reviews/<session>/`
   3. `AGENTS.md` is present and accurately describes the pipeline, isolation model, and known editor-specific behaviors
   4. Edge case: session reload after `/new` does not corrupt or lose an in-progress review
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [x] 07-01-PLAN.md — Prompt injection hardening: XML wrapping + anti-injection instructions in reviewer + validator; AGENTS.md
+- [x] 07-02-PLAN.md — Cursor command template improvements: build hint, severity presentation, session ID guidance; package.json build fix
+
 **UI hint**: no
 
 ---
@@ -144,7 +149,7 @@ Plans:
 | 4. Writer Agent | 2/2 | Complete   | 2026-04-06 |
 | 5. Review Orchestration | 2/2 | Complete   | 2026-04-06 |
 | 6. Fix Command | 2/2 | Complete   | 2026-04-06 |
-| 7. Cross-Editor Hardening | 0/? | Not started | - |
+| 7. Cross-Editor Hardening | 2/2 | Complete   | 2026-04-06 |
 
 ---
 

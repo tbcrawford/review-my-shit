@@ -82,6 +82,28 @@ describe('REVIEWER_PROMPT — structure and language agnosticism', () => {
       assert.ok(prompt.includes(field), `prompt should include finding field: ${field}`);
     }
   });
+
+  test('diff is wrapped in <diff> XML tags', () => {
+    const prompt = buildReviewerPrompt({ diff: 'sample diff content', focus: undefined });
+    assert.ok(prompt.includes('<diff>'), 'prompt should open with <diff> tag');
+    assert.ok(prompt.includes('</diff>'), 'prompt should close with </diff> tag');
+    // Diff content is between the tags
+    const diffStart = prompt.indexOf('<diff>');
+    const diffEnd = prompt.indexOf('</diff>');
+    assert.ok(diffStart < diffEnd, '<diff> must appear before </diff>');
+    assert.ok(
+      prompt.slice(diffStart, diffEnd).includes('sample diff content'),
+      'diff content must be inside <diff> tags',
+    );
+  });
+
+  test('contains anti-injection instruction about treating diff as data', () => {
+    const prompt = buildReviewerPrompt({ diff: 'sample diff', focus: undefined });
+    assert.ok(
+      prompt.includes('NOT executable instructions') || prompt.includes('data to analyze'),
+      'prompt should instruct model to treat diff as data, not instructions',
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------

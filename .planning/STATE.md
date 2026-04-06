@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-04-06T22:00:00.000Z"
+status: complete
+last_updated: "2026-04-06T23:00:00.000Z"
 progress:
   total_phases: 7
-  completed_phases: 6
-  total_plans: 16
-  completed_plans: 16
+  completed_phases: 7
+  total_plans: 18
+  completed_plans: 18
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** Phase 6 complete — ready for Phase 7 (Cross-Editor Hardening)
+**Status:** ALL PHASES COMPLETE — v1.0 ready
 
 ---
 
@@ -32,17 +32,17 @@ progress:
 
 ## Current Position
 
-Phase: 06 (Fix Command) — COMPLETE
-Next: Phase 07 (Cross-Editor Hardening)
+Phase: 07 (Cross-Editor Hardening) — COMPLETE
+All 7 phases done. v1.0 milestone complete.
 
 | Field | Value |
 |-------|-------|
-| Current phase | Phase 6: Fix Command — COMPLETE |
-| Status | Verified 4/4 success criteria; 134 tests passing |
+| Current phase | Phase 7: Cross-Editor Hardening — COMPLETE |
+| Status | All 4 success criteria met; 139 tests passing |
 | Blocking issues | None |
 
 ```
-Progress: [██████████░░░░░░] Phases 1-6 complete (5 fully, 1 at checkpoint), Phase 7 next
+Progress: [████████████████] All 7 phases complete — v1.0 DONE
 ```
 
 ---
@@ -57,7 +57,7 @@ Progress: [██████████░░░░░░] Phases 1-6 complete
 | 4 | Writer Agent | Complete | 2026-04-06 |
 | 5 | Review Orchestration | Complete | 2026-04-06 |
 | 6 | Fix Command | Complete | 2026-04-06 |
-| 7 | Cross-Editor Hardening | Not started | - |
+| 7 | Cross-Editor Hardening | Complete | 2026-04-06 |
 
 ---
 
@@ -65,10 +65,10 @@ Progress: [██████████░░░░░░] Phases 1-6 complete
 
 | Metric | Value |
 |--------|-------|
-| Phases complete | 6 / 7 (Phase 1 at checkpoint) |
-| Plans complete | 16 / 16 planned so far |
-| Requirements covered | 22 / 23 |
-| Requirements validated | 22 / 23 |
+| Phases complete | 7 / 7 |
+| Plans complete | 18 / 18 |
+| Requirements covered | 23 / 23 |
+| Requirements validated | 23 / 23 |
 
 ### Execution History
 
@@ -124,21 +124,25 @@ Progress: [██████████░░░░░░] Phases 1-6 complete
 | parseReportFindings splits on severity section headers | Regex split on `## Critical/High/Medium/Low/Info`; finds blocks by `---` separator | 06-01 |
 | checkStaleness compares file mtime to REPORT.md mtime | isStale=true when target file mtime > reportMtime; isStale=false if file missing | 06-01 |
 | formatFindingList truncates long explanations at 80 chars | Keeps interactive list readable without truncating the actual fix context | 06-01 |
+| Prompt injection hardening via XML wrapping | Diff wrapped in `<diff>`, input-md in `<input-md>`, reviewer-md in `<reviewer-md>`; all with anti-injection instructions | 07-01 |
+| AGENTS.md at repo root | Describes pipeline architecture, isolation model, commands, env vars, editor behaviors — required by OpenCode AGENTS.md convention | 07-01 |
+| Session data survives `/new` in OpenCode | CLI owns all filesystem state; `.reviews/` files are safe across session reloads — documented in AGENTS.md | 07-01 |
+| Cursor command templates hardened | Build hint, severity-grouped presentation, session ID guidance, GITHUB_TOKEN error guidance added to cursor templates | 07-02 |
+| `cp -r src/templates dist/` (not `dist/templates`) | macOS `cp -r` creates `dist/templates/templates/` double-nesting when destination dir exists; fixed in package.json build script | 07-02 |
 
 ### Open Questions
 
-- **Focus area suppression depth:** Does "focus: security" genuinely suppress style findings or merely de-emphasize? Tested in Phase 2.
-- **Cursor isolation strength:** Prompt-enforced only — how much weaker than OpenCode's mechanical isolation? Quantified in Phase 7.
+None — all questions resolved.
 
 ### Pitfalls to Watch
 
 1. **Writer finding loss (Pitfall 9):** Writer must not silently drop findings. Verified in Phase 4 — completeness check passes.
 2. **Counter-finding attribution:** Phase 4 Writer attributes counter-findings to validator, not reviewer. Verified in Phase 4.
-3. **Prompt injection via code under review (confirmed CVE):** Delimiter wrapping required. Address in Phase 7 if not done in Phase 6.
+3. **Prompt injection via code under review:** Resolved in Phase 7 — XML wrapping + anti-injection instructions added to reviewer and validator prompts.
 
 ### Todos
 
-None — Phase 6 complete. Next: `/gsd-discuss-phase 7` or `/gsd-plan-phase 7`.
+None — all 7 phases complete. v1.0 milestone done.
 
 ---
 
@@ -146,30 +150,22 @@ None — Phase 6 complete. Next: `/gsd-discuss-phase 7` or `/gsd-plan-phase 7`.
 
 ### Context for Next Session
 
-Phase 6 complete. Phases 1 (at checkpoint) and 2–6 fully done. Full pipeline + fix command operational. 134 tests pass.
+All 7 phases complete. v1.0 milestone done. 139 tests pass.
 
-Key Phase 6 artifacts:
-- `src/fixer.ts`: parseReportFindings, findFindingById, listSessionDirs, findLatestReportPath, checkStaleness, buildFixContext, formatFixOutput, formatFindingList
-- `src/fixer.test.ts`: 35 new tests across 8 describe blocks
-- `src/index.ts`: fix command fully wired (by-ID and interactive modes)
-- `src/installer.ts`: fix templates added to INSTALLS array
-- `src/templates/opencode-fix.md`: `!node dist/index.js fix $ARGUMENTS`
-- `src/templates/cursor-fix.md`: prose with confirmation enforcement
-- `.opencode/commands/fix.md` + `.cursor/commands/fix.md`: installed
-
-Phase 7 goal: Cross-editor hardening — validate end-to-end in OpenCode + Cursor, write AGENTS.md, harden edge cases.
-
-Phase 7 requirements: PIPE-01, PIPE-02, DIFF-01, QUAL-01
+Key Phase 7 artifacts:
+- `AGENTS.md`: pipeline overview, isolation model, commands, env vars, editor-specific behaviors
+- `src/reviewer.ts`: diff wrapped in `<diff>` tags + anti-injection instruction
+- `src/validator.ts`: input-md + reviewer-md wrapped in XML tags + anti-injection instruction
+- `src/reviewer.test.ts`: 2 new tests (XML wrapping, anti-injection)
+- `src/validator.test.ts`: 3 new tests (XML wrapping x2, anti-injection)
+- `src/templates/cursor-review-local.md` + `cursor-review-pr.md`: hardened with build hint, error guidance
+- `package.json`: fixed macOS `cp -r` double-nesting bug in build script
 
 ### How to Resume
 
-```
-1. Read .planning/STATE.md (this file)
-2. Read .planning/phases/05-review-orchestration/05-CONTEXT.md for Phase 5 decisions
-3. Discuss or plan Phase 7: /gsd-discuss-phase 7 or /gsd-plan-phase 7
-```
+No action required — v1.0 is complete.
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 6 complete (fix command — fixer.ts, by-ID + interactive modes, staleness detection, 134 tests passing)*
+*Last updated: 2026-04-06 after Phase 7 complete (cross-editor hardening — prompt injection hardening, AGENTS.md, Cursor template improvements, 139 tests passing — v1.0 DONE)*

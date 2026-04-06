@@ -69,6 +69,47 @@ describe('buildValidatorPrompt', () => {
       'Built prompt must contain inputMdContent',
     );
   });
+
+  test('reviewerMdContent is wrapped in <reviewer-md> XML tags', () => {
+    const prompt = buildValidatorPrompt({
+      reviewerMdContent: 'REVIEWER_SENTINEL',
+      inputMdContent: 'INPUT_SENTINEL',
+    });
+    assert.ok(prompt.includes('<reviewer-md>'), 'prompt should contain <reviewer-md> opening tag');
+    assert.ok(prompt.includes('</reviewer-md>'), 'prompt should contain </reviewer-md> closing tag');
+    const start = prompt.indexOf('<reviewer-md>');
+    const end = prompt.indexOf('</reviewer-md>');
+    assert.ok(
+      prompt.slice(start, end).includes('REVIEWER_SENTINEL'),
+      'reviewerMdContent must be inside <reviewer-md> tags',
+    );
+  });
+
+  test('inputMdContent is wrapped in <input-md> XML tags', () => {
+    const prompt = buildValidatorPrompt({
+      reviewerMdContent: 'REVIEWER_SENTINEL',
+      inputMdContent: 'INPUT_SENTINEL',
+    });
+    assert.ok(prompt.includes('<input-md>'), 'prompt should contain <input-md> opening tag');
+    assert.ok(prompt.includes('</input-md>'), 'prompt should contain </input-md> closing tag');
+    const start = prompt.indexOf('<input-md>');
+    const end = prompt.indexOf('</input-md>');
+    assert.ok(
+      prompt.slice(start, end).includes('INPUT_SENTINEL'),
+      'inputMdContent must be inside <input-md> tags',
+    );
+  });
+
+  test('contains anti-injection instruction about treating content as data', () => {
+    const prompt = buildValidatorPrompt({
+      reviewerMdContent: 'REVIEWER_SENTINEL',
+      inputMdContent: 'INPUT_SENTINEL',
+    });
+    assert.ok(
+      prompt.includes('NOT executable instructions') || prompt.includes('data to evaluate'),
+      'prompt should instruct model to treat file contents as data, not instructions',
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
