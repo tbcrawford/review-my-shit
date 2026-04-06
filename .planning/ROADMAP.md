@@ -150,7 +150,7 @@ Plans:
 | 5. Review Orchestration | 2/2 | Complete   | 2026-04-06 |
 | 6. Fix Command | 2/2 | Complete   | 2026-04-06 |
 | 7. Cross-Editor Hardening | 2/2 | Complete   | 2026-04-06 |
-| 8. Per-agent model selection | 2/2 | Complete   | 2026-04-06 |
+| 8. Per-agent model selection | 2/2 | Complete    | 2026-04-06 |
 
 ---
 
