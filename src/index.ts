@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { nanoid } from 'nanoid';
 import { install } from './installer.js';
+import { loadRmsConfig, resolveAgentModel, getConfigPath, saveRmsConfig } from './config.js';
+import type { AgentModelSpec } from './schemas.js';
 import {
   getLocalDiff,
   getPrDiff,
@@ -25,32 +27,38 @@ import {
 } from './fixer.js';
 
 // ---------------------------------------------------------------------------
-// Model resolution (provider-agnostic)
+// Model resolution (provider-agnostic, per-agent)
 // ---------------------------------------------------------------------------
 
 /**
- * Resolves an AI SDK model instance from environment variables.
+ * Resolves per-agent model instances from config or env var fallback.
  *
- * Checks AI_SDK_PROVIDER (openai|anthropic|google) and AI_SDK_MODEL.
- * Falls back to OpenAI gpt-4o if unset.
- *
- * This is a Phase 2 implementation — Phase 5 will handle full model resolution
- * including reading model config from the editor's settings.
+ * Priority: ~/.config/rms/config.json > AI_SDK_PROVIDER + AI_SDK_MODEL env vars
+ * Throws if config exists but is invalid. Returns three model instances.
  */
-async function resolveModel(): Promise<Parameters<typeof runReviewer>[0]['model']> {
+async function resolveModels(): Promise<{
+  reviewerModel: Parameters<typeof runReviewer>[0]['model'];
+  validatorModel: Parameters<typeof runValidator>[0]['model'];
+  writerModelId: string;
+}> {
+  const config = await loadRmsConfig();
+
+  if (config) {
+    const reviewerModel = await resolveAgentModel(config.reviewer);
+    const validatorModel = await resolveAgentModel(config.validator);
+    const writerModelId = `${config.writer.provider}:${config.writer.model}`;
+    return { reviewerModel, validatorModel, writerModelId };
+  }
+
+  // Fallback: env vars (backward compat for users without config file)
   const provider = process.env['AI_SDK_PROVIDER'] ?? 'openai';
   const modelId = process.env['AI_SDK_MODEL'] ?? 'gpt-4o';
-
-  if (provider === 'anthropic') {
-    const { anthropic } = await import('@ai-sdk/anthropic');
-    return anthropic(modelId);
-  } else if (provider === 'google') {
-    const { google } = await import('@ai-sdk/google');
-    return google(modelId);
-  } else {
-    const { openai } = await import('@ai-sdk/openai');
-    return openai(modelId);
-  }
+  const fallbackSpec: AgentModelSpec = {
+    provider: provider as 'openai' | 'anthropic' | 'google',
+    model: modelId,
+  };
+  const model = await resolveAgentModel(fallbackSpec);
+  return { reviewerModel: model, validatorModel: model, writerModelId: modelId };
 }
 
 // ---------------------------------------------------------------------------
@@ -110,10 +118,9 @@ program
     });
 
     // Step 4: Run reviewer
-    // Model is resolved from environment variables — provider agnostic (QUAL-03).
-    // AI_SDK_PROVIDER: openai (default) | anthropic | google
-    // AI_SDK_MODEL: model ID (default: gpt-4o)
-    const model = await resolveModel();
+    // Model is resolved from config file or environment variables — provider agnostic (QUAL-03).
+    // Priority: ~/.config/rms/config.json > AI_SDK_PROVIDER + AI_SDK_MODEL env vars
+    const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
     const reviewsDir = join(projectRoot, '.reviews');
 
     console.log('Running reviewer...');
@@ -121,7 +128,7 @@ program
       session,
       diff,
       focus: opts.focus,
-      model,
+      model: reviewerModel,
       reviewsDir,
     });
 
@@ -133,11 +140,11 @@ program
       session,
       reviewerMdPath: result.reviewerMdPath,
       inputMdPath,
-      model,
+      model: validatorModel,
     });
 
     // Step 6: Run writer (deterministic — no LLM call)
-    const modelId = process.env['AI_SDK_MODEL'] ?? 'gpt-4o';
+    const modelId = writerModelId;
     const inputMdContent = await readFile(inputMdPath, 'utf8');
     await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
     console.log('Running writer...');
@@ -241,7 +248,7 @@ program
     });
 
     // Resolve model
-    const model = await resolveModel();
+    const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
     const reviewsDir = join(projectRoot, '.reviews');
 
     // Run pipeline — identical to review-local from here
@@ -250,7 +257,7 @@ program
       session,
       diff,
       focus: opts.focus,
-      model,
+      model: reviewerModel,
       reviewsDir,
     });
 
@@ -261,10 +268,10 @@ program
       session,
       reviewerMdPath: result.reviewerMdPath,
       inputMdPath,
-      model,
+      model: validatorModel,
     });
 
-    const modelId = process.env['AI_SDK_MODEL'] ?? 'gpt-4o';
+    const modelId = writerModelId;
     const inputMdContent = await readFile(inputMdPath, 'utf8');
     await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
     console.log('Running writer...');
@@ -338,6 +345,87 @@ program
 
     const ctx = await buildFixContext(projectRoot, reportResult.reportPath, reportResult.sessionId, finding);
     console.log(formatFixOutput(ctx));
+  });
+
+program
+  .command('settings')
+  .description('View or set per-agent model configuration')
+  .option('--reviewer <spec>', 'Set reviewer model (format: provider:model, e.g. anthropic:claude-opus-4-5)')
+  .option('--validator <spec>', 'Set validator model (format: provider:model)')
+  .option('--writer <spec>', 'Set writer model (format: provider:model)')
+  .option('--reset', 'Delete config file and revert to env var fallback')
+  .action(async (opts: { reviewer?: string; validator?: string; writer?: string; reset?: boolean }) => {
+    const { unlink } = await import('node:fs/promises');
+    const configPath = getConfigPath();
+
+    if (opts.reset) {
+      try {
+        await unlink(configPath);
+        console.log(`Config deleted: ${configPath}`);
+        console.log('Reverted to AI_SDK_PROVIDER / AI_SDK_MODEL env vars.');
+      } catch {
+        console.log('No config file found — already using env var defaults.');
+      }
+      return;
+    }
+
+    // Parse a provider:model spec string
+    function parseSpec(raw: string, label: string): AgentModelSpec {
+      const colonIdx = raw.indexOf(':');
+      if (colonIdx === -1) {
+        console.error(`Invalid ${label} spec "${raw}". Expected format: provider:model (e.g. anthropic:claude-opus-4-5)`);
+        process.exit(1);
+      }
+      const provider = raw.slice(0, colonIdx) as AgentModelSpec['provider'];
+      const model = raw.slice(colonIdx + 1);
+      if (!['openai', 'anthropic', 'google'].includes(provider)) {
+        console.error(`Invalid provider "${provider}". Must be one of: openai, anthropic, google`);
+        process.exit(1);
+      }
+      if (!model) {
+        console.error(`Invalid ${label} spec "${raw}": model ID cannot be empty`);
+        process.exit(1);
+      }
+      return { provider, model };
+    }
+
+    // If any flags provided, update config
+    if (opts.reviewer || opts.validator || opts.writer) {
+      const existing = await loadRmsConfig();
+      const defaults = {
+        reviewer: { provider: 'openai' as const, model: 'gpt-4o' },
+        validator: { provider: 'openai' as const, model: 'gpt-4o' },
+        writer: { provider: 'openai' as const, model: 'gpt-4o' },
+      };
+      const base = existing ?? defaults;
+      const updated = {
+        reviewer: opts.reviewer ? parseSpec(opts.reviewer, 'reviewer') : base.reviewer,
+        validator: opts.validator ? parseSpec(opts.validator, 'validator') : base.validator,
+        writer: opts.writer ? parseSpec(opts.writer, 'writer') : base.writer,
+      };
+      await saveRmsConfig(updated);
+      console.log(`Config saved to: ${configPath}`);
+      console.log(JSON.stringify(updated, null, 2));
+      return;
+    }
+
+    // No flags: show current state
+    const config = await loadRmsConfig();
+    console.log(`Config path: ${configPath}`);
+    console.log('');
+    if (config) {
+      console.log('Current configuration:');
+      console.log(JSON.stringify(config, null, 2));
+    } else {
+      console.log('Not configured — using env var fallback:');
+      console.log(`  AI_SDK_PROVIDER = ${process.env['AI_SDK_PROVIDER'] ?? 'openai (default)'}`);
+      console.log(`  AI_SDK_MODEL    = ${process.env['AI_SDK_MODEL'] ?? 'gpt-4o (default)'}`);
+      console.log('');
+      console.log('To configure per-agent models:');
+      console.log('  rms settings --reviewer anthropic:claude-opus-4-5');
+      console.log('  rms settings --validator anthropic:claude-sonnet-4-5');
+      console.log('  rms settings --writer openai:gpt-4o');
+    }
   });
 
 program.parse();
