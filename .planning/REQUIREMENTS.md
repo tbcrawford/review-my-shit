@@ -11,7 +11,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **PIPE-01**: User can invoke `/review` as a slash command in OpenCode
 - [x] **PIPE-02**: User can invoke `/review` as a slash command in Cursor
-- [ ] **PIPE-03**: Primary reviewer agent analyzes code across all 11 dimensions in a fully isolated context window
+- [x] **PIPE-03**: Primary reviewer agent analyzes code across all 11 dimensions in a fully isolated context window
 - [ ] **PIPE-04**: Validator agent receives only the reviewer's structured output (not reasoning or chain-of-thought) and independently challenges each finding
 - [ ] **PIPE-05**: Writer agent synthesizes reviewer and validator output into a final severity-grouped report
 - [x] **PIPE-06**: All three agents run with fully isolated context — no shared conversation history between roles
@@ -41,8 +41,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Quality & Compatibility
 
-- [ ] **QUAL-01**: System is language agnostic — no language-specific assumptions baked into agent prompts or tooling
-- [ ] **QUAL-02**: Reviewer covers all 11 dimensions: bugs & logic errors, security, performance, style & conventions, test coverage, architecture, error handling & resilience, data integrity, API & interface contracts, dependency & environment risk, code & documentation consistency
+- [x] **QUAL-01**: System is language agnostic — no language-specific assumptions baked into agent prompts or tooling
+- [x] **QUAL-02**: Reviewer covers all 11 dimensions: bugs & logic errors, security, performance, style & conventions, test coverage, architecture, error handling & resilience, data integrity, API & interface contracts, dependency & environment risk, code & documentation consistency
 - [x] **QUAL-03**: Tool has no external service dependencies beyond the GitHub API for PR diffs — uses whatever model the editor has configured
 
 ---
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | PIPE-01 | Phase 1 | Complete |
 | PIPE-02 | Phase 1 | Complete |
-| PIPE-03 | Phase 2 | Pending |
+| PIPE-03 | Phase 2 | Complete |
 | PIPE-04 | Phase 3 | Pending |
 | PIPE-05 | Phase 4 | Pending |
 | PIPE-06 | Phase 1 | Complete |
@@ -111,8 +111,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-02 | Phase 6 | Pending |
 | FIX-03 | Phase 6 | Pending |
 | FIX-04 | Phase 6 | Pending |
-| QUAL-01 | Phase 2 | Pending |
-| QUAL-02 | Phase 2 | Pending |
+| QUAL-01 | Phase 2 | Complete |
+| QUAL-02 | Phase 2 | Complete |
 | QUAL-03 | Phase 1 | Complete |
 
 **Coverage:**

@@ -9,7 +9,7 @@
 ## Phases
 
 - [ ] **Phase 1: Foundation** — Lock schemas, validate slash command invocation, confirm isolation, establish finding ID strategy
-- [ ] **Phase 2: Reviewer Agent** — Implement the primary reviewer agent across all 11 dimensions with diff preprocessing
+- [x] **Phase 2: Reviewer Agent** — Implement the primary reviewer agent across all 11 dimensions with diff preprocessing (completed 2026-04-06)
 - [ ] **Phase 3: Validator Agent** — Implement the adversarial validator and confirm empirical isolation independence
 - [ ] **Phase 4: Writer Agent** — Synthesize reviewer + validator outputs into a severity-grouped report with full audit trail
 - [ ] **Phase 5: Review Orchestration** — Wire the `/review` entry command: scope selection, session creation, pipeline sequencing
@@ -122,7 +122,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/4 | In Progress|  |
-| 2. Reviewer Agent | 1/2 | In Progress|  |
+| 2. Reviewer Agent | 2/2 | Complete   | 2026-04-06 |
 | 3. Validator Agent | 0/? | Not started | - |
 | 4. Writer Agent | 0/? | Not started | - |
 | 5. Review Orchestration | 0/? | Not started | - |
