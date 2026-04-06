@@ -5,6 +5,7 @@ import { install } from './installer.js';
 import { getLocalDiff, writeInputFile } from './pipeline-io.js';
 import { createSession } from './session.js';
 import { runReviewer } from './reviewer.js';
+import { runValidator } from './validator.js';
 
 // ---------------------------------------------------------------------------
 // Model resolution (provider-agnostic)
@@ -107,10 +108,26 @@ program
       reviewsDir,
     });
 
-    // Step 5: Report results
-    console.log(`\nReview complete: ${result.findingCount} finding(s)`);
-    console.log(`Report: .reviews/${session.reviewId}/REVIEWER.md`);
-    console.log(`\n(Validator and Writer agents will be added in Phases 3-4)`);
+    // Step 5: Run validator
+    const inputMdPath = join(session.sessionDir, 'INPUT.md');
+    console.log('Running validator...');
+    const validatorResult = await runValidator({
+      session,
+      reviewerMdPath: result.reviewerMdPath,
+      inputMdPath,
+      model,
+    });
+
+    // Step 6: Report results
+    const challenged = validatorResult.verdicts.filter(v => v.verdict === 'challenged').length;
+    const escalated = validatorResult.verdicts.filter(v => v.verdict === 'escalated').length;
+    console.log(`\nReview complete:`);
+    console.log(`  Findings: ${result.findingCount}`);
+    console.log(`  Verdicts: ${validatorResult.verdictCount} (${challenged} challenged, ${escalated} escalated)`);
+    console.log(`\nAudit trail:`);
+    console.log(`  REVIEWER.md: .reviews/${session.reviewId}/REVIEWER.md`);
+    console.log(`  VALIDATOR.md: .reviews/${session.reviewId}/VALIDATOR.md`);
+    console.log(`\n(Writer agent will be added in Phase 4)`);
   });
 
 program

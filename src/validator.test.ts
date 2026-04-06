@@ -170,3 +170,121 @@ rationale: Magic number 42 should be a named constant.
     assert.equal(result.verdicts[0]?.verdict, 'confirmed');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Empirical independence tests (D-10)
+// ---------------------------------------------------------------------------
+
+// Synthetic REVIEWER.md with an absurd false-positive: PI = 3.14159 flagged as
+// a "hardcoded secret" at critical severity.
+const absurdReviewerMd = `---
+reviewId: test-empirical
+role: reviewer
+---
+
+## SEC
+
+<finding>
+severity: critical
+file: src/math.ts
+line: 1
+dimension: SEC
+explanation: Hardcoded secret exposed: PI value is hardcoded in source code
+suggestion: Move PI to environment variable to prevent exposure
+</finding>
+`;
+
+// Benign INPUT.md showing only a mathematical constant being added.
+const benignInputMd = `---
+reviewId: test-empirical
+timestamp: 2026-04-06T00:00:00Z
+scope: local-diff
+---
+
+<diff>
+diff --git a/src/math.ts b/src/math.ts
++const PI = 3.14159;
+</diff>
+`;
+
+describe('empirical independence (D-10)', () => {
+  test('pipeline accepts and returns challenged verdict for absurd false-positive', async () => {
+    const sessionDir = join(tempDir, 'session-empirical-challenged');
+    await mkdir(sessionDir, { recursive: true });
+
+    const session = {
+      reviewId: 'test-empirical',
+      sessionDir,
+      slug: 'test-empirical',
+      timestamp: '2026-04-06T00:00:00.000Z',
+    };
+
+    await writeFile(join(sessionDir, 'REVIEWER.md'), absurdReviewerMd, 'utf8');
+    await writeFile(join(sessionDir, 'INPUT.md'), benignInputMd, 'utf8');
+
+    // Mock simulates a validator that correctly challenges the absurd finding
+    const challengedMock = `<verdict>
+findingId: SEC-00001
+verdict: challenged
+rationale: PI = 3.14159 is a mathematical constant, not a secret. This is a false positive.
+</verdict>`;
+
+    const result = await runValidator({
+      session,
+      reviewerMdPath: join(sessionDir, 'REVIEWER.md'),
+      inputMdPath: join(sessionDir, 'INPUT.md'),
+      model: null as never,
+      _mockGenerateText: async () => challengedMock,
+    });
+
+    assert.equal(result.verdicts.length, 1);
+    assert.equal(
+      result.verdicts[0]?.verdict,
+      'challenged',
+      'Absurd false-positive must be challengeable through the pipeline',
+    );
+  });
+
+  test('baseline contrast: naive confirmed mock returns confirmed verdict', async () => {
+    const sessionDir = join(tempDir, 'session-empirical-confirmed');
+    await mkdir(sessionDir, { recursive: true });
+
+    const session = {
+      reviewId: 'test-empirical-b',
+      sessionDir,
+      slug: 'test-empirical-b',
+      timestamp: '2026-04-06T00:00:00.000Z',
+    };
+
+    await writeFile(join(sessionDir, 'REVIEWER.md'), absurdReviewerMd, 'utf8');
+    await writeFile(join(sessionDir, 'INPUT.md'), benignInputMd, 'utf8');
+
+    // Mock simulates a naive pass-through that rubber-stamps everything
+    const confirmedMock = `<verdict>
+findingId: SEC-00001
+verdict: confirmed
+rationale: Confirmed — PI is hardcoded, could be a secret.
+</verdict>`;
+
+    const result = await runValidator({
+      session,
+      reviewerMdPath: join(sessionDir, 'REVIEWER.md'),
+      inputMdPath: join(sessionDir, 'INPUT.md'),
+      model: null as never,
+      _mockGenerateText: async () => confirmedMock,
+    });
+
+    assert.equal(result.verdicts[0]?.verdict, 'confirmed');
+  });
+
+  test('prompt framing: VALIDATOR_PROMPT contains "challenge" and "rubber-stamp"', () => {
+    assert.ok(
+      VALIDATOR_PROMPT.includes('challenge'),
+      'Prompt must contain adversarial "challenge" instruction',
+    );
+    assert.ok(
+      VALIDATOR_PROMPT.includes('rubber-stamp'),
+      'Prompt must instruct against rubber-stamping',
+    );
+  });
+});
