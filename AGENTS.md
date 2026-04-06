@@ -9,7 +9,7 @@
 Every review runs three agents in strict sequence:
 
 ```
-User invokes /review-local or /review-pr
+User invokes /rms-review
          │
          ▼
   ┌─────────────┐
@@ -61,8 +61,7 @@ Commands are installed to `.opencode/commands/` via `node dist/index.js install`
 
 | Command | Description | Isolation |
 |---------|-------------|-----------|
-| `/review-local [--focus <dim>]` | Review staged + unstaged local diff | `subtask: true` (mechanical) |
-| `/review-pr <pr-number> [--focus <dim>]` | Review a GitHub PR diff | `subtask: true` (mechanical) |
+| `/rms-review [local\|pr <number>] [--focus <dim>]` | Unified review — prompts for scope if none given | `subtask: true` (mechanical) |
 | `/fix [<finding-id>] [--session <id>]` | Show or apply a finding | `subtask: true` (mechanical) |
 | `/rms-settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]` | View or set per-agent model config | `subtask: true` (mechanical) |
 
@@ -74,8 +73,7 @@ Commands are installed to `.cursor/commands/` via `node dist/index.js install`.
 
 | Command | Description | Isolation |
 |---------|-------------|-----------|
-| `/review-local [--focus <dim>]` | Review staged + unstaged local diff | Prompt-enforced |
-| `/review-pr <pr-number> [--focus <dim>]` | Review a GitHub PR diff | Prompt-enforced |
+| `/rms-review [local\|pr <number>] [--focus <dim>]` | Unified review — prompts for scope if none given | Prompt-enforced |
 | `/fix [<finding-id>] [--session <id>]` | Show or apply a finding | Prompt-enforced |
 | `/rms-settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]` | View or set per-agent model config | Prompt-enforced |
 
@@ -90,7 +88,7 @@ Cursor commands use the terminal to run `node dist/index.js ...` and then presen
 | `~/.config/rms/config.json` | No | — | Per-agent model config (preferred over env vars) |
 | `AI_SDK_PROVIDER` | Fallback only | `openai` | AI provider when no config file exists |
 | `AI_SDK_MODEL` | Fallback only | `gpt-4o` | Model ID when no config file exists |
-| `GITHUB_TOKEN` | For `review-pr` only | — | GitHub Personal Access Token for PR diff fetching |
+| `GITHUB_TOKEN` | For PR reviews | — | GitHub Personal Access Token for PR diff fetching |
 | `OPENAI_API_KEY` | If provider=openai | — | Standard provider key |
 | `ANTHROPIC_API_KEY` | If provider=anthropic | — | Standard provider key |
 

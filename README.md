@@ -9,7 +9,7 @@ A three-agent AI code review pipeline for OpenCode and Cursor. The reviewer catc
 Every review runs three agents in strict sequence, each in a fully isolated context window:
 
 ```
-/review-local  or  /review-pr <number>
+/rms-review [local | pr <number>]
         │
         ▼
   ┌─────────────┐
@@ -85,25 +85,15 @@ export GITHUB_TOKEN=ghp_...
 
 ## Commands
 
-### `/review-local [--focus <area>]`
+### `/rms-review [local | pr <number>] [--focus <area>]`
 
-Review your staged and unstaged local changes.
-
-```
-/review-local
-/review-local --focus security
-/review-local --focus performance
-```
-
-Produces a full report in `.reviews/<session>/REPORT.md`.
-
-### `/review-pr <number> [--focus <area>]`
-
-Review a GitHub PR by number. Requires `GITHUB_TOKEN`.
+Unified review entry point. Prompts for scope if called with no arguments.
 
 ```
-/review-pr 42
-/review-pr 42 --focus architecture
+/rms-review               # prompts: local diff or PR?
+/rms-review local         # review staged + unstaged git changes
+/rms-review pr 42         # review GitHub PR #42
+/rms-review local --focus security
 ```
 
 ### `/fix [<finding-id>] [--session <id>]`
@@ -187,11 +177,8 @@ The counter persists in `.reviews/.counter` across sessions. IDs are stable with
 ## CLI reference
 
 ```bash
-# Run a review on local diff
-node dist/index.js review-local [--focus <area>]
-
-# Run a review on a GitHub PR
-node dist/index.js review-pr <pr-number> [--focus <area>]
+# Unified review command (prompts for scope if none given)
+node dist/index.js review [local | pr <pr-number>] [--focus <area>]
 
 # Show or apply a finding
 node dist/index.js fix [<finding-id>] [--session <id>]
@@ -210,7 +197,7 @@ node dist/index.js install
 ```bash
 npm install       # install dependencies
 npm run build     # compile TypeScript → dist/
-npm test          # run 149 tests (Node.js built-in test runner, no extra deps)
+npm test          # run 152 tests (Node.js built-in test runner, no extra deps)
 npm run typecheck # type-check without emitting
 ```
 
