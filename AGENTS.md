@@ -62,7 +62,7 @@ Commands are installed to `.opencode/commands/` via `node dist/index.js install`
 | Command | Description | Isolation |
 |---------|-------------|-----------|
 | `/rms-review [local\|pr <number>] [--focus <dim>]` | Unified review — prompts for scope if none given | `subtask: true` (mechanical) |
-| `/fix [<finding-id>] [--session <id>]` | Show or apply a finding | `subtask: true` (mechanical) |
+| `/rms-fix [<finding-id>] [--session <id>]` | Show or apply a finding | `subtask: true` (mechanical) |
 | `/rms-settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]` | View or set per-agent model config | `subtask: true` (mechanical) |
 
 OpenCode commands use `subtask: true` in frontmatter, which forces execution in a fresh subagent context. The `!node dist/index.js ...` pattern injects the shell output (the Node.js CLI's stdout) directly into the agent's response.
@@ -74,7 +74,7 @@ Commands are installed to `.cursor/commands/` via `node dist/index.js install`.
 | Command | Description | Isolation |
 |---------|-------------|-----------|
 | `/rms-review [local\|pr <number>] [--focus <dim>]` | Unified review — prompts for scope if none given | Prompt-enforced |
-| `/fix [<finding-id>] [--session <id>]` | Show or apply a finding | Prompt-enforced |
+| `/rms-fix [<finding-id>] [--session <id>]` | Show or apply a finding | Prompt-enforced |
 | `/rms-settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]` | View or set per-agent model config | Prompt-enforced |
 
 Cursor commands use the terminal to run `node dist/index.js ...` and then present the output. Isolation is prompt-enforced rather than mechanically enforced — the agent is instructed to run the command and present results, but no `subtask: true` equivalent exists in Cursor.

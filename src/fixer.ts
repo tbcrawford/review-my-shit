@@ -341,7 +341,7 @@ export function formatFindingList(
   }
 
   let output = `# Findings from \`${sessionId}\`\n\n`;
-  output += `${findings.length} finding(s) available. Use \`/fix <finding-id>\` to apply one.\n\n`;
+  output += `${findings.length} finding(s) available. Use \`/rms-fix <finding-id>\` to apply one.\n\n`;
 
   const bySeverity: Record<string, ParsedFinding[]> = {};
   for (const f of findings) {

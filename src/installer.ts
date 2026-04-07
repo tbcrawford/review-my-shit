@@ -6,8 +6,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = join(__dirname, 'templates');
 
 const INSTALLS = [
-  { template: 'opencode-fix.md',       dest: '.opencode/commands/fix.md' },
-  { template: 'cursor-fix.md',         dest: '.cursor/commands/fix.md' },
+  { template: 'opencode-rms-fix.md',    dest: '.opencode/commands/rms-fix.md' },
+  { template: 'cursor-rms-fix.md',     dest: '.cursor/commands/rms-fix.md' },
   { template: 'opencode-settings.md',  dest: '.opencode/commands/rms-settings.md' },
   { template: 'cursor-settings.md',    dest: '.cursor/commands/rms-settings.md' },
   { template: 'opencode-review.md',    dest: '.opencode/commands/rms-review.md' },

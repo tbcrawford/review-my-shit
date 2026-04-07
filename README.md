@@ -96,14 +96,14 @@ Unified review entry point. Prompts for scope if called with no arguments.
 /rms-review local --focus security
 ```
 
-### `/fix [<finding-id>] [--session <id>]`
+### `/rms-fix [<finding-id>] [--session <id>]`
 
 Display a finding and its suggestion so your AI agent can apply it.
 
 ```
-/fix                     # interactive — lists all findings from the latest report
-/fix SEC-00001           # jump directly to a specific finding
-/fix BUG-00003 --session 2026-04-06-local-a3b7
+/rms-fix                     # interactive — lists all findings from the latest report
+/rms-fix SEC-00001           # jump directly to a specific finding
+/rms-fix BUG-00003 --session 2026-04-06-local-a3b7
 ```
 
 The fix command never applies changes automatically. It presents the finding and suggestion; you decide what to do.
