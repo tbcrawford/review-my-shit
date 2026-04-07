@@ -211,12 +211,12 @@ Plans:
 **Goal:** Rename the npm package to `review-my-shit`, update all 6 editor command templates to use the `rms` binary instead of `node dist/index.js`, redesign the installer to write OpenCode commands globally (`~/.config/opencode/command/`) and Cursor commands per-project (`.cursor/commands/`), and update the README and version to reflect the new global install flow.
 **Requirements**: TBD
 **Depends on:** Phase 9
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
-- [ ] 10-01-PLAN.md — Package rename to `review-my-shit` + update all 6 templates to use `rms` binary
-- [ ] 10-02-PLAN.md — Redesign installer for global OpenCode (`~/.config/opencode/command/`) + per-project Cursor
-- [ ] 10-03-PLAN.md — Update README for global install flow + bump version to 0.2.0 (checkpoint)
+- [x] 10-01-PLAN.md — Package rename to `review-my-shit` + update all 6 templates to use `rms` binary
+- [x] 10-02-PLAN.md — Redesign installer for global OpenCode (`~/.config/opencode/command/`) + per-project Cursor
+- [x] 10-03-PLAN.md — Update README for global install flow + bump version to 0.2.0 (checkpoint)
 
 ---
 
