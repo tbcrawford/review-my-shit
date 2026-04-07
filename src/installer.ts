@@ -40,31 +40,27 @@ export async function install(
   const resolvedCursorSkillsDir = options?.cursorSkillsDir ?? join(homedir(), '.cursor', 'skills');
 
   if (editors.includes('opencode')) {
-    console.log(`\nOpenCode (global): ${resolvedGlobalDir}`);
+    console.log(`\n  OpenCode  ${resolvedGlobalDir}`);
     for (const { template, dest } of GLOBAL_INSTALLS) {
       const templatePath = join(TEMPLATES_DIR, template);
       const destPath = join(resolvedGlobalDir, dest);
       await mkdir(dirname(destPath), { recursive: true });
       const content = await readFile(templatePath, 'utf-8');
       await writeFile(destPath, content, 'utf-8');
-      console.log(`  ✓ ${dest}`);
+      console.log(`    ✓ ${dest}`);
     }
   }
 
   if (editors.includes('cursor')) {
-    console.log(`\nCursor (global): ${resolvedCursorSkillsDir}`);
+    console.log(`\n  Cursor  ${resolvedCursorSkillsDir}`);
     for (const { templateDir, skillName } of CURSOR_SKILL_INSTALLS) {
       const templatePath = join(TEMPLATES_DIR, templateDir, 'SKILL.md');
       const destPath = join(resolvedCursorSkillsDir, skillName, 'SKILL.md');
       await mkdir(dirname(destPath), { recursive: true });
       const content = await readFile(templatePath, 'utf-8');
       await writeFile(destPath, content, 'utf-8');
-      console.log(`  ✓ ${skillName}/SKILL.md`);
+      console.log(`    ✓ ${skillName}/SKILL.md`);
     }
   }
 
-  console.log('\nrms installed.');
-  if (editors.includes('opencode')) console.log('  OpenCode: commands available globally in all projects.');
-  if (editors.includes('cursor')) console.log('  Cursor: skills available globally in all projects.');
-  console.log('\nRestart your editor to pick up new commands.');
 }
