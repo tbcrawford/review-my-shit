@@ -294,10 +294,9 @@ program
 
 program
   .command('install')
-  .description('Install rms slash commands into the current project')
+  .description('Install rms slash commands (OpenCode: global, Cursor: this project)')
   .action(async () => {
     const projectRoot = process.cwd();
-    console.log(`Installing rms commands into ${projectRoot}...`);
     await install(projectRoot);
   });
 
