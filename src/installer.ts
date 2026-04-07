@@ -27,34 +27,44 @@ const CURSOR_SKILL_INSTALLS = [
   { templateDir: 'cursor-rms-settings', skillName: 'rms-settings' },
 ];
 
-export async function install(projectRoot: string, globalDir?: string, cursorSkillsDir?: string): Promise<void> {
-  const resolvedGlobalDir = globalDir ?? join(homedir(), '.config', 'opencode', 'command');
-  const resolvedCursorSkillsDir = cursorSkillsDir ?? join(homedir(), '.cursor', 'skills');
+export async function install(
+  projectRoot: string,
+  options?: {
+    editors?: ('opencode' | 'cursor')[];
+    globalDir?: string;
+    cursorSkillsDir?: string;
+  }
+): Promise<void> {
+  const editors = options?.editors ?? ['opencode', 'cursor'];
+  const resolvedGlobalDir = options?.globalDir ?? join(homedir(), '.config', 'opencode', 'command');
+  const resolvedCursorSkillsDir = options?.cursorSkillsDir ?? join(homedir(), '.cursor', 'skills');
 
-  // Install OpenCode commands globally
-  console.log(`\nOpenCode (global): ${resolvedGlobalDir}`);
-  for (const { template, dest } of GLOBAL_INSTALLS) {
-    const templatePath = join(TEMPLATES_DIR, template);
-    const destPath = join(resolvedGlobalDir, dest);
-    await mkdir(dirname(destPath), { recursive: true });
-    const content = await readFile(templatePath, 'utf-8');
-    await writeFile(destPath, content, 'utf-8');
-    console.log(`  ✓ ${dest}`);
+  if (editors.includes('opencode')) {
+    console.log(`\nOpenCode (global): ${resolvedGlobalDir}`);
+    for (const { template, dest } of GLOBAL_INSTALLS) {
+      const templatePath = join(TEMPLATES_DIR, template);
+      const destPath = join(resolvedGlobalDir, dest);
+      await mkdir(dirname(destPath), { recursive: true });
+      const content = await readFile(templatePath, 'utf-8');
+      await writeFile(destPath, content, 'utf-8');
+      console.log(`  ✓ ${dest}`);
+    }
   }
 
-  // Install Cursor skills globally
-  console.log(`\nCursor (global): ${resolvedCursorSkillsDir}`);
-  for (const { templateDir, skillName } of CURSOR_SKILL_INSTALLS) {
-    const templatePath = join(TEMPLATES_DIR, templateDir, 'SKILL.md');
-    const destPath = join(resolvedCursorSkillsDir, skillName, 'SKILL.md');
-    await mkdir(dirname(destPath), { recursive: true });
-    const content = await readFile(templatePath, 'utf-8');
-    await writeFile(destPath, content, 'utf-8');
-    console.log(`  ✓ ${skillName}/SKILL.md`);
+  if (editors.includes('cursor')) {
+    console.log(`\nCursor (global): ${resolvedCursorSkillsDir}`);
+    for (const { templateDir, skillName } of CURSOR_SKILL_INSTALLS) {
+      const templatePath = join(TEMPLATES_DIR, templateDir, 'SKILL.md');
+      const destPath = join(resolvedCursorSkillsDir, skillName, 'SKILL.md');
+      await mkdir(dirname(destPath), { recursive: true });
+      const content = await readFile(templatePath, 'utf-8');
+      await writeFile(destPath, content, 'utf-8');
+      console.log(`  ✓ ${skillName}/SKILL.md`);
+    }
   }
 
   console.log('\nrms installed.');
-  console.log('  OpenCode: commands available globally in all projects.');
-  console.log('  Cursor: skills available globally in all projects.');
+  if (editors.includes('opencode')) console.log('  OpenCode: commands available globally in all projects.');
+  if (editors.includes('cursor')) console.log('  Cursor: skills available globally in all projects.');
   console.log('\nRestart your editor to pick up new commands.');
 }
