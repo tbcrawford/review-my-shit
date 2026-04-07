@@ -49,19 +49,20 @@ All three agents run as isolated `generateText` calls — no shared history, no 
 ### Install
 
 ```bash
-# Clone the repo
-git clone https://github.com/tylercrawford/review-my-shit
-cd review-my-shit
+# Install rms globally
+npm install -g review-my-shit
 
-# Install dependencies and build
-npm install
-npm run build
-
-# Install slash commands into the current project
-node dist/index.js install
+# Install slash commands
+# OpenCode: installed globally (available in all projects automatically)
+# Cursor: installed in the current project (run from each project where you want Cursor integration)
+rms install
 ```
 
-`install` writes slash command files into `.opencode/commands/` and `.cursor/commands/` of whatever project you're in. Re-run after upgrading.
+`install` writes slash command files:
+- **OpenCode:** `~/.config/opencode/command/` — global, no per-project setup needed
+- **Cursor:** `.cursor/commands/` in your current project — run `rms install` from each project
+
+Re-run after upgrading.
 
 ### Configure models
 
@@ -178,16 +179,16 @@ The counter persists in `.reviews/.counter` across sessions. IDs are stable with
 
 ```bash
 # Unified review command (prompts for scope if none given)
-node dist/index.js review [local | pr <pr-number>] [--focus <area>]
+rms review [local | pr <pr-number>] [--focus <area>]
 
 # Show or apply a finding
-node dist/index.js fix [<finding-id>] [--session <id>]
+rms fix [<finding-id>] [--session <id>]
 
 # View or set per-agent model config
-node dist/index.js settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]
+rms settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]
 
-# Install slash commands into the current project
-node dist/index.js install
+# Install slash commands
+rms install
 ```
 
 ---
@@ -197,8 +198,10 @@ node dist/index.js install
 ```bash
 npm install       # install dependencies
 npm run build     # compile TypeScript → dist/
-npm test          # run 152 tests (Node.js built-in test runner, no extra deps)
+npm test          # run tests (Node.js built-in test runner, no extra deps)
 npm run typecheck # type-check without emitting
 ```
+
+For development, use `node dist/index.js <command>` instead of the globally-installed `rms` to test local changes before publishing.
 
 Tests cover: diff preprocessing, reviewer prompt structure, validator isolation, writer output, finding ID generation, pipeline I/O, session management, and config loading.
