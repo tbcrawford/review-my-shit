@@ -57,7 +57,7 @@ All three agents run as isolated `generateText` calls via the Vercel AI SDK. No 
 
 ### OpenCode
 
-Commands are installed to `.opencode/commands/` via `node dist/index.js install`.
+Commands are installed globally to `~/.config/opencode/command/` via `rms install`.
 
 | Command | Description | Isolation |
 |---------|-------------|-----------|
@@ -65,7 +65,7 @@ Commands are installed to `.opencode/commands/` via `node dist/index.js install`
 | `/rms-fix [<finding-id>] [--session <id>]` | Show or apply a finding | `subtask: true` (mechanical) |
 | `/rms-settings [--reviewer p:m] [--validator p:m] [--writer p:m] [--reset]` | View or set per-agent model config | `subtask: true` (mechanical) |
 
-OpenCode commands use `subtask: true` in frontmatter, which forces execution in a fresh subagent context. The `!node dist/index.js ...` pattern injects the shell output (the Node.js CLI's stdout) directly into the agent's response.
+OpenCode commands use `subtask: true` in frontmatter, which forces execution in a fresh subagent context. The `!rms ...` pattern injects the shell output (the globally-installed `rms` binary's stdout) directly into the agent's response.
 
 ### Cursor
 
@@ -128,7 +128,7 @@ Re-run `rms install` after upgrading to pick up the new `/rms-settings` command.
 
 - **No mechanical isolation:** Cursor does not have a `subtask: true` equivalent. Isolation is achieved by instructing the agent to run the terminal command and present output — the agent controls this, not the framework.
 
-- **Terminal execution:** Cursor commands run `node dist/index.js ...` via the terminal tool. The agent then reads the REPORT.md output and presents it to the user.
+- **Terminal execution:** Cursor skills run `rms <subcommand> $ARGUMENTS` via the terminal tool. The agent then reads the REPORT.md output and presents it to the user.
 
 - **Build requirement:** `dist/` must exist before any command runs. If not present, run `npm run build` first. The commands do not auto-build.
 
