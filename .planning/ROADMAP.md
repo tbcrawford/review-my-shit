@@ -229,7 +229,19 @@ Plans:
 - [x] 11-01-PLAN.md — Installer refactor: add `editors` option to `install()` for selective OpenCode/Cursor installation + TDD
 - [ ] 11-02-PLAN.md — `src/setup.ts` npx entrypoint with readline editor prompt, `package.json` bin wiring, README update (checkpoint)
 
+### Phase 12: overhaul installer UX with interactive editor picker, CLI flags for scripting, RMS banner, and polished output
+
+**Goal:** Overhaul `src/setup.ts` and the `rms install` CLI command with an RMS banner, `--opencode`/`--cursor`/`-y/--yes` CLI flags for scripting, a polished interactive prompt showing destination paths, and improved completion output — then bump the version to 0.3.0 and document the new flags in the README.
+**Requirements**: TBD
+**Depends on:** Phase 11
+**Plans:** 3 plans
+
+Plans:
+- [ ] 12-01-PLAN.md — `src/setup.ts` UX overhaul: RMS banner, CLI flags (`--opencode`, `--cursor`, `-y/--yes`), improved prompt with destination paths, polished completion output
+- [ ] 12-02-PLAN.md — `src/installer.ts` output polish + `--opencode`/`--cursor`/`-y/--yes` flags on `rms install` CLI command in `src/index.ts`
+- [ ] 12-03-PLAN.md — Version bump to 0.3.0 across `package.json`/`src/setup.ts`/`src/index.ts`, README flag docs, human end-to-end verification checkpoint
+
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-07 after Phase 11 planned (npx installer — 2 plans)*
+*Last updated: 2026-04-07 after Phase 12 planned (installer UX overhaul — 3 plans)*
