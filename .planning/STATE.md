@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-04-07T15:56:11.725Z"
+status: executing
+last_updated: "2026-04-07T20:04:26.410Z"
 progress:
-  total_phases: 10
+  total_phases: 11
   completed_phases: 6
-  total_plans: 19
-  completed_plans: 15
+  total_plans: 21
+  completed_plans: 16
   percent: 100
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** COMPLETE — All 9 phases done. v1.0 milestone shipped.
+**Status:** Ready to execute
 
 ---
 
@@ -33,7 +33,8 @@ progress:
 
 ## Current Position
 
-Phase: 9 — COMPLETE
+Phase: 11 (make-this-project-installable-via-npx) — EXECUTING
+Plan: 2 of 2
 All 9 phases done. v1.0 milestone fully shipped.
 
 | Field | Value |
@@ -73,6 +74,7 @@ Progress: [██████████] 100% (18/18 plans)
 | Requirements covered | 23 / 23 |
 | Requirements validated | 23 / 23 |
 | Phase 10 P03 | 4 min | 5 tasks | 11 files |
+| Phase 11 P01 | 4 min | 1 tasks | 2 files |
 
 ### Execution History
 
@@ -102,6 +104,7 @@ Progress: [██████████] 100% (18/18 plans)
 - Phase 8 added: Per-agent model selection via JSON config with /rms-settings command
 - Phase 9 added: Unified /rms-review command that prompts user for review scope when no context is provided
 - Phase 10 added: change the installation of this project to be global instead of per project
+- Phase 11 added: make this project installable via npx instead of requiring that rms is installed and then rms install is run separately — one installation method where the user selects which editors to install for
 
 ### Key Decisions Made
 
@@ -144,6 +147,8 @@ Progress: [██████████] 100% (18/18 plans)
 | `rms review` scope routing | D-01: no-args outputs structured scope-prompt; `local`/`pr` route to shared helpers; unknown scope exits 1 | 09-01 |
 | `runLocalReview`/`runPrReview` helpers | Extracted from existing command action bodies — no pipeline logic changed; DRY refactor only | 09-01 |
 | Destination name `rms-review.md` (with prefix) | Mirrors `rms-settings.md` convention; avoids collision with `review-local.md` / `review-pr.md` | 09-02 |
+| Options object replaces positional args for install() | Cleaner ergonomics for Plan 02 setup.ts; more extensible than positional args | 11-01 |
+| Default editors=['opencode','cursor'] for backward compat | Existing `rms install` call site passes no options; default preserves all-editors behavior | 11-01 |
 
 ### Open Questions
 
@@ -165,22 +170,18 @@ None — all 9 phases complete. v1.0 milestone done.
 
 ### Context for Next Session
 
-All 9 phases complete. v1.0 milestone fully shipped. 152 tests pass.
+Phase 11 in progress. Plan 01 complete (install() editors option). Plan 02 pending (npx setup.ts entrypoint).
 
-Key Phase 9 artifacts:
+Key Phase 11 Plan 01 artifacts:
 
-- `src/index.ts`: `runLocalReview()` + `runPrReview()` helpers extracted; `review` sub-command added
-- `src/index.test.ts`: 3 new routing unit tests (152 total passing)
-- `src/templates/opencode-review.md`: OpenCode `/rms-review` command template
-- `src/templates/cursor-review.md`: Cursor `/rms-review` command template with scope-prompt handling
-- `src/installer.ts`: 10 INSTALLS entries (was 8); adds rms-review for both editors
-- `.opencode/commands/rms-review.md` + `.cursor/commands/rms-review.md`: installed and ready
+- `src/installer.ts`: refactored install() to accept options object with editors array; conditional install blocks for opencode/cursor
+- `src/installer.test.ts`: 6 existing tests updated to options-object call style; 3 new selective-install tests added (161 total passing)
 
 ### How to Resume
 
-No resumption needed — all phases complete. v1.0 shipped.
+Phase 11 Plan 02: Create src/setup.ts npx entrypoint — interactive editor selection prompts, calls install() with selected editors, wired into package.json bin.
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-06 after Phase 9 complete (unified /rms-review command — runLocalReview/runPrReview helpers, review sub-command, 2 new editor templates, 10-entry installer — 152 tests passing)*
+*Last updated: 2026-04-07 after Phase 11 Plan 01 complete (install() editors option — 161 tests passing)*

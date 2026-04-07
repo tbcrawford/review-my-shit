@@ -223,10 +223,10 @@ Plans:
 **Goal:** Replace the two-step global install (`npm install -g review-my-shit && rms install`) with a single `npx review-my-shit` command that prompts for editor selection (OpenCode, Cursor, or both) and installs the appropriate slash commands — no prior global install required.
 **Requirements**: TBD
 **Depends on:** Phase 10
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 11-01-PLAN.md — Installer refactor: add `editors` option to `install()` for selective OpenCode/Cursor installation + TDD
+- [x] 11-01-PLAN.md — Installer refactor: add `editors` option to `install()` for selective OpenCode/Cursor installation + TDD
 - [ ] 11-02-PLAN.md — `src/setup.ts` npx entrypoint with readline editor prompt, `package.json` bin wiring, README update (checkpoint)
 
 ---
