@@ -4,7 +4,8 @@
   "description": "review-my-shit — AI code review pipeline for OpenCode and Cursor",
   "type": "module",
   "bin": {
-    "rms": "dist/index.js"
+    "rms": "dist/index.js",
+    "review-my-shit": "dist/setup.js"
   },
   "main": "dist/index.js",
   "files": [

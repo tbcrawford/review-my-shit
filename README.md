@@ -49,20 +49,17 @@ All three agents run as isolated `generateText` calls — no shared history, no 
 ### Install
 
 ```bash
-# Install rms globally
-npm install -g review-my-shit
-
-# Install slash commands
-# OpenCode: installed globally (available in all projects automatically)
-# Cursor: installed globally as skills (available in all projects automatically)
-rms install
+npx review-my-shit
 ```
 
-`install` writes slash command files:
-- **OpenCode:** `~/.config/opencode/command/` — global, no per-project setup needed
-- **Cursor:** `~/.cursor/skills/<name>/SKILL.md` — global, no per-project setup needed
+Running `npx review-my-shit` prompts you to choose which editors to install for (OpenCode, Cursor, or both), then writes the slash command files:
 
-Re-run after upgrading.
+- **OpenCode:** `~/.config/opencode/command/` — global, available in all projects
+- **Cursor:** `~/.cursor/skills/<name>/SKILL.md` — global, available in all projects
+
+Re-run after upgrading to pick up updated commands.
+
+> **Already have rms installed globally?** You can also run `rms install` directly.
 
 ### Configure models
 
