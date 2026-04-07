@@ -54,13 +54,13 @@ npm install -g review-my-shit
 
 # Install slash commands
 # OpenCode: installed globally (available in all projects automatically)
-# Cursor: installed in the current project (run from each project where you want Cursor integration)
+# Cursor: installed globally as skills (available in all projects automatically)
 rms install
 ```
 
 `install` writes slash command files:
 - **OpenCode:** `~/.config/opencode/command/` — global, no per-project setup needed
-- **Cursor:** `.cursor/commands/` in your current project — run `rms install` from each project
+- **Cursor:** `~/.cursor/skills/<name>/SKILL.md` — global, no per-project setup needed
 
 Re-run after upgrading.
 

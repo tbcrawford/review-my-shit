@@ -294,7 +294,7 @@ program
 
 program
   .command('install')
-  .description('Install rms slash commands (OpenCode: global, Cursor: this project)')
+  .description('Install rms slash commands (OpenCode: global, Cursor: global skills)')
   .action(async () => {
     const projectRoot = process.cwd();
     await install(projectRoot);

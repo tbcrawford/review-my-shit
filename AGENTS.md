@@ -69,7 +69,7 @@ OpenCode commands use `subtask: true` in frontmatter, which forces execution in 
 
 ### Cursor
 
-Commands are installed to `.cursor/commands/` via `node dist/index.js install`.
+Skills are installed globally to `~/.cursor/skills/` via `node dist/index.js install`. Each command becomes a skill directory (`rms-review/SKILL.md`, `rms-fix/SKILL.md`, `rms-settings/SKILL.md`) — available in all projects automatically.
 
 | Command | Description | Isolation |
 |---------|-------------|-----------|
@@ -143,7 +143,7 @@ npm run build
 # Run all tests
 npm test
 
-# Install commands into .opencode/commands/ and .cursor/commands/
+# Install commands into ~/.config/opencode/command/ and ~/.cursor/skills/
 node dist/index.js install
 ```
 
