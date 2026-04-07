@@ -3,4 +3,4 @@ description: Apply a finding from the latest rms review report (by ID, or list a
 argument-hint: [<finding-id>] [--session <id>]
 subtask: true
 ---
-!node dist/index.js fix $ARGUMENTS
+!rms fix $ARGUMENTS

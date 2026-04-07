@@ -4,12 +4,10 @@ argument-hint: "[--reviewer provider:model] [--validator provider:model] [--writ
 ---
 Run the following command in the terminal and present the output to the user:
 
-node dist/index.js settings $ARGUMENTS
-
-If the command fails with "Cannot find module" or similar, run `npm run build` first and retry.
+rms settings $ARGUMENTS
 
 To set per-agent models, run with flags:
-node dist/index.js settings --reviewer anthropic:claude-opus-4-5 --validator anthropic:claude-sonnet-4-5 --writer openai:gpt-4o
+rms settings --reviewer anthropic:claude-opus-4-5 --validator anthropic:claude-sonnet-4-5 --writer openai:gpt-4o
 
 Supported providers: openai, anthropic, google
 Model spec format: provider:model-id (e.g. anthropic:claude-opus-4-5)

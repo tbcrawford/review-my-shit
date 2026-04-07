@@ -1,5 +1,5 @@
 {
-  "name": "rms",
+  "name": "review-my-shit",
   "version": "0.1.0",
   "description": "review-my-shit — AI code review pipeline for OpenCode and Cursor",
   "type": "module",

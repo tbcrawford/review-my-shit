@@ -5,7 +5,7 @@ argument-hint: [<finding-id>] [--session <id>]
 Run the following command in the terminal and capture the output:
 
 ```
-node dist/index.js fix $ARGUMENTS
+rms fix $ARGUMENTS
 ```
 
 If no finding ID was provided, present the list of findings to the user and ask them to choose one by ID, then re-run with that ID.
