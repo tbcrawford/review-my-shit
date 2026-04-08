@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-last_updated: "2026-04-08T01:51:28.682Z"
+status: executing
+last_updated: "2026-04-08T14:34:31.491Z"
 progress:
-  total_phases: 12
+  total_phases: 13
   completed_phases: 8
-  total_plans: 24
-  completed_plans: 20
+  total_plans: 26
+  completed_plans: 21
   percent: 100
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** Ready to plan
+**Status:** Ready to execute
 
 ---
 
@@ -33,8 +33,8 @@ progress:
 
 ## Current Position
 
-Phase: 12
-Plan: Not started
+Phase: 13 (update-all-dependencies-to-the-latest-stable-versions-for-node-make-sure-to-update-to-the-latest-lts-make-sure-the-build-works-by-the-end) — EXECUTING
+Plan: 2 of 2
 All 9 phases done. v1.0 milestone fully shipped.
 
 | Field | Value |
@@ -76,6 +76,7 @@ Progress: [██████████] 100% (18/18 plans)
 | Phase 10 P03 | 4 min | 5 tasks | 11 files |
 | Phase 11 P01 | 4 min | 1 tasks | 2 files |
 | Phase 11 P02 | 45 | 3 tasks | 4 files |
+| Phase 13 P01 | 96s | 3 tasks | 4 files |
 
 ### Execution History
 
@@ -107,6 +108,7 @@ Progress: [██████████] 100% (18/18 plans)
 - Phase 10 added: change the installation of this project to be global instead of per project
 - Phase 11 added: make this project installable via npx instead of requiring that rms is installed and then rms install is run separately — one installation method where the user selects which editors to install for
 - Phase 12 added: overhaul installer UX with interactive editor picker, CLI flags for scripting, RMS banner, and polished output
+- Phase 13 added: update all dependencies to the latest stable versions. For node, make sure to update to the latest lts. Make sure the build works by the end.
 
 ### Key Decisions Made
 
@@ -151,6 +153,9 @@ Progress: [██████████] 100% (18/18 plans)
 | Destination name `rms-review.md` (with prefix) | Mirrors `rms-settings.md` convention; avoids collision with `review-local.md` / `review-pr.md` | 09-02 |
 | Options object replaces positional args for install() | Cleaner ergonomics for Plan 02 setup.ts; more extensible than positional args | 11-01 |
 | Default editors=['opencode','cursor'] for backward compat | Existing `rms install` call site passes no options; default preserves all-editors behavior | 11-01 |
+| TypeScript 6 requires explicit "types":["node"] in tsconfig | TS6 no longer auto-discovers @types packages; added as the sole TS6 migration step | 13-01 |
+| engines.node bumped to >=20.0.0 | commander v14 drops Node 18 support; updated engines field to match minimum | 13-01 |
+| .nvmrc pinned to Node 24 LTS (Krypton) | Pins developer environments for reproducibility; Node 24 is current LTS | 13-01 |
 
 ### Open Questions
 
@@ -172,16 +177,19 @@ None — all 9 phases complete. v1.0 milestone done.
 
 ### Context for Next Session
 
-Phase 11 in progress. Plan 01 complete (install() editors option). Plan 02 pending (npx setup.ts entrypoint).
+Phase 13 in progress. Plan 01 complete (dependency updates). Plan 02 pending.
 
-Key Phase 11 Plan 01 artifacts:
+Key Phase 13 Plan 01 artifacts:
 
-- `src/installer.ts`: refactored install() to accept options object with editors array; conditional install blocks for opencode/cursor
-- `src/installer.test.ts`: 6 existing tests updated to options-object call style; 3 new selective-install tests added (161 total passing)
+- `package.json`: all deps bumped to latest stable (zod@^4, commander@^14, typescript@^6, @types/node@^25)
+- `tsconfig.json`: added `"types": ["node"]` for TypeScript 6 compatibility
+- `.nvmrc`: created with `24` (Node.js v24 LTS)
+- `package-lock.json`: updated lock file (zod@4.3.6, commander@14.0.3, typescript@6.0.2)
+- Build passes: zero TS errors. Tests: 168/168 passing.
 
 ### How to Resume
 
-Phase 11 Plan 02: Create src/setup.ts npx entrypoint — interactive editor selection prompts, calls install() with selected editors, wired into package.json bin.
+Phase 13 Plan 02: Execute next plan in the phase.
 
 ---
 
