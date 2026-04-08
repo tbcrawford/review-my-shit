@@ -151,6 +151,13 @@ Plans:
 | 6. Fix Command | 2/2 | Complete   | 2026-04-06 |
 | 7. Cross-Editor Hardening | 2/2 | Complete   | 2026-04-06 |
 | 8. Per-agent model selection | 2/2 | Complete    | 2026-04-06 |
+| 9. Unified /rms-review Command | 2/2 | Complete   | 2026-04-06 |
+| 10. Global Installation | 3/3 | Complete   | 2026-04-06 |
+| 11. npx Installable | 2/2 | Complete   | 2026-04-06 |
+| 12. Installer UX Overhaul | 3/3 | Complete   | 2026-04-06 |
+| 13. Dependency Updates | 2/2 | Complete   | 2026-04-08 |
+| 14. Vitest Migration | 2/2 | Complete   | 2026-04-08 |
+| 15. Colored Banner + Inquirer | 2/2 | Complete   | 2026-04-08 |
 
 ---
 
@@ -277,4 +284,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-08 after Phase 15 planned (banner color + inquirer selector — 2 plans)*
+*Last updated: 2026-04-08 after Phase 15 complete (banner color + inquirer selector — human checkpoint approved)*
