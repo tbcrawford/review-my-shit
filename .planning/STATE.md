@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-04-08T15:03:33.065Z"
+status: executing
+last_updated: "2026-04-08T15:37:21.862Z"
 progress:
-  total_phases: 13
+  total_phases: 14
   completed_phases: 9
-  total_plans: 26
-  completed_plans: 22
+  total_plans: 28
+  completed_plans: 23
   percent: 85
 ---
 
 # STATE: review-my-shit (rms)
 
-**Last updated:** 2026-04-06
-**Status:** Milestone complete
+**Last updated:** 2026-04-08
+**Status:** Executing Phase 14
 
 ---
 
@@ -33,18 +33,18 @@ progress:
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-All phases done. All dependency updates verified.
+Phase: 14 (use-vitest-for-tests-if-possible) — EXECUTING
+Plan: 2 of 2
+Phase 14 Plan 01 complete. vitest installed and configured. Test migration (Plan 02) is next.
 
 | Field | Value |
 |-------|-------|
-| Current phase | Phase 13: Dependency Updates — COMPLETE |
-| Status | All success criteria met; 168 tests passing; human checkpoint approved |
+| Current phase | Phase 14: use-vitest-for-tests-if-possible — PLAN 01 COMPLETE |
+| Status | vitest@4.1.3 installed; vitest.config.ts created; test script updated to vitest run |
 | Blocking issues | None |
 
 ```
-Progress: [█████████░] 85% (22/26 plans)
+Progress: [████████░░] 82% (23/28 plans)
 ```
 
 ---
@@ -78,6 +78,7 @@ Progress: [█████████░] 85% (22/26 plans)
 | Phase 11 P02 | 45 | 3 tasks | 4 files |
 | Phase 13 P01 | 96s | 3 tasks | 4 files |
 | Phase 13 P02 | 27s | 2 tasks | 0 files |
+| Phase 14 P01 | 90s | 3 tasks | 3 files |
 
 ### Execution History
 
@@ -110,6 +111,7 @@ Progress: [█████████░] 85% (22/26 plans)
 - Phase 11 added: make this project installable via npx instead of requiring that rms is installed and then rms install is run separately — one installation method where the user selects which editors to install for
 - Phase 12 added: overhaul installer UX with interactive editor picker, CLI flags for scripting, RMS banner, and polished output
 - Phase 13 added: update all dependencies to the latest stable versions. For node, make sure to update to the latest lts. Make sure the build works by the end.
+- Phase 14 added: use vitest for tests, if possible
 
 ### Key Decisions Made
 
@@ -157,6 +159,8 @@ Progress: [█████████░] 85% (22/26 plans)
 | TypeScript 6 requires explicit "types":["node"] in tsconfig | TS6 no longer auto-discovers @types packages; added as the sole TS6 migration step | 13-01 |
 | engines.node bumped to >=20.0.0 | commander v14 drops Node 18 support; updated engines field to match minimum | 13-01 |
 | .nvmrc pinned to Node 24 LTS (Krypton) | Pins developer environments for reproducibility; Node 24 is current LTS | 13-01 |
+| globals: false in vitest.config.ts | Avoids needing tsconfig types change; explicit vitest imports stay compatible with NodeNext and TS6 | 14-01 |
+| vitest run as default test script | CI/one-shot mode; vitest (watch) added as test:watch; no coverage config needed this phase | 14-01 |
 
 ### Open Questions
 
@@ -178,21 +182,20 @@ None — all 9 phases complete. v1.0 milestone done.
 
 ### Context for Next Session
 
-Phase 13 complete. All dependency updates verified.
+Phase 14 Plan 01 complete. vitest infrastructure installed and configured.
 
-Phase 13 final state:
+Phase 14 Plan 01 final state:
 
-- `package.json`: all deps bumped to latest stable (zod@^4, commander@^14, typescript@^6, @types/node@^25)
-- `tsconfig.json`: `"types": ["node"]` for TypeScript 6 compatibility
-- `.nvmrc`: created with `24` (Node.js v24 LTS)
-- `package-lock.json`: updated lock file (zod@4.3.6, commander@14.0.3, typescript@6.0.2)
-- Build passes: zero TS errors. Tests: 168/168 passing. Human checkpoint: approved.
+- `vitest.config.ts`: created with `environment: 'node'`, `include: ['src/**/*.test.ts']`, `globals: false`
+- `package.json`: `"vitest": "^4.1.0"` in devDependencies; test script → `vitest run`; test:watch → `vitest`
+- `bun.lock`: updated with vitest@4.1.3 (43 new packages)
+- vitest launches and discovers all 13 test files; tests fail due to `node:test` imports (expected — Plan 02 migrates them)
 
 ### How to Resume
 
-No active phase. All planned work complete.
+Execute Phase 14 Plan 02: migrate all 13 test files from `node:test` to vitest imports.
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-08 after Phase 13 Plan 02 complete (dependency verification — 168 tests passing, human approved)*
+*Last updated: 2026-04-08 after Phase 14 Plan 01 complete (vitest installed; test script updated)*

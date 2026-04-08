@@ -257,10 +257,10 @@ Plans:
 **Goal:** Migrate all 13 test files (168 tests) from `node:test` + `node:assert/strict` to vitest, replacing the test script with `vitest run` and ensuring all tests pass under the new runner.
 **Requirements**: TBD
 **Depends on:** Phase 13
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 14-01-PLAN.md — vitest infrastructure: install vitest@^4.1.0, create vitest.config.ts, update package.json test scripts
+- [x] 14-01-PLAN.md — vitest infrastructure: install vitest@^4.1.0, create vitest.config.ts, update package.json test scripts
 - [ ] 14-02-PLAN.md — Migrate all 13 test files from node:test/assert to vitest/expect (168 tests)
 
 ---
