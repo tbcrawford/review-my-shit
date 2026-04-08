@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-07T20:04:26.410Z"
+last_updated: "2026-04-07T22:30:25.103Z"
 progress:
-  total_phases: 11
+  total_phases: 12
   completed_phases: 6
-  total_plans: 21
+  total_plans: 24
   completed_plans: 16
   percent: 100
 ---
@@ -15,7 +15,7 @@ progress:
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-06
-**Status:** Ready to execute
+**Status:** Executing Phase 12
 
 ---
 
@@ -33,8 +33,8 @@ progress:
 
 ## Current Position
 
-Phase: 11 (make-this-project-installable-via-npx) — EXECUTING
-Plan: 2 of 2
+Phase: 12 (overhaul-installer-ux) — EXECUTING
+Plan: 1 of 3
 All 9 phases done. v1.0 milestone fully shipped.
 
 | Field | Value |
@@ -105,6 +105,7 @@ Progress: [██████████] 100% (18/18 plans)
 - Phase 9 added: Unified /rms-review command that prompts user for review scope when no context is provided
 - Phase 10 added: change the installation of this project to be global instead of per project
 - Phase 11 added: make this project installable via npx instead of requiring that rms is installed and then rms install is run separately — one installation method where the user selects which editors to install for
+- Phase 12 added: overhaul installer UX with interactive editor picker, CLI flags for scripting, RMS banner, and polished output
 
 ### Key Decisions Made
 
