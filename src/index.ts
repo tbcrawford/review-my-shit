@@ -3,6 +3,7 @@ import { Command } from 'commander';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { nanoid } from 'nanoid';
+import { select, input } from '@inquirer/prompts';
 import { install } from './installer.js';
 import { loadRmsConfig, resolveAgentModel, getConfigPath, saveRmsConfig } from './config.js';
 import type { AgentModelSpec } from './schemas.js';
@@ -331,14 +332,54 @@ program.command('review')
   .action(async (scope: string | undefined, prArg: string | undefined, opts: { focus?: string }) => {
     const projectRoot = process.cwd();
 
-    // No scope provided — print prompt and exit 0
+    // No scope provided — interactive selector
     if (!scope) {
-      console.log('[rms] What would you like to review?\n');
-      console.log('  1. local  — Review staged and unstaged git changes in the working tree');
-      console.log('  2. pr     — Review a GitHub Pull Request (you will need to provide the PR number)');
-      console.log('\nRe-invoke with your choice:');
-      console.log('  rms review local [--focus <area>]');
-      console.log('  rms review pr <pr-number> [--focus <area>]');
+      let chosenScope: string;
+      try {
+        chosenScope = await select({
+          message: 'What would you like to review?',
+          choices: [
+            {
+              name: 'local  —  Review staged and unstaged git changes',
+              value: 'local',
+            },
+            {
+              name: 'pr     —  Review a GitHub Pull Request',
+              value: 'pr',
+            },
+          ],
+        });
+      } catch {
+        // Non-TTY or user cancelled (Ctrl+C) — print usage and exit cleanly
+        console.log('\nUsage:');
+        console.log('  rms review local [--focus <area>]');
+        console.log('  rms review pr <pr-number> [--focus <area>]');
+        return;
+      }
+
+      if (chosenScope === 'local') {
+        await runLocalReview({ projectRoot, focus: opts.focus });
+        return;
+      }
+
+      if (chosenScope === 'pr') {
+        // For PR scope, we still need the PR number — prompt for it
+        let prInput: string;
+        try {
+          prInput = await input({ message: 'Enter PR number:' });
+        } catch {
+          console.error('[rms] PR number required. Usage: rms review pr <pr-number>');
+          process.exit(1);
+        }
+        const prNumber = parseInt(prInput, 10);
+        if (isNaN(prNumber) || prNumber <= 0) {
+          console.error(`Invalid PR number: "${prInput}". Must be a positive integer.`);
+          process.exit(1);
+        }
+        await runPrReview({ projectRoot, prNumber, focus: opts.focus });
+        return;
+      }
+
       return;
     }
 
