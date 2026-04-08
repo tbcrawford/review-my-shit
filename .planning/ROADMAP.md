@@ -234,11 +234,11 @@ Plans:
 **Goal:** Overhaul `src/setup.ts` and the `rms install` CLI command with an RMS banner, `--opencode`/`--cursor`/`-y/--yes` CLI flags for scripting, a polished interactive prompt showing destination paths, and improved completion output — then bump the version to 0.3.0 and document the new flags in the README.
 **Requirements**: TBD
 **Depends on:** Phase 11
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 
 Plans:
 - [x] 12-01-PLAN.md — `src/setup.ts` UX overhaul: RMS banner, CLI flags (`--opencode`, `--cursor`, `-y/--yes`), improved prompt with destination paths, polished completion output
-- [ ] 12-02-PLAN.md — `src/installer.ts` output polish + `--opencode`/`--cursor`/`-y/--yes` flags on `rms install` CLI command in `src/index.ts`
+- [x] 12-02-PLAN.md — `src/installer.ts` output polish + `--opencode`/`--cursor`/`-y/--yes` flags on `rms install` CLI command in `src/index.ts`
 - [ ] 12-03-PLAN.md — Version bump to 0.3.0 across `package.json`/`src/setup.ts`/`src/index.ts`, README flag docs, human end-to-end verification checkpoint
 
 ---
