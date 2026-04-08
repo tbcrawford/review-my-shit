@@ -12,8 +12,8 @@
  *   (no flag)      Interactive numbered prompt
  */
 import { realpathSync } from 'node:fs';
-import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
+import { select } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { install } from './installer.js';
 
@@ -65,29 +65,34 @@ export function resolveEditorsFromArgs(argv: string[]): ('opencode' | 'cursor')[
 // Interactive prompt
 // ---------------------------------------------------------------------------
 
-async function promptLine(question: string): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer.trim());
-    });
-  });
-}
-
 async function promptEditorSelection(): Promise<('opencode' | 'cursor')[]> {
-  console.log('  Which editors would you like to install rms for?\n');
-  console.log('  1. OpenCode  —  ~/.config/opencode/command/  (global, all projects)');
-  console.log('  2. Cursor    —  ~/.cursor/skills/            (global, all projects)');
-  console.log('  3. Both      —  install for all editors (default)');
-  console.log('');
+  try {
+    const answer = await select({
+      message: 'Which editors would you like to install rms for?',
+      choices: [
+        {
+          name: 'Both  —  OpenCode + Cursor (recommended)',
+          value: 'both' as const,
+        },
+        {
+          name: 'OpenCode  —  ~/.config/opencode/command/',
+          value: 'opencode' as const,
+        },
+        {
+          name: 'Cursor    —  ~/.cursor/skills/',
+          value: 'cursor' as const,
+        },
+      ],
+      default: 'both',
+    });
 
-  const answer = await promptLine('  Enter choice [3]: ');
-
-  if (answer === '1') return ['opencode'];
-  if (answer === '2') return ['cursor'];
-  // Default: both (covers empty input, '3', or anything else)
-  return ['opencode', 'cursor'];
+    if (answer === 'opencode') return ['opencode'];
+    if (answer === 'cursor') return ['cursor'];
+    return ['opencode', 'cursor'];
+  } catch {
+    // Non-TTY or cancelled — default to both
+    return ['opencode', 'cursor'];
+  }
 }
 
 // ---------------------------------------------------------------------------
