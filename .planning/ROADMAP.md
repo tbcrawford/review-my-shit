@@ -268,11 +268,11 @@ Plans:
 **Goal:** Add chalk v5 to colorize the ASCII art banner in setup.ts, and replace the readline-based promptEditorSelection (setup.ts) and plain console.log scope menu (index.ts) with interactive arrow-key selectors from @inquirer/prompts.
 **Requirements**: TBD
 **Depends on:** Phase 14
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 15-01-PLAN.md — Add chalk v5, colorize RMS banner in setup.ts, update banner test
-- [ ] 15-02-PLAN.md — Add @inquirer/prompts, replace readline selector in setup.ts + scope prompt in index.ts (has human checkpoint)
+- [x] 15-02-PLAN.md — Add @inquirer/prompts, replace readline selector in setup.ts + scope prompt in index.ts (has human checkpoint)
 
 ---
 

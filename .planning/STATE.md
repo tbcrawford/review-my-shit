@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-04-08T18:16:26.085Z"
+status: verifying
+last_updated: "2026-04-08T18:26:34.971Z"
 progress:
   total_phases: 15
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 30
-  completed_plans: 25
+  completed_plans: 26
   percent: 86
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-08
-**Status:** Ready to execute
+**Status:** Phase complete — ready for verification
 
 ---
 
@@ -33,9 +33,9 @@ progress:
 
 ## Current Position
 
-Phase: 15 (color-the-rms-ascii-art-banner-and-switch-the-multi-selector-to-ink-or-inquirer) — EXECUTING
-Plan: 2 of 2
-Phase 15 Plan 01 complete. chalk v5 installed; RMS banner colorized (cyan borders, bold white rms, yellow version).
+Phase: 15 (color-the-rms-ascii-art-banner-and-switch-the-multi-selector-to-ink-or-inquirer) — AWAITING VERIFICATION
+Plan: 2 of 2 (COMPLETE — human verification checkpoint pending)
+Phase 15 Plan 02 complete. @inquirer/prompts v8 installed; arrow-key selectors in setup.ts and index.ts.
 
 | Field | Value |
 |-------|-------|
@@ -81,6 +81,8 @@ Progress: [█████████░] 86% (24/28 plans)
 | Phase 14 P01 | 90s | 3 tasks | 3 files |
 | Phase 14 P02 | 511s | 2 tasks | 13 files |
 | Phase 15 P01 | 123s | 1 tasks | 4 files |
+| Phase 15 P02 | 311s | 2 tasks | 5 files |
+| Phase 15 P02 | 311s | 2 tasks | 5 files |
 
 ### Execution History
 
@@ -168,6 +170,8 @@ Progress: [█████████░] 86% (24/28 plans)
 | assert.ok → expect().toBeTruthy() | vitest idiomatic equivalent; toBeTruthy() checks loose truthiness matching assert.ok semantics | 14-02 |
 | chalk v5 for banner colors | Pure ESM, ships own types, NodeNext compatible; no @types/chalk needed | 15-01 |
 | BANNER_STRING kept as const export | chalk auto-detects color support at runtime; no lazy evaluation needed; API stays identical | 15-01 |
+| @inquirer/prompts v8 for arrow-key selectors | ESM-native, zero peer deps, ships own types, non-TTY fallback via try/catch | 15-02 |
+| index.test.ts stdin.end() for non-TTY path | Close stdin immediately so inquirer falls back gracefully in CI/subprocess test context | 15-02 |
 
 ### Open Questions
 
@@ -189,20 +193,23 @@ None — all 9 phases complete. v1.0 milestone done.
 
 ### Context for Next Session
 
-Phase 15 Plan 01 complete. Chalk v5 banner colorization done.
+Phase 15 Plan 02 complete. @inquirer/prompts arrow-key selectors installed.
 
-Phase 15 Plan 01 final state:
+Phase 15 Plan 02 final state:
 
-- chalk v5.6.2 added to runtime dependencies
-- BANNER_STRING in src/setup.ts uses chalk.cyan borders, chalk.bold.white "rms", chalk.dim.white subtitle, chalk.yellow version
-- setup.test.ts updated with stripAnsi helper; 169 tests pass
-- bun run build and bun run test both exit 0
+- @inquirer/prompts@8.4.1 added to runtime dependencies
+- setup.ts: readline removed; promptEditorSelection uses select() with non-TTY fallback
+- index.ts: console.log scope menu replaced with select(); PR path uses input() for PR number
+- index.test.ts: updated with stdin.end() and flexible assertion for non-TTY output
+- bun run build and bun run test both exit 0 (169 tests pass)
+
+Phase 15 is COMPLETE. Awaiting human verification checkpoint (Task 3).
 
 ### How to Resume
 
-Execute Phase 15 Plan 02 — switch the multi-selector to inquirer.
+Phase 15 is complete — human verification checkpoint pending (see 15-02 Task 3).
 
 ---
 
 *State initialized: 2026-04-03*
-*Last updated: 2026-04-08 after Phase 14 Plan 02 complete (all 13 test files migrated to vitest)*
+*Last updated: 2026-04-08 after Phase 15 Plan 02 complete (@inquirer/prompts selectors)*
