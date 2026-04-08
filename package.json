@@ -1,6 +1,6 @@
 {
   "name": "review-my-shit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "review-my-shit — AI code review pipeline for OpenCode and Cursor",
   "type": "module",
   "bin": {

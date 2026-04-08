@@ -41,8 +41,8 @@ describe('resolveEditorsFromArgs', () => {
 });
 
 describe('BANNER_STRING', () => {
-  it('Test 7: banner contains "rms" and "v0.2.0"', () => {
+  it('Test 7: banner contains "rms" and "v0.3.0"', () => {
     assert.ok(BANNER_STRING.includes('rms'), 'Banner should contain "rms"');
-    assert.ok(BANNER_STRING.includes('v0.2.0'), 'Banner should contain "v0.2.0"');
+    assert.ok(BANNER_STRING.includes('v0.3.0'), 'Banner should contain "v0.3.0"');
   });
 });
