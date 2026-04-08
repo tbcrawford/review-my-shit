@@ -263,7 +263,18 @@ Plans:
 - [x] 14-01-PLAN.md — vitest infrastructure: install vitest@^4.1.0, create vitest.config.ts, update package.json test scripts
 - [x] 14-02-PLAN.md — Migrate all 13 test files from node:test/assert to vitest/expect (168 tests)
 
+### Phase 15: color the RMS ascii art banner and switch the multi selector to ink or inquirer
+
+**Goal:** Add chalk v5 to colorize the ASCII art banner in setup.ts, and replace the readline-based promptEditorSelection (setup.ts) and plain console.log scope menu (index.ts) with interactive arrow-key selectors from @inquirer/prompts.
+**Requirements**: TBD
+**Depends on:** Phase 14
+**Plans:** 2 plans
+
+Plans:
+- [ ] 15-01-PLAN.md — Add chalk v5, colorize RMS banner in setup.ts, update banner test
+- [ ] 15-02-PLAN.md — Add @inquirer/prompts, replace readline selector in setup.ts + scope prompt in index.ts (has human checkpoint)
+
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-08 after Phase 14 planned (vitest migration — 2 plans)*
+*Last updated: 2026-04-08 after Phase 15 planned (banner color + inquirer selector — 2 plans)*
