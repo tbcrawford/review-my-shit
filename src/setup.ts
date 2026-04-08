@@ -33,7 +33,7 @@ export const BANNER_STRING = [
   c('  ██╔══██╗██║╚██╔╝██║╚════██║'),
   c('  ██║  ██║██║ ╚═╝ ██║███████║'),
   c('  ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝'),
-  `  ${chalk.dim.white('review-my-shit')}  ${chalk.yellow(`v${VERSION}`)}`,
+  `  ${chalk.gray('Review My Shit')}  ${chalk.yellow(`v${VERSION}`)}`,
   '',
 ].join('\n');
 
@@ -72,20 +72,28 @@ export function resolveEditorsFromArgs(argv: string[]): ('opencode' | 'cursor')[
 async function promptEditorSelection(): Promise<('opencode' | 'cursor')[]> {
   try {
     const answer = await checkbox<'opencode' | 'cursor'>({
-      message: 'Which editors would you like to install rms for?',
+      message: 'Install globally for:',
+      prefix: '',
       choices: [
         {
-          name: 'OpenCode  —  ~/.config/opencode/command/',
+          name: 'OpenCode',
           value: 'opencode' as const,
           checked: true,
         },
         {
-          name: 'Cursor    —  ~/.cursor/skills/',
+          name: 'Cursor',
           value: 'cursor' as const,
           checked: true,
         },
       ],
-    });
+      theme: {
+        icon: {
+          cursor: '›',
+          checked: chalk.green(' ◉'),
+          unchecked: ' ◯',
+        },
+      },
+    }, { clearPromptOnDone: true });
 
     if (answer.length === 0) {
       console.log('No editors selected — nothing to install.');
@@ -123,7 +131,7 @@ async function main(): Promise<void> {
     // Interactive path
     editors = await promptEditorSelection();
     const label = editors.length === 2 ? 'OpenCode + Cursor' : editors[0] === 'opencode' ? 'OpenCode' : 'Cursor';
-    console.log(`\n  Installing for ${label}...`);
+    console.log(`  Installing for ${label}...`);
   }
 
   const projectRoot = process.cwd();
@@ -131,12 +139,12 @@ async function main(): Promise<void> {
 
   // Completion message
   console.log('');
-  console.log(`  ${chalk.green('✓')} Done. Restart your editor to pick up the new commands.\n`);
-  console.log('  Available commands:');
-  console.log('    /rms-review');
-  console.log('    /rms-fix');
-  console.log('    /rms-settings');
+  console.log(`  ${chalk.bold.white('Commands')}`);
+  console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-review')}`);
+  console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-fix')}`);
+  console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-settings')}`);
   console.log('');
+  console.log(`  ${chalk.gray('Restart your editor to pick up the new commands.')}`);
 }
 
 // Only execute when run directly (not when imported by tests or other modules).

@@ -41,26 +41,26 @@ export async function install(
   const resolvedCursorSkillsDir = options?.cursorSkillsDir ?? join(homedir(), '.cursor', 'skills');
 
   if (editors.includes('opencode')) {
-    console.log(`\n  ${chalk.bold('OpenCode')} ${chalk.dim(resolvedGlobalDir)}`);
+    console.log(`\n  ${chalk.bold('OpenCode')} ${chalk.gray(resolvedGlobalDir)}`);
     for (const { template, dest } of GLOBAL_INSTALLS) {
       const templatePath = join(TEMPLATES_DIR, template);
       const destPath = join(resolvedGlobalDir, dest);
       await mkdir(dirname(destPath), { recursive: true });
       const content = await readFile(templatePath, 'utf-8');
       await writeFile(destPath, content, 'utf-8');
-      console.log(`  ${chalk.green('✓')} ${dest}`);
+      console.log(`  ${chalk.green('›')} ${dest}`);
     }
   }
 
   if (editors.includes('cursor')) {
-    console.log(`\n  ${chalk.bold('Cursor')} ${chalk.dim(resolvedCursorSkillsDir)}`);
+    console.log(`\n  ${chalk.bold('Cursor')} ${chalk.gray(resolvedCursorSkillsDir)}`);
     for (const { templateDir, skillName } of CURSOR_SKILL_INSTALLS) {
       const templatePath = join(TEMPLATES_DIR, templateDir, 'SKILL.md');
       const destPath = join(resolvedCursorSkillsDir, skillName, 'SKILL.md');
       await mkdir(dirname(destPath), { recursive: true });
       const content = await readFile(templatePath, 'utf-8');
       await writeFile(destPath, content, 'utf-8');
-      console.log(`  ${chalk.green('✓')} ${skillName}/SKILL.md`);
+      console.log(`  ${chalk.green('›')} ${skillName}/SKILL.md`);
     }
   }
 
