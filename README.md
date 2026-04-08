@@ -207,6 +207,21 @@ bun run test      # run tests (Node.js built-in test runner, no extra deps)
 bun run typecheck # type-check without emitting
 ```
 
-For development, use `node dist/index.js <command>` instead of the globally-installed `rms` to test local changes before publishing.
+**Testing local changes with `bunx`:**
+
+```bash
+bun run build     # compile your changes first
+bun link          # register the local package as "review-my-shit"
+bunx review-my-shit   # runs your local build instead of the published version
+```
+
+To unlink when done: `bun unlink review-my-shit`
+
+Alternatively, invoke the compiled entry points directly without linking:
+
+```bash
+node dist/index.js review local      # run a local diff review
+node dist/index.js install           # install slash commands
+```
 
 Tests cover: diff preprocessing, reviewer prompt structure, validator isolation, writer output, finding ID generation, pipeline I/O, session management, and config loading.

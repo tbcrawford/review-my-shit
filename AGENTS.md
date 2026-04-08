@@ -130,7 +130,7 @@ Re-run `rms install` after upgrading to pick up the new `/rms-settings` command.
 
 - **Terminal execution:** Cursor skills run `rms <subcommand> $ARGUMENTS` via the terminal tool. The agent then reads the REPORT.md output and presents it to the user.
 
-- **Build requirement:** `dist/` must exist before any command runs. If not present, run `npm run build` first. The commands do not auto-build.
+- **Build requirement:** `dist/` must exist before any command runs. If not present, run `bun run build` first. The commands do not auto-build.
 
 ---
 
@@ -138,10 +138,10 @@ Re-run `rms install` after upgrading to pick up the new `/rms-settings` command.
 
 ```bash
 # Build (required before running any command)
-npm run build
+bun run build
 
 # Run all tests
-npm test
+bun run test
 
 # Install commands into ~/.config/opencode/command/ and ~/.cursor/skills/
 node dist/index.js install
