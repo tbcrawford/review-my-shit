@@ -14,6 +14,7 @@
 import { realpathSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
+import chalk from 'chalk';
 import { install } from './installer.js';
 
 const VERSION = '0.3.0';
@@ -22,12 +23,13 @@ const VERSION = '0.3.0';
 // Banner
 // ---------------------------------------------------------------------------
 
+const c = chalk.cyan;
 export const BANNER_STRING = [
   '',
-  '  ┌─────────────────────────────────────┐',
-  `  │  rms — review-my-shit  v${VERSION}       │`,
-  '  │  AI code review pipeline            │',
-  '  └─────────────────────────────────────┘',
+  c('  ┌─────────────────────────────────────┐'),
+  `  ${c('│')}  ${chalk.bold.white('rms')} ${chalk.dim('—')} ${chalk.dim.white('review-my-shit')}  ${chalk.yellow(`v${VERSION}`)}       ${c('│')}`,
+  `  ${c('│')}  ${chalk.dim.white('AI code review pipeline')}            ${c('│')}`,
+  c('  └─────────────────────────────────────┘'),
   '',
 ].join('\n');
 

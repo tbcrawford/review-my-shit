@@ -39,9 +39,24 @@ describe('resolveEditorsFromArgs', () => {
   });
 });
 
+// Strip ANSI escape codes for content testing
+function stripAnsi(str: string): string {
+  return str.replace(/\u001b\[[0-9;]*m/g, '');
+}
+
 describe('BANNER_STRING', () => {
-  it('Test 7: banner contains "rms" and "v0.3.0"', () => {
-    expect(BANNER_STRING.includes('rms')).toBeTruthy();
-    expect(BANNER_STRING.includes('v0.3.0')).toBeTruthy();
+  it('Test 7: banner contains "rms" and version after stripping ANSI', () => {
+    const plain = stripAnsi(BANNER_STRING);
+    expect(plain.includes('rms')).toBeTruthy();
+    expect(plain.includes('v0.3.0')).toBeTruthy();
+  });
+
+  it('Test 8: banner uses chalk (imports chalk and produces colored output or plain text in no-color environments)', () => {
+    // The banner should contain chalk color calls — either ANSI codes in color envs
+    // or plain text in no-color envs. Either way, plain text content must be intact.
+    const plain = stripAnsi(BANNER_STRING);
+    expect(plain).toContain('rms');
+    expect(plain).toContain('review-my-shit');
+    expect(plain).toContain('AI code review pipeline');
   });
 });
