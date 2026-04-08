@@ -14,6 +14,7 @@
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { select } from '@inquirer/prompts';
+import { ExitPromptError } from '@inquirer/core';
 import chalk from 'chalk';
 import { install } from './installer.js';
 
@@ -92,8 +93,12 @@ async function promptEditorSelection(): Promise<('opencode' | 'cursor')[]> {
     if (answer === 'opencode') return ['opencode'];
     if (answer === 'cursor') return ['cursor'];
     return ['opencode', 'cursor'];
-  } catch {
-    // Non-TTY or cancelled — default to both
+  } catch (err) {
+    // Ctrl+C: ExitPromptError — exit cleanly, no install
+    if (err instanceof ExitPromptError) {
+      process.exit(130);
+    }
+    // Non-TTY or other error — default to both
     return ['opencode', 'cursor'];
   }
 }
