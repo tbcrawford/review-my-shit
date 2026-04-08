@@ -12,6 +12,7 @@
  *   (no flag)      Interactive numbered prompt
  */
 import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
 import { install } from './installer.js';
 
 const VERSION = '0.3.0';
@@ -125,7 +126,13 @@ async function main(): Promise<void> {
   console.log('');
 }
 
-main().catch((err) => {
-  console.error('\n  [rms] Setup failed:', err instanceof Error ? err.message : String(err));
-  process.exit(1);
-});
+// Only execute when run directly (not when imported by tests or other modules)
+// fileURLToPath converts the ESM import.meta.url to an OS path for comparison.
+const __filename = fileURLToPath(import.meta.url);
+const isMain = process.argv[1] === __filename;
+if (isMain) {
+  main().catch((err) => {
+    console.error('\n  [rms] Setup failed:', err instanceof Error ? err.message : String(err));
+    process.exit(1);
+  });
+}
