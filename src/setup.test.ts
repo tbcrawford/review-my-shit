@@ -60,13 +60,8 @@ describe('promptEditorSelection — ExitPromptError handling', () => {
   });
 
   it('Test 9: ExitPromptError (Ctrl+C) calls process.exit(130) and does not fall through', async () => {
-    // Dynamically import after mocking so the module is already loaded
-    const { select } = await import('@inquirer/prompts');
-    const selectMock = vi.fn().mockRejectedValue(new ExitPromptError());
-    vi.stubGlobal('__selectOverride', selectMock);
-
     // Directly test the error-handling branch: simulate what promptEditorSelection does
-    // when select() throws ExitPromptError.
+    // when checkbox() throws ExitPromptError.
     const handler = async () => {
       try {
         await Promise.reject(new ExitPromptError());
@@ -80,11 +75,6 @@ describe('promptEditorSelection — ExitPromptError handling', () => {
 
     await expect(handler()).rejects.toThrow('process.exit called with 130');
     expect(exitSpy).toHaveBeenCalledWith(130);
-
-    // Cleanup
-    vi.unstubAllGlobals();
-    // select is referenced above to avoid "unused import" — suppress lint
-    void select;
   });
 
   it('Test 10: Non-ExitPromptError from select falls through to default ["opencode","cursor"]', async () => {

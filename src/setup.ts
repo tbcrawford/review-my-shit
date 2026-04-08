@@ -13,7 +13,7 @@
  */
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { select } from '@inquirer/prompts';
+import { checkbox } from '@inquirer/prompts';
 import { ExitPromptError } from '@inquirer/core';
 import chalk from 'chalk';
 import { install } from './installer.js';
@@ -71,28 +71,28 @@ export function resolveEditorsFromArgs(argv: string[]): ('opencode' | 'cursor')[
 
 async function promptEditorSelection(): Promise<('opencode' | 'cursor')[]> {
   try {
-    const answer = await select({
+    const answer = await checkbox<'opencode' | 'cursor'>({
       message: 'Which editors would you like to install rms for?',
       choices: [
         {
-          name: 'Both  —  OpenCode + Cursor (recommended)',
-          value: 'both' as const,
-        },
-        {
           name: 'OpenCode  —  ~/.config/opencode/command/',
           value: 'opencode' as const,
+          checked: true,
         },
         {
           name: 'Cursor    —  ~/.cursor/skills/',
           value: 'cursor' as const,
+          checked: true,
         },
       ],
-      default: 'both',
     });
 
-    if (answer === 'opencode') return ['opencode'];
-    if (answer === 'cursor') return ['cursor'];
-    return ['opencode', 'cursor'];
+    if (answer.length === 0) {
+      console.log('No editors selected — nothing to install.');
+      process.exit(0);
+    }
+
+    return answer;
   } catch (err) {
     // Ctrl+C: ExitPromptError — exit cleanly, no install
     if (err instanceof ExitPromptError) {
