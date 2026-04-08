@@ -45,9 +45,9 @@ function stripAnsi(str: string): string {
 }
 
 describe('BANNER_STRING', () => {
-  it('Test 7: banner contains "rms" and version after stripping ANSI', () => {
+  it('Test 7: banner contains subtitle and version after stripping ANSI', () => {
     const plain = stripAnsi(BANNER_STRING);
-    expect(plain.includes('rms')).toBeTruthy();
+    expect(plain.includes('review-my-shit')).toBeTruthy();
     expect(plain.includes('v0.3.0')).toBeTruthy();
   });
 
@@ -55,8 +55,9 @@ describe('BANNER_STRING', () => {
     // The banner should contain chalk color calls — either ANSI codes in color envs
     // or plain text in no-color envs. Either way, plain text content must be intact.
     const plain = stripAnsi(BANNER_STRING);
-    expect(plain).toContain('rms');
     expect(plain).toContain('review-my-shit');
-    expect(plain).toContain('AI code review pipeline');
+    expect(plain).toContain('v0.3.0');
+    // Block-letter art uses box-drawing / block chars
+    expect(plain).toContain('██');
   });
 });
