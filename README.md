@@ -59,7 +59,15 @@ Running `npx review-my-shit` prompts you to choose which editors to install for 
 
 Re-run after upgrading to pick up updated commands.
 
-> **Already have rms installed globally?** You can also run `rms install` directly.
+**Scripting / CI:** Pass flags to skip the interactive prompt:
+
+```bash
+npx review-my-shit --opencode   # OpenCode only
+npx review-my-shit --cursor     # Cursor only
+npx review-my-shit --yes        # Both editors (non-interactive)
+```
+
+> **Already have rms installed globally?** You can also run `rms install` directly, with the same flags: `rms install --opencode`, `rms install --cursor`, `rms install -y`.
 
 ### Configure models
 
