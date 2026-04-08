@@ -147,7 +147,7 @@ bun run test
 node dist/index.js install
 ```
 
-**Test framework:** Node.js built-in `node:test` with `tsx` for TypeScript execution. No external test runner required.
+**Test framework:** [Vitest](https://vitest.dev) — `bun run test` invokes `vitest run`.
 
 **Tests must pass before committing.** The test suite covers: diff preprocessing, reviewer prompt structure, validator isolation, writer output, finding ID generation, pipeline I/O parsing, and session management.
 
