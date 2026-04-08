@@ -42,5 +42,6 @@
     "cursor",
     "cli"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "packageManager": "bun@1.3.9"
 }

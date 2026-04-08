@@ -42,17 +42,17 @@ All three agents run as isolated `generateText` calls — no shared history, no 
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+ (or [Bun](https://bun.sh) 1.0+)
 - OpenCode or Cursor
 - API key for your chosen AI provider (OpenAI, Anthropic, or Google)
 
 ### Install
 
 ```bash
-npx review-my-shit
+bunx review-my-shit
 ```
 
-Running `npx review-my-shit` prompts you to choose which editors to install for (OpenCode, Cursor, or both), then writes the slash command files:
+Running `bunx review-my-shit` prompts you to choose which editors to install for (OpenCode, Cursor, or both), then writes the slash command files:
 
 - **OpenCode:** `~/.config/opencode/command/` — global, available in all projects
 - **Cursor:** `~/.cursor/skills/<name>/SKILL.md` — global, available in all projects
@@ -62,9 +62,9 @@ Re-run after upgrading to pick up updated commands.
 **Scripting / CI:** Pass flags to skip the interactive prompt:
 
 ```bash
-npx review-my-shit --opencode   # OpenCode only
-npx review-my-shit --cursor     # Cursor only
-npx review-my-shit --yes        # Both editors (non-interactive)
+bunx review-my-shit --opencode   # OpenCode only
+bunx review-my-shit --cursor     # Cursor only
+bunx review-my-shit --yes        # Both editors (non-interactive)
 ```
 
 > **Already have rms installed globally?** You can also run `rms install` directly, with the same flags: `rms install --opencode`, `rms install --cursor`, `rms install -y`.
@@ -201,10 +201,10 @@ rms install
 ## Development
 
 ```bash
-npm install       # install dependencies
-npm run build     # compile TypeScript → dist/
-npm test          # run tests (Node.js built-in test runner, no extra deps)
-npm run typecheck # type-check without emitting
+bun install       # install dependencies
+bun run build     # compile TypeScript → dist/
+bun run test      # run tests (Node.js built-in test runner, no extra deps)
+bun run typecheck # type-check without emitting
 ```
 
 For development, use `node dist/index.js <command>` instead of the globally-installed `rms` to test local changes before publishing.
