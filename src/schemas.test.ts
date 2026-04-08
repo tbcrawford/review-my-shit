@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect } from 'vitest';
 import { ZodError } from 'zod';
 import {
   FindingSchema,
@@ -13,7 +12,7 @@ import {
 
 describe('DIMENSIONS constant', () => {
   test('has all 11 abbreviations', () => {
-    assert.deepStrictEqual(DIMENSIONS, [
+    expect(DIMENSIONS).toEqual([
       'BUG', 'SEC', 'PERF', 'STYL', 'TEST',
       'ARCH', 'ERR', 'DATA', 'API', 'DEP', 'DOC',
     ]);
@@ -33,28 +32,22 @@ describe('FindingSchema', () => {
 
   test('parses a valid Finding object', () => {
     const result = FindingSchema.parse(validFinding);
-    assert.strictEqual(result.id, 'SEC-00001');
-    assert.strictEqual(result.severity, 'high');
-    assert.strictEqual(result.dimension, 'SEC');
+    expect(result.id).toBe('SEC-00001');
+    expect(result.severity).toBe('high');
+    expect(result.dimension).toBe('SEC');
   });
 
   test('throws ZodError for invalid severity', () => {
-    assert.throws(
-      () => FindingSchema.parse({ ...validFinding, severity: 'urgent' }),
-      ZodError,
-    );
+    expect(() => FindingSchema.parse({ ...validFinding, severity: 'urgent' })).toThrow(ZodError);
   });
 
   test('throws ZodError for unknown dimension', () => {
-    assert.throws(
-      () => FindingSchema.parse({ ...validFinding, dimension: 'UNKNOWN' }),
-      ZodError,
-    );
+    expect(() => FindingSchema.parse({ ...validFinding, dimension: 'UNKNOWN' })).toThrow(ZodError);
   });
 
   test('throws ZodError for missing required field', () => {
     const { explanation: _omit, ...withoutExplanation } = validFinding;
-    assert.throws(() => FindingSchema.parse(withoutExplanation), ZodError);
+    expect(() => FindingSchema.parse(withoutExplanation)).toThrow(ZodError);
   });
 });
 
@@ -67,21 +60,20 @@ describe('ValidationVerdictSchema', () => {
 
   test('parses a valid ValidationVerdict', () => {
     const result = ValidationVerdictSchema.parse(validVerdict);
-    assert.strictEqual(result.findingId, 'SEC-00001');
-    assert.strictEqual(result.verdict, 'confirmed');
+    expect(result.findingId).toBe('SEC-00001');
+    expect(result.verdict).toBe('confirmed');
   });
 
   test('throws ZodError for unknown verdict value', () => {
-    assert.throws(
+    expect(
       () => ValidationVerdictSchema.parse({ ...validVerdict, verdict: 'approved' }),
-      ZodError,
-    );
+    ).toThrow(ZodError);
   });
 
   test('accepts all three verdict values', () => {
     for (const verdict of ['confirmed', 'challenged', 'escalated'] as const) {
       const result = ValidationVerdictSchema.parse({ ...validVerdict, verdict });
-      assert.strictEqual(result.verdict, verdict);
+      expect(result.verdict).toBe(verdict);
     }
   });
 });
@@ -93,8 +85,8 @@ describe('InputFileSchema', () => {
       timestamp: '2026-04-04T13:00:00.000Z',
       scope: 'local-diff',
     });
-    assert.strictEqual(result.scope, 'local-diff');
-    assert.strictEqual(result.focus, undefined);
+    expect(result.scope).toBe('local-diff');
+    expect(result.focus).toBe(undefined);
   });
 
   test('parses a valid InputFile with optional focus', () => {
@@ -104,18 +96,17 @@ describe('InputFileSchema', () => {
       scope: 'pr-diff',
       focus: 'security',
     });
-    assert.strictEqual(result.focus, 'security');
+    expect(result.focus).toBe('security');
   });
 
   test('throws ZodError for invalid scope', () => {
-    assert.throws(
+    expect(
       () => InputFileSchema.parse({
         reviewId: '2026-04-04-r',
         timestamp: '2026-04-04T00:00:00.000Z',
         scope: 'remote-diff',
       }),
-      ZodError,
-    );
+    ).toThrow(ZodError);
   });
 });
 
@@ -125,14 +116,13 @@ describe('ReviewerFileSchema', () => {
       reviewId: '2026-04-04-r',
       role: 'reviewer',
     });
-    assert.strictEqual(result.role, 'reviewer');
+    expect(result.role).toBe('reviewer');
   });
 
   test('throws ZodError if role is not "reviewer"', () => {
-    assert.throws(
+    expect(
       () => ReviewerFileSchema.parse({ reviewId: '2026-04-04-r', role: 'validator' }),
-      ZodError,
-    );
+    ).toThrow(ZodError);
   });
 });
 
@@ -142,14 +132,13 @@ describe('ValidatorFileSchema', () => {
       reviewId: '2026-04-04-r',
       role: 'validator',
     });
-    assert.strictEqual(result.role, 'validator');
+    expect(result.role).toBe('validator');
   });
 
   test('throws ZodError if role is not "validator"', () => {
-    assert.throws(
+    expect(
       () => ValidatorFileSchema.parse({ reviewId: '2026-04-04-r', role: 'reviewer' }),
-      ZodError,
-    );
+    ).toThrow(ZodError);
   });
 });
 
@@ -160,17 +149,16 @@ describe('ReportFileSchema', () => {
       generated: '2026-04-04T13:05:00.000Z',
       findingCount: 7,
     });
-    assert.strictEqual(result.findingCount, 7);
+    expect(result.findingCount).toBe(7);
   });
 
   test('throws ZodError if findingCount is not a number', () => {
-    assert.throws(
+    expect(
       () => ReportFileSchema.parse({
         reviewId: '2026-04-04-r',
         generated: '2026-04-04T13:05:00.000Z',
         findingCount: 'seven',
       }),
-      ZodError,
-    );
+    ).toThrow(ZodError);
   });
 });

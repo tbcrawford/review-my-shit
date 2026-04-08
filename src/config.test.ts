@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect } from 'vitest';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { writeFile, mkdir, rm } from 'node:fs/promises';
@@ -35,10 +34,9 @@ describe('getConfigPath', () => {
   test('returns path ending in .config/rms/config.json', () => {
     const p = getConfigPath();
     // Cross-platform: Unix uses /, Windows uses \
-    assert.ok(
+    expect(
       p.endsWith('.config/rms/config.json') || p.endsWith('.config\\rms\\config.json'),
-      `Expected path to end with .config/rms/config.json, got: ${p}`,
-    );
+    ).toBeTruthy();
   });
 });
 
@@ -50,7 +48,7 @@ describe('loadRmsConfig', () => {
     const tmpDir = await makeTmpDir();
     const fakePath = join(tmpDir, 'nonexistent', 'config.json');
     const result = await loadRmsConfig(fakePath);
-    assert.strictEqual(result, null);
+    expect(result).toBe(null);
     await rm(tmpDir, { recursive: true, force: true });
   });
 
@@ -63,11 +61,11 @@ describe('loadRmsConfig', () => {
     await writeFile(configPath, JSON.stringify(VALID_CONFIG), 'utf8');
 
     const result = await loadRmsConfig(configPath);
-    assert.ok(result !== null);
-    assert.strictEqual(result.reviewer.provider, 'openai');
-    assert.strictEqual(result.reviewer.model, 'gpt-4o');
-    assert.strictEqual(result.validator.provider, 'anthropic');
-    assert.strictEqual(result.writer.provider, 'google');
+    expect(result !== null).toBeTruthy();
+    expect(result!.reviewer.provider).toBe('openai');
+    expect(result!.reviewer.model).toBe('gpt-4o');
+    expect(result!.validator.provider).toBe('anthropic');
+    expect(result!.writer.provider).toBe('google');
     await rm(tmpDir, { recursive: true, force: true });
   });
 
@@ -79,17 +77,12 @@ describe('loadRmsConfig', () => {
     const configPath = join(tmpDir, 'config.json');
     await writeFile(configPath, '{this is not valid JSON', 'utf8');
 
-    await assert.rejects(
-      () => loadRmsConfig(configPath),
-      (err: Error) => {
-        assert.ok(err instanceof Error);
-        assert.ok(
-          err.message.includes('Invalid rms config'),
-          `Expected "Invalid rms config" in: ${err.message}`,
-        );
-        return true;
+    await expect(
+      async () => {
+        const err = await loadRmsConfig(configPath).catch((e: unknown) => { throw e; });
+        return err;
       },
-    );
+    ).rejects.toThrow('Invalid rms config');
     await rm(tmpDir, { recursive: true, force: true });
   });
 
@@ -106,17 +99,12 @@ describe('loadRmsConfig', () => {
     };
     await writeFile(configPath, JSON.stringify(badConfig), 'utf8');
 
-    await assert.rejects(
-      () => loadRmsConfig(configPath),
-      (err: Error) => {
-        assert.ok(err instanceof Error);
-        assert.ok(
-          err.message.includes('Invalid rms config'),
-          `Expected "Invalid rms config" in: ${err.message}`,
-        );
-        return true;
+    await expect(
+      async () => {
+        const err = await loadRmsConfig(configPath).catch((e: unknown) => { throw e; });
+        return err;
       },
-    );
+    ).rejects.toThrow('Invalid rms config');
     await rm(tmpDir, { recursive: true, force: true });
   });
 });
@@ -133,12 +121,12 @@ describe('saveRmsConfig', () => {
     await saveRmsConfig(VALID_CONFIG, configPath);
 
     // File should exist
-    assert.ok(existsSync(configPath), 'config.json should exist after save');
+    expect(existsSync(configPath)).toBeTruthy();
 
     // Round-trip via loadRmsConfig
     const loaded = await loadRmsConfig(configPath);
-    assert.ok(loaded !== null);
-    assert.deepStrictEqual(loaded, VALID_CONFIG);
+    expect(loaded !== null).toBeTruthy();
+    expect(loaded).toEqual(VALID_CONFIG);
     await rm(tmpDir, { recursive: true, force: true });
   });
 
@@ -149,7 +137,7 @@ describe('saveRmsConfig', () => {
 
     await saveRmsConfig(VALID_CONFIG, configPath);
 
-    assert.ok(existsSync(configPath), 'config.json should be created in nested dirs');
+    expect(existsSync(configPath)).toBeTruthy();
     await rm(tmpDir, { recursive: true, force: true });
   });
 });
@@ -160,16 +148,16 @@ describe('saveRmsConfig', () => {
 describe('resolveAgentModel', () => {
   test('resolves openai provider to a truthy model object', async () => {
     const model = await resolveAgentModel({ provider: 'openai', model: 'gpt-4o' });
-    assert.ok(model, 'Expected truthy model instance for openai');
+    expect(model).toBeTruthy();
   });
 
   test('resolves anthropic provider to a truthy model object', async () => {
     const model = await resolveAgentModel({ provider: 'anthropic', model: 'claude-opus-4-5' });
-    assert.ok(model, 'Expected truthy model instance for anthropic');
+    expect(model).toBeTruthy();
   });
 
   test('resolves google provider to a truthy model object', async () => {
     const model = await resolveAgentModel({ provider: 'google', model: 'gemini-pro' });
-    assert.ok(model, 'Expected truthy model instance for google');
+    expect(model).toBeTruthy();
   });
 });

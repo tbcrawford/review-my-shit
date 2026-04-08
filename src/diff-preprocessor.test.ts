@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect } from 'vitest';
 import { preprocessDiff } from './diff-preprocessor.js';
 
 // Helper to build a realistic git diff file section
@@ -15,9 +14,9 @@ describe('preprocessDiff', () => {
 
     const { diff, stats } = preprocessDiff(raw);
 
-    assert.ok(!diff.includes('package-lock.json'), 'diff should not contain package-lock.json');
-    assert.ok(diff.includes('src/app.ts'), 'diff should still contain app.ts');
-    assert.deepEqual(stats.strippedFiles, ['package-lock.json']);
+    expect(!diff.includes('package-lock.json')).toBeTruthy();
+    expect(diff.includes('src/app.ts')).toBeTruthy();
+    expect(stats.strippedFiles).toEqual(['package-lock.json']);
   });
 
   test('strips yarn.lock section', () => {
@@ -25,9 +24,9 @@ describe('preprocessDiff', () => {
 
     const { diff, stats } = preprocessDiff(raw);
 
-    assert.ok(!diff.includes('yarn.lock'));
-    assert.ok(diff.includes('src/util.ts'));
-    assert.deepEqual(stats.strippedFiles, ['yarn.lock']);
+    expect(!diff.includes('yarn.lock')).toBeTruthy();
+    expect(diff.includes('src/util.ts')).toBeTruthy();
+    expect(stats.strippedFiles).toEqual(['yarn.lock']);
   });
 
   test('strips node_modules/ diff section', () => {
@@ -36,17 +35,17 @@ describe('preprocessDiff', () => {
 
     const { diff, stats } = preprocessDiff(raw);
 
-    assert.ok(!diff.includes('node_modules/some-package/index.js'));
-    assert.ok(diff.includes('src/main.ts'));
-    assert.ok(stats.strippedFiles.some((f: string) => f.includes('node_modules')));
+    expect(!diff.includes('node_modules/some-package/index.js')).toBeTruthy();
+    expect(diff.includes('src/main.ts')).toBeTruthy();
+    expect(stats.strippedFiles.some((f: string) => f.includes('node_modules'))).toBeTruthy();
   });
 
   test('passes regular .ts file diff through unchanged', () => {
     const section = makeDiffSection('src/service.ts', '@@\n-old\n+new\n');
     const { diff, stats } = preprocessDiff(section);
 
-    assert.ok(diff.includes('src/service.ts'));
-    assert.equal(stats.strippedFiles.length, 0);
+    expect(diff.includes('src/service.ts')).toBeTruthy();
+    expect(stats.strippedFiles.length).toBe(0);
   });
 
   test('strips binary file sections (Binary files differ marker)', () => {
@@ -57,9 +56,9 @@ describe('preprocessDiff', () => {
 
     const { diff, stats } = preprocessDiff(raw);
 
-    assert.ok(!diff.includes('assets/image.png'), 'binary file should be stripped');
-    assert.ok(diff.includes('src/code.ts'));
-    assert.ok(stats.strippedFiles.some((f: string) => f.includes('image.png')));
+    expect(!diff.includes('assets/image.png')).toBeTruthy();
+    expect(diff.includes('src/code.ts')).toBeTruthy();
+    expect(stats.strippedFiles.some((f: string) => f.includes('image.png'))).toBeTruthy();
   });
 
   test('stats.strippedFiles contains all stripped file names', () => {
@@ -70,9 +69,9 @@ describe('preprocessDiff', () => {
 
     const { stats } = preprocessDiff(raw);
 
-    assert.ok(stats.strippedFiles.includes('package-lock.json'));
-    assert.ok(stats.strippedFiles.includes('yarn.lock'));
-    assert.equal(stats.strippedFiles.length, 2);
+    expect(stats.strippedFiles.includes('package-lock.json')).toBeTruthy();
+    expect(stats.strippedFiles.includes('yarn.lock')).toBeTruthy();
+    expect(stats.strippedFiles.length).toBe(2);
   });
 
   test('mixed diff: 2 lock files + 1 real file — result contains only real file diff', () => {
@@ -82,41 +81,41 @@ describe('preprocessDiff', () => {
 
     const { diff, stats } = preprocessDiff(raw);
 
-    assert.ok(diff.includes('src/auth.ts'));
-    assert.ok(!diff.includes('package-lock.json'));
-    assert.ok(!diff.includes('pnpm-lock.yaml'));
-    assert.equal(stats.strippedFiles.length, 2);
+    expect(diff.includes('src/auth.ts')).toBeTruthy();
+    expect(!diff.includes('package-lock.json')).toBeTruthy();
+    expect(!diff.includes('pnpm-lock.yaml')).toBeTruthy();
+    expect(stats.strippedFiles.length).toBe(2);
   });
 
   test('empty string input returns empty string with zero stats', () => {
     const { diff, stats } = preprocessDiff('');
 
-    assert.equal(diff, '');
-    assert.equal(stats.strippedFiles.length, 0);
-    assert.equal(stats.originalLines, 0);
-    assert.equal(stats.remainingLines, 0);
+    expect(diff).toBe('');
+    expect(stats.strippedFiles.length).toBe(0);
+    expect(stats.originalLines).toBe(0);
+    expect(stats.remainingLines).toBe(0);
   });
 
   test('strips pnpm-lock.yaml section', () => {
     const raw = makeDiffSection('pnpm-lock.yaml') + makeDiffSection('src/lib.ts');
     const { diff, stats } = preprocessDiff(raw);
-    assert.ok(!diff.includes('pnpm-lock.yaml'));
-    assert.ok(diff.includes('src/lib.ts'));
-    assert.deepEqual(stats.strippedFiles, ['pnpm-lock.yaml']);
+    expect(!diff.includes('pnpm-lock.yaml')).toBeTruthy();
+    expect(diff.includes('src/lib.ts')).toBeTruthy();
+    expect(stats.strippedFiles).toEqual(['pnpm-lock.yaml']);
   });
 
   test('strips *.min.js files', () => {
     const raw = makeDiffSection('public/bundle.min.js') + makeDiffSection('src/component.ts');
     const { diff, stats } = preprocessDiff(raw);
-    assert.ok(!diff.includes('bundle.min.js'));
-    assert.ok(diff.includes('src/component.ts'));
+    expect(!diff.includes('bundle.min.js')).toBeTruthy();
+    expect(diff.includes('src/component.ts')).toBeTruthy();
   });
 
   test('strips dist/ path files', () => {
     const raw = makeDiffSection('dist/index.js') + makeDiffSection('src/input.ts');
     const { diff, stats } = preprocessDiff(raw);
-    assert.ok(!diff.includes('dist/index.js'));
-    assert.ok(diff.includes('src/input.ts'));
+    expect(!diff.includes('dist/index.js')).toBeTruthy();
+    expect(diff.includes('src/input.ts')).toBeTruthy();
   });
 
   test('remainingLines reflects actual kept content', () => {
@@ -124,7 +123,7 @@ describe('preprocessDiff', () => {
     const raw = makeDiffSection('yarn.lock') + tsSection;
 
     const { stats } = preprocessDiff(raw);
-    assert.ok(stats.remainingLines > 0);
-    assert.ok(stats.originalLines > stats.remainingLines);
+    expect(stats.remainingLines > 0).toBeTruthy();
+    expect(stats.originalLines > stats.remainingLines).toBeTruthy();
   });
 });

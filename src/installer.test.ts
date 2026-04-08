@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect } from 'vitest';
 import { mkdtemp, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -15,7 +14,7 @@ describe('install', () => {
       await install(projectRoot, { globalDir, cursorSkillsDir });
       // rms-review.md should be in globalDir
       const s = await stat(join(globalDir, 'rms-review.md'));
-      assert.ok(s.isFile(), 'rms-review.md should be in globalDir');
+      expect(s.isFile()).toBeTruthy();
     } finally {
       await rm(tmpRoot, { recursive: true });
     }
@@ -29,7 +28,7 @@ describe('install', () => {
     try {
       await install(projectRoot, { globalDir, cursorSkillsDir });
       const s = await stat(join(cursorSkillsDir, 'rms-review', 'SKILL.md'));
-      assert.ok(s.isFile(), 'rms-review/SKILL.md should be in cursorSkillsDir');
+      expect(s.isFile()).toBeTruthy();
     } finally {
       await rm(tmpRoot, { recursive: true });
     }
@@ -44,7 +43,7 @@ describe('install', () => {
       await install(projectRoot, { globalDir, cursorSkillsDir });
       for (const name of ['rms-review.md', 'rms-fix.md', 'rms-settings.md']) {
         const s = await stat(join(globalDir, name));
-        assert.ok(s.isFile(), `${name} should exist in globalDir`);
+        expect(s.isFile()).toBeTruthy();
       }
     } finally {
       await rm(tmpRoot, { recursive: true });
@@ -60,7 +59,7 @@ describe('install', () => {
       await install(projectRoot, { globalDir, cursorSkillsDir });
       for (const name of ['rms-review', 'rms-fix', 'rms-settings']) {
         const s = await stat(join(cursorSkillsDir, name, 'SKILL.md'));
-        assert.ok(s.isFile(), `${name}/SKILL.md should exist in cursorSkillsDir`);
+        expect(s.isFile()).toBeTruthy();
       }
     } finally {
       await rm(tmpRoot, { recursive: true });
@@ -82,7 +81,7 @@ describe('install', () => {
       } catch {
         // expected — file should not exist
       }
-      assert.ok(!found, 'OpenCode files should NOT be in projectRoot/.opencode/commands/');
+      expect(!found).toBeTruthy();
     } finally {
       await rm(tmpRoot, { recursive: true });
     }
@@ -103,7 +102,7 @@ describe('install', () => {
       } catch {
         // expected — file should not exist
       }
-      assert.ok(!found, 'Cursor files should NOT be in projectRoot/.cursor/commands/');
+      expect(!found).toBeTruthy();
     } finally {
       await rm(tmpRoot, { recursive: true });
     }
@@ -120,11 +119,11 @@ describe('selective install', () => {
       await install(projectRoot, { editors: ['opencode'], globalDir, cursorSkillsDir });
       // OpenCode file must exist
       const s = await stat(join(globalDir, 'rms-review.md'));
-      assert.ok(s.isFile(), 'rms-review.md should be in globalDir');
+      expect(s.isFile()).toBeTruthy();
       // Cursor skill must NOT exist
       let cursorFound = false;
       try { await stat(join(cursorSkillsDir, 'rms-review', 'SKILL.md')); cursorFound = true; } catch { /* expected */ }
-      assert.ok(!cursorFound, 'Cursor SKILL.md should not be written when editors=[opencode]');
+      expect(!cursorFound).toBeTruthy();
     } finally {
       await rm(tmpRoot, { recursive: true });
     }
@@ -139,11 +138,11 @@ describe('selective install', () => {
       await install(projectRoot, { editors: ['cursor'], globalDir, cursorSkillsDir });
       // Cursor skill must exist
       const s = await stat(join(cursorSkillsDir, 'rms-review', 'SKILL.md'));
-      assert.ok(s.isFile(), 'rms-review/SKILL.md should be in cursorSkillsDir');
+      expect(s.isFile()).toBeTruthy();
       // OpenCode file must NOT exist
       let ocFound = false;
       try { await stat(join(globalDir, 'rms-review.md')); ocFound = true; } catch { /* expected */ }
-      assert.ok(!ocFound, 'OpenCode rms-review.md should not be written when editors=[cursor]');
+      expect(!ocFound).toBeTruthy();
     } finally {
       await rm(tmpRoot, { recursive: true });
     }
@@ -157,9 +156,9 @@ describe('selective install', () => {
     try {
       await install(projectRoot, { editors: ['opencode', 'cursor'], globalDir, cursorSkillsDir });
       const oc = await stat(join(globalDir, 'rms-review.md'));
-      assert.ok(oc.isFile());
+      expect(oc.isFile()).toBeTruthy();
       const cu = await stat(join(cursorSkillsDir, 'rms-review', 'SKILL.md'));
-      assert.ok(cu.isFile());
+      expect(cu.isFile()).toBeTruthy();
     } finally {
       await rm(tmpRoot, { recursive: true });
     }

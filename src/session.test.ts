@@ -1,5 +1,4 @@
-import { test } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 import { mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -11,7 +10,7 @@ test('ensureReviewsDir creates .reviews/ directory', async () => {
     await ensureReviewsDir(tmpDir);
     const { stat } = await import('node:fs/promises');
     const stats = await stat(join(tmpDir, '.reviews'));
-    assert.ok(stats.isDirectory(), '.reviews should be a directory');
+    expect(stats.isDirectory()).toBeTruthy();
   } finally {
     await rm(tmpDir, { recursive: true });
   }
@@ -24,8 +23,8 @@ test('ensureReviewsDir appends .reviews/ to .gitignore when absent', async () =>
     await writeFile(join(tmpDir, '.gitignore'), 'node_modules/\ndist/\n');
     await ensureReviewsDir(tmpDir);
     const contents = await readFile(join(tmpDir, '.gitignore'), 'utf8');
-    assert.ok(contents.includes('.reviews/'), '.gitignore should contain .reviews/');
-    assert.ok(contents.includes('node_modules/'), '.gitignore should retain original entries');
+    expect(contents.includes('.reviews/')).toBeTruthy();
+    expect(contents.includes('node_modules/')).toBeTruthy();
   } finally {
     await rm(tmpDir, { recursive: true });
   }
@@ -36,7 +35,7 @@ test('ensureReviewsDir creates .gitignore if it does not exist', async () => {
   try {
     await ensureReviewsDir(tmpDir);
     const contents = await readFile(join(tmpDir, '.gitignore'), 'utf8');
-    assert.ok(contents.includes('.reviews/'), 'created .gitignore should contain .reviews/');
+    expect(contents.includes('.reviews/')).toBeTruthy();
   } finally {
     await rm(tmpDir, { recursive: true });
   }
@@ -50,7 +49,7 @@ test('ensureReviewsDir is idempotent (does not duplicate .reviews/ in .gitignore
     const contents = await readFile(join(tmpDir, '.gitignore'), 'utf8');
     // Count occurrences of .reviews/
     const matches = contents.match(/\.reviews\//g) ?? [];
-    assert.equal(matches.length, 1, '.reviews/ should appear exactly once in .gitignore');
+    expect(matches.length).toBe(1);
   } finally {
     await rm(tmpDir, { recursive: true });
   }
@@ -60,12 +59,12 @@ test('createSession returns correct SessionInfo shape', async () => {
   const tmpDir = await mkdtemp(join(tmpdir(), 'rms-test-'));
   try {
     const info = await createSession(tmpDir, 'feat-auth');
-    assert.ok(info.sessionDir, 'sessionDir should be set');
-    assert.ok(info.reviewId, 'reviewId should be set');
-    assert.equal(info.slug, 'feat-auth', 'slug should match input');
-    assert.ok(info.timestamp, 'timestamp should be set');
+    expect(info.sessionDir).toBeTruthy();
+    expect(info.reviewId).toBeTruthy();
+    expect(info.slug).toBe('feat-auth');
+    expect(info.timestamp).toBeTruthy();
     // reviewId format: YYYY-MM-DD-slug
-    assert.match(info.reviewId, /^\d{4}-\d{2}-\d{2}-feat-auth$/, 'reviewId should match YYYY-MM-DD-slug format');
+    expect(info.reviewId).toMatch(/^\d{4}-\d{2}-\d{2}-feat-auth$/);
   } finally {
     await rm(tmpDir, { recursive: true });
   }
@@ -77,7 +76,7 @@ test('createSession creates the session folder on disk', async () => {
     const info = await createSession(tmpDir, 'my review');
     const { stat } = await import('node:fs/promises');
     const stats = await stat(info.sessionDir);
-    assert.ok(stats.isDirectory(), 'session directory should exist on disk');
+    expect(stats.isDirectory()).toBeTruthy();
   } finally {
     await rm(tmpDir, { recursive: true });
   }
@@ -88,9 +87,9 @@ test('createSession sanitizes slug correctly', async () => {
   try {
     const info = await createSession(tmpDir, 'Feature/Auth Refactor!!');
     // Expected sanitized slug: feature-auth-refactor
-    assert.ok(info.slug.match(/^[a-z0-9-]+$/), 'slug should only contain lowercase alphanumerics and hyphens');
-    assert.ok(!info.slug.startsWith('-'), 'slug should not start with hyphen');
-    assert.ok(!info.slug.endsWith('-'), 'slug should not end with hyphen');
+    expect(info.slug.match(/^[a-z0-9-]+$/)).toBeTruthy();
+    expect(!info.slug.startsWith('-')).toBeTruthy();
+    expect(!info.slug.endsWith('-')).toBeTruthy();
   } finally {
     await rm(tmpDir, { recursive: true });
   }
@@ -101,7 +100,7 @@ test('createSession sessionDir is inside .reviews/', async () => {
   try {
     const info = await createSession(tmpDir, 'test-scope');
     const reviewsDir = join(tmpDir, '.reviews');
-    assert.ok(info.sessionDir.startsWith(reviewsDir), 'sessionDir should be inside .reviews/');
+    expect(info.sessionDir.startsWith(reviewsDir)).toBeTruthy();
   } finally {
     await rm(tmpDir, { recursive: true });
   }
