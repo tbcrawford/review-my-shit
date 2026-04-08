@@ -252,7 +252,18 @@ Plans:
 - [x] 13-01-PLAN.md — Update package.json versions, tsconfig TS6 fix, npm install, build + test verification
 - [x] 13-02-PLAN.md — Final clean build verification + human end-to-end checkpoint
 
+### Phase 14: use vitest for tests, if possible
+
+**Goal:** Migrate all 13 test files (168 tests) from `node:test` + `node:assert/strict` to vitest, replacing the test script with `vitest run` and ensuring all tests pass under the new runner.
+**Requirements**: TBD
+**Depends on:** Phase 13
+**Plans:** 2 plans
+
+Plans:
+- [ ] 14-01-PLAN.md — vitest infrastructure: install vitest@^4.1.0, create vitest.config.ts, update package.json test scripts
+- [ ] 14-02-PLAN.md — Migrate all 13 test files from node:test/assert to vitest/expect (168 tests)
+
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-08 after Phase 13 planned (dependency updates — 2 plans)*
+*Last updated: 2026-04-08 after Phase 14 planned (vitest migration — 2 plans)*
