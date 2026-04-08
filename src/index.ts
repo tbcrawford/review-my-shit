@@ -295,9 +295,32 @@ program
 program
   .command('install')
   .description('Install rms slash commands (OpenCode: global, Cursor: global skills)')
-  .action(async () => {
+  .option('--opencode', 'Install for OpenCode only')
+  .option('--cursor', 'Install for Cursor only')
+  .option('-y, --yes', 'Install for all editors without prompting')
+  .action(async (opts: { opencode?: boolean; cursor?: boolean; yes?: boolean }) => {
     const projectRoot = process.cwd();
-    await install(projectRoot);
+
+    let editors: ('opencode' | 'cursor')[] = ['opencode', 'cursor']; // default: both
+    if (opts.opencode && !opts.cursor && !opts.yes) {
+      editors = ['opencode'];
+    } else if (opts.cursor && !opts.opencode && !opts.yes) {
+      editors = ['cursor'];
+    }
+    // --yes, both flags, or no flags all result in both editors (default)
+
+    await install(projectRoot, { editors });
+
+    // Completion summary (installer no longer prints this)
+    const label = editors.length === 2 ? 'OpenCode + Cursor' : editors[0] === 'opencode' ? 'OpenCode' : 'Cursor';
+    console.log(`\n  ✓ rms installed for ${label}.`);
+    if (editors.includes('opencode')) {
+      console.log('    OpenCode: commands available globally — /rms-review, /rms-fix, /rms-settings');
+    }
+    if (editors.includes('cursor')) {
+      console.log('    Cursor: skills available globally — /rms-review, /rms-fix, /rms-settings');
+    }
+    console.log('\n  Restart your editor to pick up the new commands.');
   });
 
 program.command('review')
