@@ -15,7 +15,8 @@
     "build": "tsc && rm -rf dist/templates && cp -r src/templates dist/",
     "dev": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx/esm --test src/*.test.ts"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.68",
