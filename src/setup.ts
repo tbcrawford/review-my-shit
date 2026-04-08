@@ -11,6 +11,7 @@
  *   --yes / -y     Install for all editors (skips prompt)
  *   (no flag)      Interactive numbered prompt
  */
+import { realpathSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { install } from './installer.js';
@@ -126,10 +127,21 @@ async function main(): Promise<void> {
   console.log('');
 }
 
-// Only execute when run directly (not when imported by tests or other modules)
-// fileURLToPath converts the ESM import.meta.url to an OS path for comparison.
+// Only execute when run directly (not when imported by tests or other modules).
+//
+// Use realpathSync on both sides so the check survives symlink-based runners
+// (bunx, npx, bun link) where process.argv[1] is the unresolved symlink path
+// (e.g. node_modules/.bin/review-my-shit) while import.meta.url reflects the
+// real file path — a plain string comparison would always be false.
 const __filename = fileURLToPath(import.meta.url);
-const isMain = process.argv[1] === __filename;
+function resolveReal(p: string): string {
+  try {
+    return realpathSync(p);
+  } catch {
+    return p;
+  }
+}
+const isMain = resolveReal(process.argv[1] ?? '') === resolveReal(__filename);
 if (isMain) {
   main().catch((err) => {
     console.error('\n  [rms] Setup failed:', err instanceof Error ? err.message : String(err));
