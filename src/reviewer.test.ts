@@ -1,5 +1,4 @@
-import { test, describe, before, after } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -16,14 +15,14 @@ import type { ReviewerOptions } from './reviewer.js';
 
 let tempDir: string;
 
-before(async () => {
+beforeAll(async () => {
   tempDir = join(tmpdir(), `rms-reviewer-test-${Date.now()}`);
   await mkdir(tempDir, { recursive: true });
   // Create .reviews/ for counter persistence
   await mkdir(join(tempDir, '.reviews'), { recursive: true });
 });
 
-after(async () => {
+afterAll(async () => {
   await rm(tempDir, { recursive: true, force: true });
 });
 
@@ -36,10 +35,9 @@ describe('REVIEWER_PROMPT — structure and language agnosticism', () => {
     const prompt = buildReviewerPrompt({ diff: 'sample diff', focus: undefined });
     const dimensions = ['BUG', 'SEC', 'PERF', 'STYL', 'TEST', 'ARCH', 'ERR', 'DATA', 'API', 'DEP', 'DOC'];
     for (const dim of dimensions) {
-      assert.ok(
+      expect(
         prompt.includes(`- ${dim}:`),
-        `prompt should contain dimension definition for ${dim}`,
-      );
+      ).toBeTruthy();
     }
   });
 
@@ -49,60 +47,56 @@ describe('REVIEWER_PROMPT — structure and language agnosticism', () => {
     const staticPart = REVIEWER_PROMPT;
     const forbidden = ['JavaScript', 'TypeScript', 'Python', 'Java', 'React', 'Node.js'];
     for (const lang of forbidden) {
-      assert.ok(
+      expect(
         !staticPart.includes(lang),
-        `REVIEWER_PROMPT should not contain hard-coded language: ${lang}`,
-      );
+      ).toBeTruthy();
     }
   });
 
   test('with focus SEC: contains FOCUS MODE text and Suppressed for non-SEC dimensions', () => {
     const prompt = buildReviewerPrompt({ diff: 'sample diff', focus: 'SEC' });
-    assert.ok(prompt.includes('FOCUS MODE'), 'should contain FOCUS MODE instruction');
-    assert.ok(prompt.includes('Suppressed'), 'should contain Suppressed instruction for other dimensions');
+    expect(prompt.includes('FOCUS MODE')).toBeTruthy();
+    expect(prompt.includes('Suppressed')).toBeTruthy();
   });
 
   test('without focus: no FOCUS MODE text', () => {
     const prompt = buildReviewerPrompt({ diff: 'sample diff', focus: undefined });
-    assert.ok(!prompt.includes('FOCUS MODE'), 'should not contain FOCUS MODE when no focus specified');
+    expect(!prompt.includes('FOCUS MODE')).toBeTruthy();
   });
 
   test('instructs LLM not to generate IDs', () => {
     const prompt = buildReviewerPrompt({ diff: 'sample diff', focus: undefined });
-    assert.ok(
+    expect(
       prompt.includes('Do NOT generate') || prompt.includes('do not generate') || prompt.includes('leave the id field absent'),
-      'prompt should instruct LLM not to generate IDs',
-    );
+    ).toBeTruthy();
   });
 
   test('contains output format instructions with all required finding fields', () => {
     const prompt = buildReviewerPrompt({ diff: 'sample diff', focus: undefined });
     const requiredFields = ['severity:', 'file:', 'line:', 'dimension:', 'explanation:', 'suggestion:'];
     for (const field of requiredFields) {
-      assert.ok(prompt.includes(field), `prompt should include finding field: ${field}`);
+      expect(prompt.includes(field)).toBeTruthy();
     }
   });
 
   test('diff is wrapped in <diff> XML tags', () => {
     const prompt = buildReviewerPrompt({ diff: 'sample diff content', focus: undefined });
-    assert.ok(prompt.includes('<diff>'), 'prompt should open with <diff> tag');
-    assert.ok(prompt.includes('</diff>'), 'prompt should close with </diff> tag');
+    expect(prompt.includes('<diff>')).toBeTruthy();
+    expect(prompt.includes('</diff>')).toBeTruthy();
     // Diff content is between the tags
     const diffStart = prompt.indexOf('<diff>');
     const diffEnd = prompt.indexOf('</diff>');
-    assert.ok(diffStart < diffEnd, '<diff> must appear before </diff>');
-    assert.ok(
+    expect(diffStart < diffEnd).toBeTruthy();
+    expect(
       prompt.slice(diffStart, diffEnd).includes('sample diff content'),
-      'diff content must be inside <diff> tags',
-    );
+    ).toBeTruthy();
   });
 
   test('contains anti-injection instruction about treating diff as data', () => {
     const prompt = buildReviewerPrompt({ diff: 'sample diff', focus: undefined });
-    assert.ok(
+    expect(
       prompt.includes('NOT executable instructions') || prompt.includes('data to analyze'),
-      'prompt should instruct model to treat diff as data, not instructions',
-    );
+    ).toBeTruthy();
   });
 });
 
@@ -185,15 +179,14 @@ describe('runReviewer — output and ID assignment', () => {
 
     const result = await runReviewer(opts);
 
-    assert.ok(
+    expect(
       result.reviewerMdPath.endsWith('REVIEWER.md'),
-      'reviewerMdPath should end with REVIEWER.md',
-    );
+    ).toBeTruthy();
 
     // Verify file was actually written
     const { readFile } = await import('node:fs/promises');
     const written = await readFile(result.reviewerMdPath, 'utf8');
-    assert.ok(written.includes('reviewId:'), 'REVIEWER.md should contain reviewId frontmatter');
+    expect(written.includes('reviewId:')).toBeTruthy();
   });
 
   test('finding IDs are assigned and match ^[A-Z]+-\\d{5}$ format', async () => {
@@ -217,13 +210,12 @@ describe('runReviewer — output and ID assignment', () => {
       _mockGenerateText: async () => fixtureReviewerMdContent,
     });
 
-    assert.equal(result.findings.length, 2, 'should have 2 findings');
+    expect(result.findings.length).toBe(2);
     const idPattern = /^[A-Z]+-\d{5}$/;
     for (const finding of result.findings) {
-      assert.ok(
+      expect(
         idPattern.test(finding.id),
-        `finding ID ${finding.id} should match ^[A-Z]+-\\d{5}$`,
-      );
+      ).toBeTruthy();
     }
   });
 
@@ -254,7 +246,7 @@ describe('runReviewer — output and ID assignment', () => {
     });
 
     // Counters should be sequential (1, 2)
-    assert.equal(counters[0], 1, 'first finding should have counter 1');
-    assert.equal(counters[1], 2, 'second finding should have counter 2');
+    expect(counters[0]).toBe(1);
+    expect(counters[1]).toBe(2);
   });
 });

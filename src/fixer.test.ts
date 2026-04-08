@@ -10,8 +10,7 @@
  * - formatFindingList: render findings list for interactive mode
  */
 
-import { test, describe, before, after } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 import { mkdir, mkdtemp, rm, writeFile, utimes } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -105,13 +104,13 @@ findingCount: 4
 describe('parseReportFindings', () => {
   test('parses all 4 findings from sample report', () => {
     const findings = parseReportFindings(SAMPLE_REPORT);
-    assert.equal(findings.length, 4);
+    expect(findings.length).toBe(4);
   });
 
   test('assigns correct severities', () => {
     const findings = parseReportFindings(SAMPLE_REPORT);
     const ids = findings.map(f => ({ id: f.id, severity: f.severity }));
-    assert.deepEqual(ids, [
+    expect(ids).toEqual([
       { id: 'SEC-00001', severity: 'critical' },
       { id: 'BUG-00002', severity: 'high' },
       { id: 'ERR-00003', severity: 'high' },
@@ -122,47 +121,47 @@ describe('parseReportFindings', () => {
   test('parses file, line, dimension correctly', () => {
     const findings = parseReportFindings(SAMPLE_REPORT);
     const sec = findings.find(f => f.id === 'SEC-00001');
-    assert.ok(sec);
-    assert.equal(sec.file, 'src/auth.ts');
-    assert.equal(sec.line, '42');
-    assert.equal(sec.dimension, 'SEC');
+    expect(sec).toBeTruthy();
+    expect(sec!.file).toBe('src/auth.ts');
+    expect(sec!.line).toBe('42');
+    expect(sec!.dimension).toBe('SEC');
   });
 
   test('parses explanation and suggestion', () => {
     const findings = parseReportFindings(SAMPLE_REPORT);
     const bug = findings.find(f => f.id === 'BUG-00002');
-    assert.ok(bug);
-    assert.ok(bug.explanation.includes('Unhandled promise rejection'));
-    assert.ok(bug.suggestion.includes('try/catch'));
+    expect(bug).toBeTruthy();
+    expect(bug!.explanation.includes('Unhandled promise rejection')).toBeTruthy();
+    expect(bug!.suggestion.includes('try/catch')).toBeTruthy();
   });
 
   test('marks counter-finding correctly', () => {
     const findings = parseReportFindings(SAMPLE_REPORT);
     const err = findings.find(f => f.id === 'ERR-00003');
-    assert.ok(err);
-    assert.equal(err.isCounterFinding, true);
-    assert.equal(err.dimension, 'ERR');
+    expect(err).toBeTruthy();
+    expect(err!.isCounterFinding).toBe(true);
+    expect(err!.dimension).toBe('ERR');
   });
 
   test('regular findings are not marked as counter-findings', () => {
     const findings = parseReportFindings(SAMPLE_REPORT);
     const sec = findings.find(f => f.id === 'SEC-00001');
-    assert.ok(sec);
-    assert.equal(sec.isCounterFinding, false);
+    expect(sec).toBeTruthy();
+    expect(sec!.isCounterFinding).toBe(false);
   });
 
   test('parses escalated verdict note', () => {
     const findings = parseReportFindings(SAMPLE_REPORT);
     const sec = findings.find(f => f.id === 'SEC-00001');
-    assert.ok(sec);
-    assert.ok(sec.verdictNote?.includes('Severity elevated by validator'));
+    expect(sec).toBeTruthy();
+    expect(sec!.verdictNote?.includes('Severity elevated by validator')).toBeTruthy();
   });
 
   test('parses challenged verdict note', () => {
     const findings = parseReportFindings(SAMPLE_REPORT);
     const perf = findings.find(f => f.id === 'PERF-00004');
-    assert.ok(perf);
-    assert.ok(perf.verdictNote?.includes('Challenged by validator'));
+    expect(perf).toBeTruthy();
+    expect(perf!.verdictNote?.includes('Challenged by validator')).toBeTruthy();
   });
 
   test('returns empty array for report with no findings', () => {
@@ -177,7 +176,7 @@ findingCount: 0
 _No findings. Clean review._
 `;
     const findings = parseReportFindings(noFindings);
-    assert.equal(findings.length, 0);
+    expect(findings.length).toBe(0);
   });
 });
 
@@ -189,26 +188,26 @@ describe('findFindingById', () => {
   let tmpDir: string;
   let reportPath: string;
 
-  before(async () => {
+  beforeAll(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'rms-fixer-test-'));
     reportPath = join(tmpDir, 'REPORT.md');
     await writeFile(reportPath, SAMPLE_REPORT, 'utf8');
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rm(tmpDir, { recursive: true, force: true });
   });
 
   test('finds an existing finding by ID', async () => {
     const finding = await findFindingById(reportPath, 'SEC-00001');
-    assert.ok(finding);
-    assert.equal(finding.id, 'SEC-00001');
-    assert.equal(finding.file, 'src/auth.ts');
+    expect(finding).toBeTruthy();
+    expect(finding!.id).toBe('SEC-00001');
+    expect(finding!.file).toBe('src/auth.ts');
   });
 
   test('returns null for unknown finding ID', async () => {
     const finding = await findFindingById(reportPath, 'SEC-99999');
-    assert.equal(finding, null);
+    expect(finding).toBe(null);
   });
 });
 
@@ -219,22 +218,22 @@ describe('findFindingById', () => {
 describe('listSessionDirs', () => {
   let reviewsDir: string;
 
-  before(async () => {
+  beforeAll(async () => {
     reviewsDir = await mkdtemp(join(tmpdir(), 'rms-sessions-test-'));
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rm(reviewsDir, { recursive: true, force: true });
   });
 
   test('returns empty array when .reviews/ is empty', async () => {
     const dirs = await listSessionDirs(reviewsDir);
-    assert.deepEqual(dirs, []);
+    expect(dirs).toEqual([]);
   });
 
   test('returns empty array when .reviews/ does not exist', async () => {
     const dirs = await listSessionDirs('/nonexistent/path/to/reviews');
-    assert.deepEqual(dirs, []);
+    expect(dirs).toEqual([]);
   });
 
   test('returns session directories sorted newest-first', async () => {
@@ -251,7 +250,7 @@ describe('listSessionDirs', () => {
     await utimes(s2, newer, newer);
 
     const dirs = await listSessionDirs(reviewsDir);
-    assert.ok(dirs.indexOf('2026-04-06-local-bbbb') < dirs.indexOf('2026-04-06-local-aaaa'));
+    expect(dirs.indexOf('2026-04-06-local-bbbb') < dirs.indexOf('2026-04-06-local-aaaa')).toBeTruthy();
   });
 });
 
@@ -262,17 +261,17 @@ describe('listSessionDirs', () => {
 describe('findLatestReportPath', () => {
   let reviewsDir: string;
 
-  before(async () => {
+  beforeAll(async () => {
     reviewsDir = await mkdtemp(join(tmpdir(), 'rms-latest-test-'));
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rm(reviewsDir, { recursive: true, force: true });
   });
 
   test('returns null when no sessions exist', async () => {
     const result = await findLatestReportPath(reviewsDir);
-    assert.equal(result, null);
+    expect(result).toBe(null);
   });
 
   test('returns the latest REPORT.md', async () => {
@@ -282,14 +281,14 @@ describe('findLatestReportPath', () => {
     await writeFile(reportPath, SAMPLE_REPORT, 'utf8');
 
     const result = await findLatestReportPath(reviewsDir);
-    assert.ok(result);
-    assert.equal(result.sessionId, '2026-04-06-local-cccc');
-    assert.equal(result.reportPath, reportPath);
+    expect(result).toBeTruthy();
+    expect(result!.sessionId).toBe('2026-04-06-local-cccc');
+    expect(result!.reportPath).toBe(reportPath);
   });
 
   test('returns null for specified session that has no REPORT.md', async () => {
     const result = await findLatestReportPath(reviewsDir, 'nonexistent-session');
-    assert.equal(result, null);
+    expect(result).toBe(null);
   });
 });
 
@@ -300,11 +299,11 @@ describe('findLatestReportPath', () => {
 describe('checkStaleness', () => {
   let tmpDir: string;
 
-  before(async () => {
+  beforeAll(async () => {
     tmpDir = await mkdtemp(join(tmpdir(), 'rms-stale-test-'));
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rm(tmpDir, { recursive: true, force: true });
   });
 
@@ -319,7 +318,7 @@ describe('checkStaleness', () => {
     // Report mtime is "now"
     const reportMtime = new Date();
     const result = await checkStaleness(filePath, reportMtime);
-    assert.equal(result.isStale, false);
+    expect(result.isStale).toBe(false);
   });
 
   test('isStale=true when file is newer than report', async () => {
@@ -329,15 +328,15 @@ describe('checkStaleness', () => {
     // Report mtime is 1 hour ago
     const reportMtime = new Date(Date.now() - 3600_000);
     const result = await checkStaleness(filePath, reportMtime);
-    assert.equal(result.isStale, true);
-    assert.ok(result.fileMtime instanceof Date);
+    expect(result.isStale).toBe(true);
+    expect(result.fileMtime instanceof Date).toBeTruthy();
   });
 
   test('isStale=false when file does not exist', async () => {
     const reportMtime = new Date();
     const result = await checkStaleness('/nonexistent/file.ts', reportMtime);
-    assert.equal(result.isStale, false);
-    assert.equal(result.fileMtime, undefined);
+    expect(result.isStale).toBe(false);
+    expect(result.fileMtime).toBe(undefined);
   });
 });
 
@@ -367,24 +366,24 @@ describe('formatFixOutput', () => {
 
   test('includes finding ID in output', () => {
     const output = formatFixOutput(baseCtx);
-    assert.ok(output.includes('SEC-00001'));
+    expect(output.includes('SEC-00001')).toBeTruthy();
   });
 
   test('includes file and line', () => {
     const output = formatFixOutput(baseCtx);
-    assert.ok(output.includes('src/auth.ts'));
-    assert.ok(output.includes('42'));
+    expect(output.includes('src/auth.ts')).toBeTruthy();
+    expect(output.includes('42')).toBeTruthy();
   });
 
   test('includes explanation and suggestion', () => {
     const output = formatFixOutput(baseCtx);
-    assert.ok(output.includes('JWT secret not validated'));
-    assert.ok(output.includes('Use zod to validate at startup'));
+    expect(output.includes('JWT secret not validated')).toBeTruthy();
+    expect(output.includes('Use zod to validate at startup')).toBeTruthy();
   });
 
   test('includes no stale warning when isStale=false', () => {
     const output = formatFixOutput(baseCtx);
-    assert.ok(!output.includes('Warning'));
+    expect(!output.includes('Warning')).toBeTruthy();
   });
 
   test('includes stale warning when isStale=true', () => {
@@ -394,8 +393,8 @@ describe('formatFixOutput', () => {
       fileMtime: new Date('2026-04-06T13:00:00Z'),
     };
     const output = formatFixOutput(staleCtx);
-    assert.ok(output.includes('Warning'));
-    assert.ok(output.includes('changed since this review'));
+    expect(output.includes('Warning')).toBeTruthy();
+    expect(output.includes('changed since this review')).toBeTruthy();
   });
 
   test('includes counter-finding label', () => {
@@ -404,7 +403,7 @@ describe('formatFixOutput', () => {
       finding: { ...finding, isCounterFinding: true },
     };
     const output = formatFixOutput(counterCtx);
-    assert.ok(output.includes('counter-finding'));
+    expect(output.includes('counter-finding')).toBeTruthy();
   });
 
   test('includes verdict note when present', () => {
@@ -413,7 +412,7 @@ describe('formatFixOutput', () => {
       finding: { ...finding, verdictNote: 'Challenged by validator: reason' },
     };
     const output = formatFixOutput(withVerdict);
-    assert.ok(output.includes('Challenged by validator'));
+    expect(output.includes('Challenged by validator')).toBeTruthy();
   });
 });
 
@@ -426,15 +425,15 @@ describe('formatFindingList', () => {
 
   test('includes session ID', () => {
     const output = formatFindingList(findings, '2026-04-06-local-a3b7');
-    assert.ok(output.includes('2026-04-06-local-a3b7'));
+    expect(output.includes('2026-04-06-local-a3b7')).toBeTruthy();
   });
 
   test('includes all finding IDs', () => {
     const output = formatFindingList(findings, '2026-04-06-local-a3b7');
-    assert.ok(output.includes('SEC-00001'));
-    assert.ok(output.includes('BUG-00002'));
-    assert.ok(output.includes('ERR-00003'));
-    assert.ok(output.includes('PERF-00004'));
+    expect(output.includes('SEC-00001')).toBeTruthy();
+    expect(output.includes('BUG-00002')).toBeTruthy();
+    expect(output.includes('ERR-00003')).toBeTruthy();
+    expect(output.includes('PERF-00004')).toBeTruthy();
   });
 
   test('groups by severity (critical before high before medium)', () => {
@@ -442,23 +441,23 @@ describe('formatFindingList', () => {
     const critPos = output.indexOf('## Critical');
     const highPos = output.indexOf('## High');
     const medPos = output.indexOf('## Medium');
-    assert.ok(critPos < highPos);
-    assert.ok(highPos < medPos);
+    expect(critPos < highPos).toBeTruthy();
+    expect(highPos < medPos).toBeTruthy();
   });
 
   test('includes finding count', () => {
     const output = formatFindingList(findings, '2026-04-06-local-a3b7');
-    assert.ok(output.includes('4 finding'));
+    expect(output.includes('4 finding')).toBeTruthy();
   });
 
   test('returns empty message when no findings', () => {
     const output = formatFindingList([], 'some-session');
-    assert.ok(output.includes('No findings'));
+    expect(output.includes('No findings')).toBeTruthy();
   });
 
   test('marks counter-findings in list', () => {
     const output = formatFindingList(findings, '2026-04-06-local-a3b7');
-    assert.ok(output.includes('counter-finding'));
+    expect(output.includes('counter-finding')).toBeTruthy();
   });
 });
 
@@ -469,28 +468,28 @@ describe('formatFindingList', () => {
 describe('getAllFindings', () => {
   let reviewsDir: string;
 
-  before(async () => {
+  beforeAll(async () => {
     reviewsDir = await mkdtemp(join(tmpdir(), 'rms-all-findings-test-'));
     const sessionDir = join(reviewsDir, '2026-04-06-local-dddd');
     await mkdir(sessionDir, { recursive: true });
     await writeFile(join(sessionDir, 'REPORT.md'), SAMPLE_REPORT, 'utf8');
   });
 
-  after(async () => {
+  afterAll(async () => {
     await rm(reviewsDir, { recursive: true, force: true });
   });
 
   test('returns all findings from latest session', async () => {
     const result = await getAllFindings(reviewsDir);
-    assert.ok(result);
-    assert.equal(result.findings.length, 4);
-    assert.equal(result.sessionId, '2026-04-06-local-dddd');
+    expect(result).toBeTruthy();
+    expect(result!.findings.length).toBe(4);
+    expect(result!.sessionId).toBe('2026-04-06-local-dddd');
   });
 
   test('returns null when no sessions exist', async () => {
     const emptyDir = await mkdtemp(join(tmpdir(), 'rms-empty-'));
     const result = await getAllFindings(emptyDir);
-    assert.equal(result, null);
+    expect(result).toBe(null);
     await rm(emptyDir, { recursive: true, force: true });
   });
 });

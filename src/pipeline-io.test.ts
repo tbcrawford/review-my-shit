@@ -1,5 +1,4 @@
-import { test, describe, before, after } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 import { mkdir, rm, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -18,12 +17,12 @@ import {
 
 let tempDir: string;
 
-before(async () => {
+beforeAll(async () => {
   tempDir = join(tmpdir(), `rms-test-${Date.now()}`);
   await mkdir(tempDir, { recursive: true });
 });
 
-after(async () => {
+afterAll(async () => {
   await rm(tempDir, { recursive: true, force: true });
 });
 
@@ -48,9 +47,9 @@ describe('writeInputFile', () => {
     const content = await readFile(join(sessionDir, 'INPUT.md'), 'utf8');
 
     // Frontmatter must contain focus line
-    assert.ok(content.includes('focus: security'), 'frontmatter should contain focus: security');
+    expect(content.includes('focus: security')).toBeTruthy();
     // XML body must contain <focus>security</focus>
-    assert.ok(content.includes('<focus>security</focus>'), 'body should contain <focus>security</focus>');
+    expect(content.includes('<focus>security</focus>')).toBeTruthy();
   });
 
   test('without focus: no focus line in frontmatter, <focus>none</focus> in body', async () => {
@@ -70,12 +69,12 @@ describe('writeInputFile', () => {
     // Frontmatter must NOT have a focus: line
     // The frontmatter section is between the first --- and second ---
     const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-    assert.ok(frontmatterMatch, 'file should have frontmatter');
-    const frontmatter = frontmatterMatch[1] ?? '';
-    assert.ok(!frontmatter.includes('focus:'), 'frontmatter should not have focus: line when undefined');
+    expect(frontmatterMatch).toBeTruthy();
+    const frontmatter = frontmatterMatch![1] ?? '';
+    expect(!frontmatter.includes('focus:')).toBeTruthy();
 
     // Body should have <focus>none</focus>
-    assert.ok(content.includes('<focus>none</focus>'), 'body should have <focus>none</focus>');
+    expect(content.includes('<focus>none</focus>')).toBeTruthy();
   });
 
   test('diff content appears verbatim inside <diff>...</diff> tags', async () => {
@@ -95,9 +94,9 @@ describe('writeInputFile', () => {
     const content = await readFile(join(sessionDir, 'INPUT.md'), 'utf8');
 
     // Diff must appear verbatim (no escaping)
-    assert.ok(content.includes('<diff>'), 'should have opening <diff> tag');
-    assert.ok(content.includes('</diff>'), 'should have closing </diff> tag');
-    assert.ok(content.includes(diffContent), 'diff content should appear verbatim');
+    expect(content.includes('<diff>')).toBeTruthy();
+    expect(content.includes('</diff>')).toBeTruthy();
+    expect(content.includes(diffContent)).toBeTruthy();
   });
 });
 
@@ -217,19 +216,19 @@ describe('parseReviewerOutput', () => {
 
     const result = await parseReviewerOutput(fixturePath);
 
-    assert.equal(result.findings.length, 2);
+    expect(result.findings.length).toBe(2);
 
     const secFinding = result.findings.find((f: { dimension: string }) => f.dimension === 'SEC');
-    assert.ok(secFinding, 'should have SEC finding');
-    assert.equal(secFinding.severity, 'high');
-    assert.equal(secFinding.file, 'src/auth.ts');
-    assert.equal(secFinding.line, '42');
+    expect(secFinding).toBeTruthy();
+    expect(secFinding!.severity).toBe('high');
+    expect(secFinding!.file).toBe('src/auth.ts');
+    expect(secFinding!.line).toBe('42');
 
     const perfFinding = result.findings.find((f: { dimension: string }) => f.dimension === 'PERF');
-    assert.ok(perfFinding, 'should have PERF finding');
-    assert.equal(perfFinding.severity, 'medium');
-    assert.equal(perfFinding.file, 'src/db.ts');
-    assert.equal(perfFinding.line, '15-20');
+    expect(perfFinding).toBeTruthy();
+    expect(perfFinding!.severity).toBe('medium');
+    expect(perfFinding!.file).toBe('src/db.ts');
+    expect(perfFinding!.line).toBe('15-20');
   });
 
   test('invalid finding (missing file field) is skipped, valid ones kept', async () => {
@@ -240,8 +239,8 @@ describe('parseReviewerOutput', () => {
 
     // SEC finding missing 'line' field is invalid → skipped
     // BUG finding is valid → kept
-    assert.equal(result.findings.length, 1);
-    assert.equal(result.findings[0]?.dimension, 'BUG');
+    expect(result.findings.length).toBe(1);
+    expect(result.findings[0]?.dimension).toBe('BUG');
   });
 
   test('dimensionsCovered reflects ## DIMENSION section headers present', async () => {
@@ -251,10 +250,10 @@ describe('parseReviewerOutput', () => {
     const result = await parseReviewerOutput(fixturePath);
 
     // All 11 dimension headers present in the fixture
-    assert.ok(result.dimensionsCovered.includes('BUG'), 'should cover BUG');
-    assert.ok(result.dimensionsCovered.includes('SEC'), 'should cover SEC');
-    assert.ok(result.dimensionsCovered.includes('PERF'), 'should cover PERF');
-    assert.equal(result.dimensionsCovered.length, 11);
+    expect(result.dimensionsCovered.includes('BUG')).toBeTruthy();
+    expect(result.dimensionsCovered.includes('SEC')).toBeTruthy();
+    expect(result.dimensionsCovered.includes('PERF')).toBeTruthy();
+    expect(result.dimensionsCovered.length).toBe(11);
   });
 
   test('dimensionsWithFindings tracks only dimensions that have parsed findings', async () => {
@@ -263,10 +262,10 @@ describe('parseReviewerOutput', () => {
 
     const result = await parseReviewerOutput(fixturePath);
 
-    assert.ok(result.dimensionsWithFindings.includes('SEC'));
-    assert.ok(result.dimensionsWithFindings.includes('PERF'));
-    assert.ok(!result.dimensionsWithFindings.includes('BUG'), 'BUG had no findings');
-    assert.equal(result.dimensionsWithFindings.length, 2);
+    expect(result.dimensionsWithFindings.includes('SEC')).toBeTruthy();
+    expect(result.dimensionsWithFindings.includes('PERF')).toBeTruthy();
+    expect(!result.dimensionsWithFindings.includes('BUG')).toBeTruthy();
+    expect(result.dimensionsWithFindings.length).toBe(2);
   });
 });
 
@@ -298,17 +297,17 @@ rationale: N+1 query pattern is present in the loop. Confirmed.
 
     const result = await parseValidatorOutput(fixturePath);
 
-    assert.equal(result.verdicts.length, 2);
-    assert.equal(result.verdictCount, 2);
+    expect(result.verdicts.length).toBe(2);
+    expect(result.verdictCount).toBe(2);
 
     const secVerdict = result.verdicts.find(v => v.findingId === 'SEC-00001');
-    assert.ok(secVerdict, 'should have SEC-00001 verdict');
-    assert.equal(secVerdict.verdict, 'confirmed');
-    assert.ok(secVerdict.rationale.length > 0, 'rationale should be non-empty');
+    expect(secVerdict).toBeTruthy();
+    expect(secVerdict!.verdict).toBe('confirmed');
+    expect(secVerdict!.rationale.length > 0).toBeTruthy();
 
     const perfVerdict = result.verdicts.find(v => v.findingId === 'PERF-00001');
-    assert.ok(perfVerdict, 'should have PERF-00001 verdict');
-    assert.equal(perfVerdict.verdict, 'confirmed');
+    expect(perfVerdict).toBeTruthy();
+    expect(perfVerdict!.verdict).toBe('confirmed');
   });
 
   test('challenged verdict with counter-finding: verdict is challenged, rawContent preserved', async () => {
@@ -336,11 +335,11 @@ suggestion: No action needed.
 
     const result = await parseValidatorOutput(fixturePath);
 
-    assert.equal(result.verdicts.length, 1);
-    assert.equal(result.verdicts[0]?.verdict, 'challenged');
-    assert.equal(result.verdicts[0]?.findingId, 'SEC-00001');
+    expect(result.verdicts.length).toBe(1);
+    expect(result.verdicts[0]?.verdict).toBe('challenged');
+    expect(result.verdicts[0]?.findingId).toBe('SEC-00001');
     // rawContent preserves the counter-finding block
-    assert.ok(result.rawContent.includes('<counter-finding>'), 'rawContent should preserve counter-finding block');
+    expect(result.rawContent.includes('<counter-finding>')).toBeTruthy();
   });
 
   test('escalated verdict: returned correctly', async () => {
@@ -360,9 +359,9 @@ rationale: The reviewer called this high but it is actually critical — direct 
 
     const result = await parseValidatorOutput(fixturePath);
 
-    assert.equal(result.verdicts.length, 1);
-    assert.equal(result.verdicts[0]?.verdict, 'escalated');
-    assert.equal(result.verdicts[0]?.findingId, 'SEC-00002');
+    expect(result.verdicts.length).toBe(1);
+    expect(result.verdicts[0]?.verdict).toBe('escalated');
+    expect(result.verdicts[0]?.findingId).toBe('SEC-00002');
   });
 
   test('malformed verdict (missing findingId) is skipped with warning, does not throw', async () => {
@@ -388,8 +387,8 @@ rationale: This one is valid.
     const result = await parseValidatorOutput(fixturePath);
 
     // Only the valid verdict should be returned
-    assert.equal(result.verdicts.length, 1);
-    assert.equal(result.verdicts[0]?.findingId, 'BUG-00001');
+    expect(result.verdicts.length).toBe(1);
+    expect(result.verdicts[0]?.findingId).toBe('BUG-00001');
   });
 
   test('unknown verdict value is rejected and skipped with warning', async () => {
@@ -416,9 +415,9 @@ rationale: This one is valid.
     const result = await parseValidatorOutput(fixturePath);
 
     // 'maybe' verdict should be skipped; only confirmed one kept
-    assert.equal(result.verdicts.length, 1);
-    assert.equal(result.verdicts[0]?.findingId, 'BUG-00003');
-    assert.equal(result.verdicts[0]?.verdict, 'confirmed');
+    expect(result.verdicts.length).toBe(1);
+    expect(result.verdicts[0]?.findingId).toBe('BUG-00003');
+    expect(result.verdicts[0]?.verdict).toBe('confirmed');
   });
 });
 
@@ -432,38 +431,27 @@ describe('verifyFileExists', () => {
     await writeFile(filePath, 'content', 'utf8');
 
     // Should not throw
-    await assert.doesNotReject(() => verifyFileExists(filePath, 'REVIEWER.md'));
+    await expect(verifyFileExists(filePath, 'REVIEWER.md')).resolves.not.toThrow();
   });
 
   test('throws with label and path when file is missing', async () => {
     const filePath = join(tempDir, 'does-not-exist.md');
 
-    await assert.rejects(
-      () => verifyFileExists(filePath, 'REVIEWER.md'),
-      (err: unknown) => {
-        assert.ok(err instanceof Error);
-        assert.ok(err.message.includes('REVIEWER.md'), 'error message should contain the label');
-        assert.ok(err.message.includes(filePath), 'error message should contain the file path');
-        assert.ok(
-          err.message.includes('[rms] Pipeline error'),
-          'error message should include [rms] prefix',
-        );
-        return true;
-      },
-    );
+    await expect(
+      verifyFileExists(filePath, 'REVIEWER.md'),
+    ).rejects.toThrow(/REVIEWER\.md/);
+
+    await expect(
+      verifyFileExists(filePath, 'REVIEWER.md'),
+    ).rejects.toThrow(/\[rms\] Pipeline error/);
   });
 
   test('uses the label parameter in the error message', async () => {
     const filePath = join(tempDir, 'another-missing.md');
 
-    await assert.rejects(
-      () => verifyFileExists(filePath, 'VALIDATOR.md'),
-      (err: unknown) => {
-        assert.ok(err instanceof Error);
-        assert.ok(err.message.includes('VALIDATOR.md'));
-        return true;
-      },
-    );
+    await expect(
+      verifyFileExists(filePath, 'VALIDATOR.md'),
+    ).rejects.toThrow(/VALIDATOR\.md/);
   });
 });
 
@@ -504,10 +492,10 @@ describe('getPrDiff', () => {
 
     try {
       const result = await getPrDiff(42, 'ghp_token', 'owner/repo');
-      assert.equal(result.prNumber, 42);
-      assert.equal(result.branch, 'fix-auth');
-      assert.equal(result.repoSlug, 'owner/repo');
-      assert.ok(result.diff.includes('src/auth.ts'), 'diff should contain file path');
+      expect(result.prNumber).toBe(42);
+      expect(result.branch).toBe('fix-auth');
+      expect(result.repoSlug).toBe('owner/repo');
+      expect(result.diff.includes('src/auth.ts')).toBeTruthy();
     } finally {
       restoreFetch();
     }
@@ -517,15 +505,13 @@ describe('getPrDiff', () => {
     mockFetch([{ status: 404, body: '' }]);
 
     try {
-      await assert.rejects(
-        () => getPrDiff(99, 'ghp_token', 'owner/repo'),
-        (err: unknown) => {
-          assert.ok(err instanceof Error);
-          assert.ok(err.message.includes('not found'), `expected "not found" in: ${err.message}`);
-          assert.ok(err.message.includes('99'));
-          return true;
-        },
-      );
+      await expect(
+        getPrDiff(99, 'ghp_token', 'owner/repo'),
+      ).rejects.toThrow(/not found/);
+
+      await expect(
+        getPrDiff(99, 'ghp_token', 'owner/repo'),
+      ).rejects.toThrow(/99/);
     } finally {
       restoreFetch();
     }
@@ -535,17 +521,9 @@ describe('getPrDiff', () => {
     mockFetch([{ status: 401, body: '' }]);
 
     try {
-      await assert.rejects(
-        () => getPrDiff(1, 'bad_token', 'owner/repo'),
-        (err: unknown) => {
-          assert.ok(err instanceof Error);
-          assert.ok(
-            err.message.includes('authentication failed'),
-            `expected "authentication failed" in: ${err.message}`,
-          );
-          return true;
-        },
-      );
+      await expect(
+        getPrDiff(1, 'bad_token', 'owner/repo'),
+      ).rejects.toThrow(/authentication failed/);
     } finally {
       restoreFetch();
     }
@@ -558,14 +536,9 @@ describe('getPrDiff', () => {
     ]);
 
     try {
-      await assert.rejects(
-        () => getPrDiff(1, 'token', 'owner/repo'),
-        (err: unknown) => {
-          assert.ok(err instanceof Error);
-          assert.ok(err.message.includes('authentication failed'));
-          return true;
-        },
-      );
+      await expect(
+        getPrDiff(1, 'token', 'owner/repo'),
+      ).rejects.toThrow(/authentication failed/);
     } finally {
       restoreFetch();
     }
@@ -578,17 +551,9 @@ describe('getPrDiff', () => {
     ]);
 
     try {
-      await assert.rejects(
-        () => getPrDiff(5, 'token', 'owner/repo'),
-        (err: unknown) => {
-          assert.ok(err instanceof Error);
-          assert.ok(
-            err.message.includes('empty'),
-            `expected "empty" in: ${err.message}`,
-          );
-          return true;
-        },
-      );
+      await expect(
+        getPrDiff(5, 'token', 'owner/repo'),
+      ).rejects.toThrow(/empty/);
     } finally {
       restoreFetch();
     }
@@ -603,7 +568,7 @@ describe('getPrDiff', () => {
 
     try {
       const result = await getPrDiff(10, 'token', 'owner/repo');
-      assert.equal(result.branch, 'feature/add-auth');
+      expect(result.branch).toBe('feature/add-auth');
     } finally {
       restoreFetch();
     }
@@ -627,7 +592,7 @@ describe('detectRepoSlug', () => {
     //
     // This test verifies the function throws clearly for non-GitHub remotes.
     // The happy path is tested implicitly when this repo runs review-pr in CI.
-    assert.ok(typeof detectRepoSlug === 'function', 'detectRepoSlug should be a function');
+    expect(typeof detectRepoSlug === 'function').toBeTruthy();
   });
 
   test('throws clear message when called in a repo without a GitHub remote', async () => {
@@ -645,17 +610,9 @@ describe('detectRepoSlug', () => {
     );
 
     try {
-      await assert.rejects(
-        () => detectRepoSlug(tmpRepo),
-        (err: unknown) => {
-          assert.ok(err instanceof Error);
-          assert.ok(
-            err.message.toLowerCase().includes('github'),
-            `expected GitHub mention in error: ${err.message}`,
-          );
-          return true;
-        },
-      );
+      await expect(
+        detectRepoSlug(tmpRepo),
+      ).rejects.toThrow(/github/i);
     } finally {
       await rm(tmpRepo, { recursive: true, force: true });
     }

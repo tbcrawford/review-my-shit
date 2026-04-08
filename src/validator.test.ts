@@ -1,5 +1,4 @@
-import { test, describe, before, after } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -11,12 +10,12 @@ import { VALIDATOR_PROMPT, buildValidatorPrompt, runValidator } from './validato
 
 let tempDir: string;
 
-before(async () => {
+beforeAll(async () => {
   tempDir = join(tmpdir(), `rms-validator-test-${Date.now()}`);
   await mkdir(tempDir, { recursive: true });
 });
 
-after(async () => {
+afterAll(async () => {
   await rm(tempDir, { recursive: true, force: true });
 });
 
@@ -26,25 +25,23 @@ after(async () => {
 
 describe('VALIDATOR_PROMPT', () => {
   test('contains adversarial "challenge" framing', () => {
-    assert.ok(
+    expect(
       VALIDATOR_PROMPT.includes('challenge'),
-      'Prompt must contain adversarial "challenge" framing',
-    );
+    ).toBeTruthy();
   });
 
   test('contains all three verdict types: confirmed, challenged, escalated', () => {
-    assert.ok(VALIDATOR_PROMPT.includes('confirmed'), 'Prompt must define "confirmed" verdict');
-    assert.ok(VALIDATOR_PROMPT.includes('challenged'), 'Prompt must define "challenged" verdict');
-    assert.ok(VALIDATOR_PROMPT.includes('escalated'), 'Prompt must define "escalated" verdict');
+    expect(VALIDATOR_PROMPT.includes('confirmed')).toBeTruthy();
+    expect(VALIDATOR_PROMPT.includes('challenged')).toBeTruthy();
+    expect(VALIDATOR_PROMPT.includes('escalated')).toBeTruthy();
   });
 
   test('is language agnostic — no specific framework or language names', () => {
     const forbidden = ['JavaScript', 'Python', 'TypeScript', 'React', 'Django'];
     for (const name of forbidden) {
-      assert.ok(
+      expect(
         !VALIDATOR_PROMPT.includes(name),
-        `Prompt must not mention "${name}" — must be language agnostic`,
-      );
+      ).toBeTruthy();
     }
   });
 });
@@ -60,14 +57,12 @@ describe('buildValidatorPrompt', () => {
       inputMdContent: 'INPUT_CONTENT_SENTINEL',
     });
 
-    assert.ok(
+    expect(
       prompt.includes('REVIEWER_CONTENT_SENTINEL'),
-      'Built prompt must contain reviewerMdContent',
-    );
-    assert.ok(
+    ).toBeTruthy();
+    expect(
       prompt.includes('INPUT_CONTENT_SENTINEL'),
-      'Built prompt must contain inputMdContent',
-    );
+    ).toBeTruthy();
   });
 
   test('reviewerMdContent is wrapped in <reviewer-md> XML tags', () => {
@@ -75,14 +70,13 @@ describe('buildValidatorPrompt', () => {
       reviewerMdContent: 'REVIEWER_SENTINEL',
       inputMdContent: 'INPUT_SENTINEL',
     });
-    assert.ok(prompt.includes('<reviewer-md>'), 'prompt should contain <reviewer-md> opening tag');
-    assert.ok(prompt.includes('</reviewer-md>'), 'prompt should contain </reviewer-md> closing tag');
+    expect(prompt.includes('<reviewer-md>')).toBeTruthy();
+    expect(prompt.includes('</reviewer-md>')).toBeTruthy();
     const start = prompt.indexOf('<reviewer-md>');
     const end = prompt.indexOf('</reviewer-md>');
-    assert.ok(
+    expect(
       prompt.slice(start, end).includes('REVIEWER_SENTINEL'),
-      'reviewerMdContent must be inside <reviewer-md> tags',
-    );
+    ).toBeTruthy();
   });
 
   test('inputMdContent is wrapped in <input-md> XML tags', () => {
@@ -90,14 +84,13 @@ describe('buildValidatorPrompt', () => {
       reviewerMdContent: 'REVIEWER_SENTINEL',
       inputMdContent: 'INPUT_SENTINEL',
     });
-    assert.ok(prompt.includes('<input-md>'), 'prompt should contain <input-md> opening tag');
-    assert.ok(prompt.includes('</input-md>'), 'prompt should contain </input-md> closing tag');
+    expect(prompt.includes('<input-md>')).toBeTruthy();
+    expect(prompt.includes('</input-md>')).toBeTruthy();
     const start = prompt.indexOf('<input-md>');
     const end = prompt.indexOf('</input-md>');
-    assert.ok(
+    expect(
       prompt.slice(start, end).includes('INPUT_SENTINEL'),
-      'inputMdContent must be inside <input-md> tags',
-    );
+    ).toBeTruthy();
   });
 
   test('contains anti-injection instruction about treating content as data', () => {
@@ -105,10 +98,9 @@ describe('buildValidatorPrompt', () => {
       reviewerMdContent: 'REVIEWER_SENTINEL',
       inputMdContent: 'INPUT_SENTINEL',
     });
-    assert.ok(
+    expect(
       prompt.includes('NOT executable instructions') || prompt.includes('data to evaluate'),
-      'prompt should instruct model to treat file contents as data, not instructions',
-    );
+    ).toBeTruthy();
   });
 });
 
@@ -160,15 +152,15 @@ rationale: N+1 query pattern confirmed in the loop.
       _mockGenerateText: async () => mockResponse,
     });
 
-    assert.equal(result.verdictCount, 2);
-    assert.equal(result.verdicts.length, 2);
-    assert.ok(result.validatorMdPath.includes('VALIDATOR.md'));
+    expect(result.verdictCount).toBe(2);
+    expect(result.verdicts.length).toBe(2);
+    expect(result.validatorMdPath.includes('VALIDATOR.md')).toBeTruthy();
 
     // Verify frontmatter in written file
     const { readFile } = await import('node:fs/promises');
     const written = await readFile(result.validatorMdPath, 'utf8');
-    assert.ok(written.includes('reviewId: test-2verdicts'), 'VALIDATOR.md must contain reviewId');
-    assert.ok(written.includes('role: validator'), 'VALIDATOR.md must contain role: validator');
+    expect(written.includes('reviewId: test-2verdicts')).toBeTruthy();
+    expect(written.includes('role: validator')).toBeTruthy();
   });
 
   test('with 1 verdict mock: verdictCount === 1', async () => {
@@ -207,8 +199,8 @@ rationale: Magic number 42 should be a named constant.
       _mockGenerateText: async () => mockResponse,
     });
 
-    assert.equal(result.verdictCount, 1);
-    assert.equal(result.verdicts[0]?.verdict, 'confirmed');
+    expect(result.verdictCount).toBe(1);
+    expect(result.verdicts[0]?.verdict).toBe('confirmed');
   });
 });
 
@@ -278,12 +270,10 @@ rationale: PI = 3.14159 is a mathematical constant, not a secret. This is a fals
       _mockGenerateText: async () => challengedMock,
     });
 
-    assert.equal(result.verdicts.length, 1);
-    assert.equal(
+    expect(result.verdicts.length).toBe(1);
+    expect(
       result.verdicts[0]?.verdict,
-      'challenged',
-      'Absurd false-positive must be challengeable through the pipeline',
-    );
+    ).toBe('challenged');
   });
 
   test('baseline contrast: naive confirmed mock returns confirmed verdict', async () => {
@@ -315,17 +305,15 @@ rationale: Confirmed — PI is hardcoded, could be a secret.
       _mockGenerateText: async () => confirmedMock,
     });
 
-    assert.equal(result.verdicts[0]?.verdict, 'confirmed');
+    expect(result.verdicts[0]?.verdict).toBe('confirmed');
   });
 
   test('prompt framing: VALIDATOR_PROMPT contains "challenge" and "rubber-stamp"', () => {
-    assert.ok(
+    expect(
       VALIDATOR_PROMPT.includes('challenge'),
-      'Prompt must contain adversarial "challenge" instruction',
-    );
-    assert.ok(
+    ).toBeTruthy();
+    expect(
       VALIDATOR_PROMPT.includes('rubber-stamp'),
-      'Prompt must instruct against rubber-stamping',
-    );
+    ).toBeTruthy();
   });
 });

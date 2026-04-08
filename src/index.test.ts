@@ -7,8 +7,7 @@
  * properly isolated.
  */
 
-import { test, describe } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect } from 'vitest';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
@@ -54,34 +53,30 @@ describe('rms review routing', () => {
   test('rms review (no args) exits 0 and prints scope prompt', async () => {
     const { stdout, exitCode } = await runCli(['review']);
 
-    assert.strictEqual(exitCode, 0, 'should exit with code 0');
-    assert.ok(
+    expect(exitCode).toBe(0);
+    expect(
       stdout.includes('What would you like to review'),
-      `stdout should contain "What would you like to review", got: ${stdout}`,
-    );
-    assert.ok(
+    ).toBeTruthy();
+    expect(
       stdout.includes('local'),
-      `stdout should contain "local", got: ${stdout}`,
-    );
-    assert.ok(
+    ).toBeTruthy();
+    expect(
       stdout.includes('pr'),
-      `stdout should contain "pr", got: ${stdout}`,
-    );
+    ).toBeTruthy();
   });
 
   test('rms review unknown-scope exits non-zero and stderr contains "Unknown scope"', async () => {
     const { stderr, exitCode } = await runCli(['review', 'unknown-scope']);
 
-    assert.ok(exitCode !== 0, `should exit with non-zero code, got: ${exitCode}`);
-    assert.ok(
+    expect(exitCode !== 0).toBeTruthy();
+    expect(
       stderr.includes('Unknown scope'),
-      `stderr should contain "Unknown scope", got: ${stderr}`,
-    );
+    ).toBeTruthy();
   });
 
   test('rms review pr (missing PR number) exits non-zero', async () => {
     const { exitCode } = await runCli(['review', 'pr']);
 
-    assert.ok(exitCode !== 0, `should exit with non-zero code when PR number is missing, got: ${exitCode}`);
+    expect(exitCode !== 0).toBeTruthy();
   });
 });

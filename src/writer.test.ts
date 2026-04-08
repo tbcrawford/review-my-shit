@@ -1,5 +1,4 @@
-import { test, describe, before, after } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect, beforeAll, afterAll } from 'vitest';
 import { mkdir, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -13,12 +12,12 @@ import type { Finding, ValidationVerdict } from './schemas.js';
 
 let tempDir: string;
 
-before(async () => {
+beforeAll(async () => {
   tempDir = join(tmpdir(), `rms-writer-test-${Date.now()}`);
   await mkdir(tempDir, { recursive: true });
 });
 
-after(async () => {
+afterAll(async () => {
   await rm(tempDir, { recursive: true, force: true });
 });
 
@@ -48,10 +47,10 @@ suggestion: Add a JSDoc comment explaining the constant.
 </verdict>`;
 
     const result = parseCounterFindings(rawContent);
-    assert.equal(result.length, 1);
-    assert.equal(result[0]?.dimension, 'DOC');
-    assert.equal(result[0]?.severity, 'info');
-    assert.equal(result[0]?.file, 'src/math.ts');
+    expect(result.length).toBe(1);
+    expect(result[0]?.dimension).toBe('DOC');
+    expect(result[0]?.severity).toBe('info');
+    expect(result[0]?.file).toBe('src/math.ts');
   });
 
   test('returns empty array when no counter-findings present', () => {
@@ -62,7 +61,7 @@ rationale: The bug is real.
 </verdict>`;
 
     const result = parseCounterFindings(rawContent);
-    assert.equal(result.length, 0);
+    expect(result.length).toBe(0);
   });
 
   test('skips counter-findings inside confirmed/escalated verdict blocks', () => {
@@ -84,7 +83,7 @@ suggestion: Fix it.
     // Our implementation only checks for 'challenged' in the content
     // An escalated verdict without 'challenged' keyword should not extract
     const result = parseCounterFindings(rawContent);
-    assert.equal(result.length, 0);
+    expect(result.length).toBe(0);
   });
 
   test('skips counter-finding with invalid fields', () => {
@@ -103,7 +102,7 @@ suggestion: Fix it.
 </verdict>`;
 
     const result = parseCounterFindings(rawContent);
-    assert.equal(result.length, 0, 'Invalid counter-finding should be skipped');
+    expect(result.length).toBe(0);
   });
 
   test('extracts multiple counter-findings from multiple challenged verdicts', () => {
@@ -136,9 +135,9 @@ suggestion: Rename the variable.
 </verdict>`;
 
     const result = parseCounterFindings(rawContent);
-    assert.equal(result.length, 2);
-    assert.equal(result[0]?.dimension, 'DOC');
-    assert.equal(result[1]?.dimension, 'STYL');
+    expect(result.length).toBe(2);
+    expect(result[0]?.dimension).toBe('DOC');
+    expect(result[1]?.dimension).toBe('STYL');
   });
 });
 
@@ -219,9 +218,9 @@ describe('runWriter', () => {
     // Critical section must appear before high section
     const criticalIdx = report.indexOf('## Critical');
     const highIdx = report.indexOf('## High');
-    assert.ok(criticalIdx !== -1, 'Report must have a Critical section');
-    assert.ok(highIdx !== -1, 'Report must have a High section');
-    assert.ok(criticalIdx < highIdx, 'Critical section must appear before High section');
+    expect(criticalIdx !== -1).toBeTruthy();
+    expect(highIdx !== -1).toBeTruthy();
+    expect(criticalIdx < highIdx).toBeTruthy();
   });
 
   test('challenged finding appears in report with annotation', async () => {
@@ -261,15 +260,13 @@ describe('runWriter', () => {
     });
 
     const report = await readFile(result.reportMdPath, 'utf8');
-    assert.ok(report.includes('SEC-00010'), 'Challenged finding ID must appear in report');
-    assert.ok(
+    expect(report.includes('SEC-00010')).toBeTruthy();
+    expect(
       report.toLowerCase().includes('challenged'),
-      'Report must contain challenged annotation',
-    );
-    assert.ok(
+    ).toBeTruthy();
+    expect(
       report.includes('mathematical constant'),
-      'Validator rationale must appear in report',
-    );
+    ).toBeTruthy();
   });
 
   test('escalated finding has severity bumped one level', async () => {
@@ -311,16 +308,16 @@ describe('runWriter', () => {
     const report = await readFile(result.reportMdPath, 'utf8');
 
     // Should appear under High (medium → high), not Medium
-    assert.ok(report.includes('ERR-00001'), 'Escalated finding ID must appear');
+    expect(report.includes('ERR-00001')).toBeTruthy();
     const highIdx = report.indexOf('## High');
     const medIdx = report.indexOf('## Medium');
     const findingIdx = report.indexOf('ERR-00001');
 
-    assert.ok(highIdx !== -1, 'Report must have High section');
-    assert.ok(findingIdx > highIdx, 'Escalated finding must appear in High section');
+    expect(highIdx !== -1).toBeTruthy();
+    expect(findingIdx > highIdx).toBeTruthy();
     // If there's a Medium section, the finding must not be in it
     if (medIdx !== -1) {
-      assert.ok(findingIdx < medIdx, 'Escalated finding must not be in Medium section');
+      expect(findingIdx < medIdx).toBeTruthy();
     }
   });
 
@@ -382,14 +379,13 @@ suggestion: Add a JSDoc comment.
     const report = await readFile(result.reportMdPath, 'utf8');
 
     // Original finding must appear
-    assert.ok(report.includes('SEC-00020'), 'Original finding must appear in report');
+    expect(report.includes('SEC-00020')).toBeTruthy();
     // Counter-finding attribution must appear
-    assert.ok(
+    expect(
       report.includes('validator counter-finding') || report.includes('counter-finding'),
-      'Counter-finding attribution must appear in report',
-    );
+    ).toBeTruthy();
     // Counter-finding count should be 1
-    assert.equal(result.counterFindingCount, 1);
+    expect(result.counterFindingCount).toBe(1);
   });
 
   test('completeness check throws when reviewer finding ID is missing', async () => {
@@ -426,7 +422,7 @@ suggestion: Add a JSDoc comment.
     });
 
     const report = await readFile(result.reportMdPath, 'utf8');
-    assert.ok(report.includes('BUG-99999'), 'Finding ID must appear in report');
+    expect(report.includes('BUG-99999')).toBeTruthy();
   });
 
   test('metadata header contains all REPT-01 fields', async () => {
@@ -463,10 +459,10 @@ suggestion: Add a JSDoc comment.
 
     const report = await readFile(result.reportMdPath, 'utf8');
 
-    assert.ok(report.includes('local-diff'), 'Report must include scope');
-    assert.ok(report.includes('test-model-id'), 'Report must include model ID');
-    assert.ok(report.includes('STYL'), 'Report must include dimensions covered');
-    assert.ok(report.includes('2026-04-06'), 'Report must include timestamp');
+    expect(report.includes('local-diff')).toBeTruthy();
+    expect(report.includes('test-model-id')).toBeTruthy();
+    expect(report.includes('STYL')).toBeTruthy();
+    expect(report.includes('2026-04-06')).toBeTruthy();
   });
 
   test('empty findings produces clean review message', async () => {
@@ -486,8 +482,8 @@ suggestion: Add a JSDoc comment.
     });
 
     const report = await readFile(result.reportMdPath, 'utf8');
-    assert.equal(result.findingCount, 0);
-    assert.ok(report.includes('Clean review') || report.includes('no findings') || report.includes('No findings'));
+    expect(result.findingCount).toBe(0);
+    expect(report.includes('Clean review') || report.includes('no findings') || report.includes('No findings')).toBeTruthy();
   });
 
   test('findingCount in WriterResult matches total entries in report', async () => {
@@ -531,7 +527,7 @@ suggestion: Add docs.
     });
 
     // 2 reviewer findings + 1 counter-finding = 3 total
-    assert.equal(result.findingCount, 3);
-    assert.equal(result.counterFindingCount, 1);
+    expect(result.findingCount).toBe(3);
+    expect(result.counterFindingCount).toBe(1);
   });
 });
