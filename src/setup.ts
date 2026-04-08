@@ -117,13 +117,13 @@ async function main(): Promise<void> {
   if (flagEditors !== null) {
     // Scripting path: skip prompt
     const label = flagEditors.length === 2 ? 'OpenCode + Cursor' : flagEditors[0] === 'opencode' ? 'OpenCode' : 'Cursor';
-    console.log(`  Installing for ${label}...`);
+    console.log(`  Installing for ${label}...\n`);
     editors = flagEditors;
   } else {
     // Interactive path
     editors = await promptEditorSelection();
     const label = editors.length === 2 ? 'OpenCode + Cursor' : editors[0] === 'opencode' ? 'OpenCode' : 'Cursor';
-    console.log(`\n  Installing for ${label}...`);
+    console.log(`\n  Installing for ${label}...\n`);
   }
 
   const projectRoot = process.cwd();
@@ -131,11 +131,14 @@ async function main(): Promise<void> {
 
   // Completion message
   console.log('');
-  console.log(`  ${chalk.green('✓')} Done. Restart your editor to pick up the new commands.\n`);
+  console.log('  ✓ Done. Restart your editor to pick up the new commands.\n');
   console.log('  Available commands:');
-  console.log('    /rms-review');
-  console.log('    /rms-fix');
-  console.log('    /rms-settings');
+  if (editors.includes('opencode')) {
+    console.log('    OpenCode:  /rms-review   /rms-fix   /rms-settings');
+  }
+  if (editors.includes('cursor')) {
+    console.log('    Cursor:    /rms-review   /rms-fix   /rms-settings');
+  }
   console.log('');
 }
 

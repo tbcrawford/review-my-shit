@@ -4,7 +4,6 @@ import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { nanoid } from 'nanoid';
 import { select, input } from '@inquirer/prompts';
-import chalk from 'chalk';
 import { install } from './installer.js';
 import { loadRmsConfig, resolveAgentModel, getConfigPath, saveRmsConfig } from './config.js';
 import type { AgentModelSpec } from './schemas.js';
@@ -315,11 +314,13 @@ program
 
     // Completion summary (installer no longer prints this)
     const label = editors.length === 2 ? 'OpenCode + Cursor' : editors[0] === 'opencode' ? 'OpenCode' : 'Cursor';
-    console.log(`\n  ${chalk.green('✓')} rms installed for ${label}.`);
-    console.log('\n  Available commands:');
-    console.log('    /rms-review');
-    console.log('    /rms-fix');
-    console.log('    /rms-settings');
+    console.log(`\n  ✓ rms installed for ${label}.`);
+    if (editors.includes('opencode')) {
+      console.log('    OpenCode: commands available globally — /rms-review, /rms-fix, /rms-settings');
+    }
+    if (editors.includes('cursor')) {
+      console.log('    Cursor: skills available globally — /rms-review, /rms-fix, /rms-settings');
+    }
     console.log('\n  Restart your editor to pick up the new commands.');
   });
 
