@@ -241,7 +241,18 @@ Plans:
 - [x] 12-02-PLAN.md — `src/installer.ts` output polish + `--opencode`/`--cursor`/`-y/--yes` flags on `rms install` CLI command in `src/index.ts`
 - [x] 12-03-PLAN.md — Version bump to 0.3.0 across `package.json`/`src/setup.ts`/`src/index.ts`, README flag docs, human end-to-end verification checkpoint
 
+### Phase 13: update all dependencies to the latest stable versions. For node, make sure to update to the latest lts. Make sure the build works by the end.
+
+**Goal:** Update all npm dependencies to their latest stable versions (including Zod v4, Commander v14, TypeScript v6, and @ai-sdk/* patch updates), fix tsconfig for TS6 compatibility, and verify the build + test suite passes cleanly.
+**Requirements**: TBD
+**Depends on:** Phase 12
+**Plans:** 2 plans
+
+Plans:
+- [ ] 13-01-PLAN.md — Update package.json versions, tsconfig TS6 fix, npm install, build + test verification
+- [ ] 13-02-PLAN.md — Final clean build verification + human end-to-end checkpoint
+
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-07 after Phase 12 planned (installer UX overhaul — 3 plans)*
+*Last updated: 2026-04-08 after Phase 13 planned (dependency updates — 2 plans)*
