@@ -293,6 +293,19 @@ Plans:
 - [x] 16-01-PLAN.md — Core provider support: schemas, config, index, package.json, tests
 - [x] 16-02-PLAN.md — TUI picker: settings-tui.ts, wire into index.ts, template updates
 
+### Phase 17: Command UX overhaul: flag-free, intelligent routing, interactive model picker, variants
+
+**Goal:** Replace the Phase 16 settings TUI (which used a multi-step agent selector) with three dedicated per-agent model picker commands (/rms-reviewer, /rms-validator, /rms-writer) each showing variant tiers (max/high/medium/low). Update /rms-settings to be overview+reset only. Create default config on install so users start without manual configuration. All editor commands work with zero flags.
+**Requirements**: UX-01, UX-02, UX-03, UX-04, UX-05, UX-06
+**Depends on:** Phase 16
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — src/model-picker.ts (variant tier picker module) + ensureDefaultConfig() in config.ts
+- [ ] 17-02-PLAN.md — 6 new/updated template files (3 OpenCode + 3 Cursor for reviewer/validator/writer) + update existing templates for flag-free UX
+- [ ] 17-03-PLAN.md — Wire: rms reviewer/validator/writer subcommands in index.ts, installer.ts expanded to 6 commands, setup.ts updated completion message
+- [ ] 17-04-PLAN.md — Tests update, build verification, human checkpoint
+
 ---
 
 *Roadmap created: 2026-04-03*
