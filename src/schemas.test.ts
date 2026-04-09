@@ -9,6 +9,8 @@ import {
   ReportFileSchema,
   DIMENSIONS,
   AgentModelSpecSchema,
+  RmsConfigSchema,
+  FlatRmsConfigSchema,
 } from './schemas.js';
 
 describe('DIMENSIONS constant', () => {
@@ -166,23 +168,112 @@ describe('ReportFileSchema', () => {
 });
 
 describe('AgentModelSpecSchema', () => {
-  test('accepts copilot as a valid provider', () => {
-    const result = AgentModelSpecSchema.parse({ provider: 'copilot', model: 'claude-opus-4.6' });
-    expect(result.provider).toBe('copilot');
-    expect(result.model).toBe('claude-opus-4.6');
+  test('accepts model only (no variant)', () => {
+    const result = AgentModelSpecSchema.parse({ model: 'github-copilot/claude-opus-4.6' });
+    expect(result.model).toBe('github-copilot/claude-opus-4.6');
+    expect(result.variant).toBeUndefined();
   });
 
-  test('accepts existing openai provider (no regression)', () => {
-    const result = AgentModelSpecSchema.parse({ provider: 'openai', model: 'gpt-4o' });
-    expect(result.provider).toBe('openai');
-    expect(result.model).toBe('gpt-4o');
+  test('accepts model with high_thinking variant', () => {
+    const result = AgentModelSpecSchema.parse({ model: 'github-copilot/claude-opus-4.6', variant: 'high_thinking' });
+    expect(result.model).toBe('github-copilot/claude-opus-4.6');
+    expect(result.variant).toBe('high_thinking');
   });
 
-  test('throws ZodError for unknown provider "bedrock"', () => {
-    expect(() => AgentModelSpecSchema.parse({ provider: 'bedrock', model: 'x' })).toThrow(ZodError);
+  test('accepts model with no_thinking variant', () => {
+    const result = AgentModelSpecSchema.parse({ model: 'github-copilot/claude-haiku-4.5', variant: 'no_thinking' });
+    expect(result.variant).toBe('no_thinking');
   });
 
-  test('throws ZodError for "github-copilot" (raw prefix is not a valid provider value)', () => {
-    expect(() => AgentModelSpecSchema.parse({ provider: 'github-copilot', model: 'x' })).toThrow(ZodError);
+  test('rejects empty model string', () => {
+    expect(() => AgentModelSpecSchema.parse({ model: '' })).toThrow(ZodError);
+  });
+
+  test('rejects invalid variant value', () => {
+    expect(() => AgentModelSpecSchema.parse({ model: 'x', variant: 'thinking' })).toThrow(ZodError);
+  });
+
+  test('old {provider, model} shape does not satisfy new AgentModelSpecSchema (no provider field)', () => {
+    // The new schema has no provider field — old shapes still parse (provider is stripped as unknown key)
+    // but the schema does NOT require provider, so the old shape is accepted with provider ignored.
+    // What matters: AgentModelSpecSchema does NOT include provider in output.
+    const result = AgentModelSpecSchema.parse({ provider: 'copilot', model: 'x' });
+    expect((result as unknown as Record<string, unknown>)['provider']).toBeUndefined();
+    expect(result.model).toBe('x');
+  });
+});
+
+describe('RmsConfigSchema', () => {
+  const validNestedConfig = {
+    opencode: {
+      reviewer:  { model: 'github-copilot/claude-opus-4.6',  variant: 'high_thinking' },
+      validator: { model: 'github-copilot/gpt-5.4',          variant: 'high_thinking' },
+      writer:    { model: 'github-copilot/claude-haiku-4.5', variant: 'no_thinking'   },
+    },
+    cursor: {
+      reviewer:  { model: 'claude-4.6-opus-high-thinking' },
+      validator: { model: 'gpt-5.4-high' },
+      writer:    { model: 'gpt-5.4-mini-none' },
+    },
+  };
+
+  test('accepts full nested config with opencode + cursor sections', () => {
+    const result = RmsConfigSchema.parse(validNestedConfig);
+    expect(result.opencode.reviewer.model).toBe('github-copilot/claude-opus-4.6');
+    expect(result.opencode.reviewer.variant).toBe('high_thinking');
+    expect(result.cursor.writer.model).toBe('gpt-5.4-mini-none');
+  });
+
+  test('rejects config missing opencode key', () => {
+    const { opencode: _omit, ...withoutOpencode } = validNestedConfig;
+    expect(() => RmsConfigSchema.parse(withoutOpencode)).toThrow(ZodError);
+  });
+
+  test('rejects config where cursor.reviewer is missing model', () => {
+    const bad = {
+      opencode: validNestedConfig.opencode,
+      cursor: {
+        reviewer:  { variant: 'high_thinking' },  // missing model
+        validator: { model: 'gpt-5.4-high' },
+        writer:    { model: 'gpt-5.4-mini-none' },
+      },
+    };
+    expect(() => RmsConfigSchema.parse(bad)).toThrow(ZodError);
+  });
+
+  test('rejects old flat shape (reviewer/validator/writer at root)', () => {
+    const flatShape = {
+      reviewer:  { provider: 'copilot', model: 'claude-opus-4-5' },
+      validator: { provider: 'copilot', model: 'gpt-5.4' },
+      writer:    { provider: 'copilot', model: 'claude-haiku-4.5' },
+    };
+    expect(() => RmsConfigSchema.parse(flatShape)).toThrow(ZodError);
+  });
+});
+
+describe('FlatRmsConfigSchema', () => {
+  const oldFlatConfig = {
+    reviewer:  { provider: 'copilot', model: 'claude-opus-4-5' },
+    validator: { provider: 'anthropic', model: 'claude-sonnet-4-5' },
+    writer:    { provider: 'openai', model: 'gpt-4o' },
+  };
+
+  test('accepts the old flat {provider, model} shape', () => {
+    const result = FlatRmsConfigSchema.parse(oldFlatConfig);
+    expect(result.reviewer.provider).toBe('copilot');
+    expect(result.reviewer.model).toBe('claude-opus-4-5');
+  });
+
+  test('rejects the new nested shape (opencode/cursor keys fail)', () => {
+    const newShape = {
+      opencode: { reviewer: { model: 'x' }, validator: { model: 'x' }, writer: { model: 'x' } },
+      cursor:   { reviewer: { model: 'x' }, validator: { model: 'x' }, writer: { model: 'x' } },
+    };
+    expect(() => FlatRmsConfigSchema.parse(newShape)).toThrow(ZodError);
+  });
+
+  test('rejects invalid provider in flat shape', () => {
+    const bad = { ...oldFlatConfig, reviewer: { provider: 'bedrock', model: 'x' } };
+    expect(() => FlatRmsConfigSchema.parse(bad)).toThrow(ZodError);
   });
 });

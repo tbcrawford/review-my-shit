@@ -120,25 +120,51 @@ export const ReportFileSchema = z.object({
 export type ReportFile = z.infer<typeof ReportFileSchema>;
 
 // ---------------------------------------------------------------------------
-// Per-agent model config (Phase 8)
+// Per-agent model config (Phase 19)
 // ---------------------------------------------------------------------------
 
 /**
- * Specification for a single agent's model: provider + model ID.
+ * Specification for a single agent's model: model ID + optional thinking variant.
+ * All models are routed through the GitHub Copilot provider — no provider field.
  */
 export const AgentModelSpecSchema = z.object({
-  provider: z.enum(['openai', 'anthropic', 'google', 'copilot']),
   model: z.string().min(1),
+  variant: z.enum(['high_thinking', 'no_thinking']).optional(),
 });
 export type AgentModelSpec = z.infer<typeof AgentModelSpecSchema>;
 
 /**
- * Full rms config: one AgentModelSpec per pipeline agent.
+ * Per-editor config block: one AgentModelSpec per pipeline agent.
+ */
+export const EditorAgentConfigSchema = z.object({
+  reviewer:  AgentModelSpecSchema,
+  validator: AgentModelSpecSchema,
+  writer:    AgentModelSpecSchema,
+});
+export type EditorAgentConfig = z.infer<typeof EditorAgentConfigSchema>;
+
+/**
+ * Full rms config: separate opencode and cursor sections.
  * Loaded from ~/.config/rms/config.json
  */
 export const RmsConfigSchema = z.object({
-  reviewer: AgentModelSpecSchema,
-  validator: AgentModelSpecSchema,
-  writer: AgentModelSpecSchema,
+  opencode: EditorAgentConfigSchema,
+  cursor:   EditorAgentConfigSchema,
 });
 export type RmsConfig = z.infer<typeof RmsConfigSchema>;
+
+/**
+ * Old flat rms config shape (Phase 8 era) — used for migration detection only.
+ * When loadRmsConfig detects this shape, it migrates to the new nested shape.
+ */
+const OldAgentModelSpecSchema = z.object({
+  provider: z.enum(['openai', 'anthropic', 'google', 'copilot']),
+  model: z.string().min(1),
+});
+
+export const FlatRmsConfigSchema = z.object({
+  reviewer:  OldAgentModelSpecSchema,
+  validator: OldAgentModelSpecSchema,
+  writer:    OldAgentModelSpecSchema,
+});
+export type FlatRmsConfig = z.infer<typeof FlatRmsConfigSchema>;
