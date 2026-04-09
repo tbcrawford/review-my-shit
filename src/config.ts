@@ -56,6 +56,37 @@ export async function saveRmsConfig(config: RmsConfig, configPath?: string): Pro
 }
 
 /**
+ * Resolves a GitHub token for the copilot provider.
+ *
+ * Priority:
+ * 1. GITHUB_TOKEN environment variable (same token used for PR diffs)
+ * 2. OpenCode auth.json at ~/.local/share/opencode/auth.json
+ *
+ * Throws with a clear actionable message if no token is available.
+ */
+export async function resolveCopilotToken(): Promise<string> {
+  // Priority 1: GITHUB_TOKEN env var (same token used for PR diffs)
+  if (process.env['GITHUB_TOKEN']) return process.env['GITHUB_TOKEN'];
+
+  // Priority 2: opencode auth.json
+  const authPath = join(homedir(), '.local', 'share', 'opencode', 'auth.json');
+  try {
+    const raw = await readFile(authPath, 'utf8');
+    const auth = JSON.parse(raw) as Record<string, unknown>;
+    const copilotAuth = auth['github-copilot'] as Record<string, unknown> | undefined;
+    const token = copilotAuth?.['access'];
+    if (typeof token === 'string' && token.length > 0) return token;
+  } catch {
+    // File not found or unreadable — fall through to error
+  }
+
+  throw new Error(
+    '[rms] copilot provider requires a GitHub token.\n' +
+    '  Set GITHUB_TOKEN or authenticate with OpenCode (opencode auth login).',
+  );
+}
+
+/**
  * Resolves a Vercel AI SDK LanguageModel instance from an AgentModelSpec.
  *
  * Mirrors the provider-switching logic in index.ts resolveModel(), but takes
@@ -64,7 +95,16 @@ export async function saveRmsConfig(config: RmsConfig, configPath?: string): Pro
 export async function resolveAgentModel(
   spec: AgentModelSpec,
 ): Promise<Parameters<typeof generateText>[0]['model']> {
-  if (spec.provider === 'anthropic') {
+  if (spec.provider === 'copilot') {
+    const { createOpenAICompatible } = await import('@ai-sdk/openai-compatible');
+    const token = await resolveCopilotToken();
+    const copilot = createOpenAICompatible({
+      name: 'github-copilot',
+      baseURL: 'https://api.githubcopilot.com',
+      apiKey: token,
+    });
+    return copilot.chatModel(spec.model);
+  } else if (spec.provider === 'anthropic') {
     const { anthropic } = await import('@ai-sdk/anthropic');
     return anthropic(spec.model);
   } else if (spec.provider === 'google') {
