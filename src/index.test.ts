@@ -140,33 +140,36 @@ describe('rms review routing', () => {
 });
 
 describe('rms settings parseSpec routing', () => {
-  test('rms settings --reviewer github-copilot/claude-opus-4.6 exits 0 and saves copilot spec', async () => {
+  test('rms settings --reviewer github-copilot/claude-opus-4.6:high_thinking exits 0 and saves spec', async () => {
+    const { stdout, exitCode } = await runCliWithToken([
+      'settings',
+      '--reviewer', 'github-copilot/claude-opus-4.6:high_thinking',
+    ]);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('"model": "github-copilot/claude-opus-4.6"');
+    expect(stdout).toContain('"variant": "high_thinking"');
+    // Reset config after test to avoid polluting state
+    await runCliWithToken(['settings', '--reset']);
+  });
+
+  test('rms settings --reviewer github-copilot/claude-opus-4.6 exits 0 and saves model-only spec', async () => {
     const { stdout, exitCode } = await runCliWithToken([
       'settings',
       '--reviewer', 'github-copilot/claude-opus-4.6',
     ]);
     expect(exitCode).toBe(0);
-    expect(stdout).toContain('"provider": "copilot"');
-    expect(stdout).toContain('"model": "claude-opus-4.6"');
-    // Reset config after test to avoid polluting state
-    await runCliWithToken(['settings', '--reset']);
-  });
-
-  test('rms settings --reviewer copilot:gpt-4o exits 0 and saves copilot spec', async () => {
-    const { stdout, exitCode } = await runCliWithToken([
-      'settings',
-      '--reviewer', 'copilot:gpt-4o',
-    ]);
-    expect(exitCode).toBe(0);
-    expect(stdout).toContain('"provider": "copilot"');
+    expect(stdout).toContain('"model": "github-copilot/claude-opus-4.6"');
     // Reset config after test
     await runCliWithToken(['settings', '--reset']);
   });
 
-  test('rms settings --reviewer bedrock:x exits non-zero and stderr contains "Invalid provider"', async () => {
-    const { stderr, exitCode } = await runCli(['settings', '--reviewer', 'bedrock:x']);
-    expect(exitCode !== 0).toBeTruthy();
-    expect(stderr).toContain('Invalid provider');
+  test('rms settings --reviewer bedrock:x exits 0 and saves bedrock:x as model ID (no provider validation)', async () => {
+    // New behavior: "bedrock:x" — "x" is not a valid variant, so whole string is the model ID
+    const { stdout, exitCode } = await runCliWithToken(['settings', '--reviewer', 'bedrock:x']);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('"model": "bedrock:x"');
+    // Reset config after test
+    await runCliWithToken(['settings', '--reset']);
   });
 
   test('rms settings (no args) exits 0 — shows config overview, no interactive picker', async () => {
