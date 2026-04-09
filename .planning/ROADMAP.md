@@ -318,7 +318,21 @@ Plans:
 - [ ] 18-02-PLAN.md — Rewrite 3 Cursor SKILL.md templates to use agent-presented selection + rms settings --<agent>
 - [ ] 18-03-PLAN.md — Build, test, install globally, human checkpoint
 
+### Phase 19: Config schema overhaul — variant support and opencode/cursor sections per agent
+
+**Goal:** Replace the flat per-agent config shape (provider + model) with a nested shape that has separate `opencode` and `cursor` top-level sections, each with per-agent `model + optional variant` specs. Migrate existing flat configs on load. Pass `variant` as thinking config to the Copilot API. Update all 8 picker templates and the CLI settings command to read/write the new structure.
+**Requirements**: TBD
+**Depends on:** Phase 18
+**Plans:** 5 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — New AgentModelSpec (model + variant?), RmsConfig (opencode/cursor sections), FlatRmsConfig for migration — schemas.ts + schemas.test.ts
+- [ ] 19-02-PLAN.md — config.ts: migration in loadRmsConfig, new nested defaults, resolveAgentModel variant/thinking support + config.test.ts
+- [ ] 19-03-PLAN.md — index.ts: resolveModels() reads config.opencode, settings --opencode/--cursor scope flags, model[:variant] spec parsing
+- [ ] 19-04-PLAN.md — All 8 picker templates (4 OpenCode + 4 Cursor) updated with new spec format and editor-scoped settings commands
+- [ ] 19-05-PLAN.md — Build + test verification + human end-to-end checkpoint
+
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-09 after Phase 18 planned (Agent-presented model picker for OpenCode and Cursor)*
+*Last updated: 2026-04-09 after Phase 19 planned (Config schema overhaul — variant support and opencode/cursor sections)*
