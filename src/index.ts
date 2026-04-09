@@ -633,25 +633,10 @@ program
       return;
     }
 
-    // No flags: show current state
-    const config = await loadRmsConfig();
-    console.log(`Config path: ${configPath}`);
-    console.log('');
-    if (config) {
-      console.log('Current configuration:');
-      console.log(JSON.stringify(config, null, 2));
-    } else {
-      console.log('Not configured — using env var fallback:');
-      console.log(`  AI_SDK_PROVIDER = ${process.env['AI_SDK_PROVIDER'] ?? 'openai (default)'}`);
-      console.log(`  AI_SDK_MODEL    = ${process.env['AI_SDK_MODEL'] ?? 'gpt-4o (default)'}`);
-      console.log('');
-      console.log('To configure per-agent models:');
-      console.log('  rms settings --reviewer copilot:claude-opus-4.6');
-      console.log('  rms settings --reviewer github-copilot/claude-opus-4.6  (copy-paste from opencode models)');
-      console.log('  rms settings --reviewer anthropic:claude-opus-4-5');
-      console.log('  rms settings --validator anthropic:claude-sonnet-4-5');
-      console.log('  rms settings --writer openai:gpt-4o');
-    }
+    // No flags: run interactive TUI (or fall through to help text in non-TTY)
+    const { runSettingsTui } = await import('./settings-tui.js');
+    await runSettingsTui();
+    return;
   });
 
 program.parse();
