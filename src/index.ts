@@ -6,7 +6,8 @@ import { nanoid } from 'nanoid';
 import { select, input } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { install } from './installer.js';
-import { loadRmsConfig, resolveAgentModel, getConfigPath, saveRmsConfig } from './config.js';
+import { loadRmsConfig, resolveAgentModel, getConfigPath, saveRmsConfig, ensureDefaultConfig } from './config.js';
+import { runModelPicker } from './model-picker.js';
 import type { AgentModelSpec } from './schemas.js';
 import {
   getLocalDiff,
@@ -406,12 +407,18 @@ program
     // --yes, both flags, or no flags all result in both editors (default)
 
     await install(projectRoot, { editors });
+    const configResult = await ensureDefaultConfig();
+    if (configResult === 'created') {
+      console.log(`\n  ${chalk.green('✓')} Default config created at ${chalk.gray(getConfigPath())}`);
+    }
 
-    // Completion summary (installer no longer prints this)
-    const label = editors.length === 2 ? 'OpenCode + Cursor' : editors[0] === 'opencode' ? 'OpenCode' : 'Cursor';
+    // Completion summary
     console.log(`\n  ${chalk.bold.white('Commands')}`);
     console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-review')}`);
     console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-fix')}`);
+    console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-reviewer')}`);
+    console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-validator')}`);
+    console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-writer')}`);
     console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-settings')}`);
     console.log(`\n  ${chalk.gray('Restart your editor to pick up the new commands.')}`);
   });
@@ -633,10 +640,87 @@ program
       return;
     }
 
-    // No flags: run interactive TUI (or fall through to help text in non-TTY)
-    const { runSettingsTui } = await import('./settings-tui.js');
-    await runSettingsTui();
+    // No flags: display current config overview
+    const config = await loadRmsConfig();
+    if (!config) {
+      console.log(`No config found at ${configPath}`);
+      console.log('Using AI_SDK_PROVIDER + AI_SDK_MODEL env var fallback.');
+      console.log('');
+      console.log('Run `rms install` to create the default config.');
+      return;
+    }
+    console.log(`Config: ${configPath}`);
+    console.log('');
+    console.log(`  reviewer   ${chalk.yellow(`${config.reviewer.provider}:${config.reviewer.model}`)}`);
+    console.log(`  validator  ${chalk.yellow(`${config.validator.provider}:${config.validator.model}`)}`);
+    console.log(`  writer     ${chalk.yellow(`${config.writer.provider}:${config.writer.model}`)}`);
+    console.log('');
+    console.log('Change a model: /rms-reviewer  /rms-validator  /rms-writer');
+    console.log('Reset config:   rms settings --reset');
     return;
+  });
+
+program
+  .command('reviewer')
+  .description('Set the reviewer agent model — interactive picker with variant tiers')
+  .action(async () => {
+    const config = await loadRmsConfig();
+    const current = config?.reviewer;
+    try {
+      const spec = await runModelPicker('reviewer', current);
+      const existing = config ?? {
+        reviewer:  { provider: 'copilot' as const, model: 'claude-opus-4-5' },
+        validator: { provider: 'copilot' as const, model: 'github-copilot/gpt-5.4' },
+        writer:    { provider: 'copilot' as const, model: 'github-copilot/claude-haiku-4.5' },
+      };
+      await saveRmsConfig({ ...existing, reviewer: spec });
+      console.log(`${chalk.green('✓')} Reviewer set to ${chalk.yellow(`${spec.provider}:${spec.model}`)}`);
+      console.log(`  Config: ${getConfigPath()}`);
+    } catch {
+      console.log('Cancelled.');
+    }
+  });
+
+program
+  .command('validator')
+  .description('Set the validator agent model — interactive picker with variant tiers')
+  .action(async () => {
+    const config = await loadRmsConfig();
+    const current = config?.validator;
+    try {
+      const spec = await runModelPicker('validator', current);
+      const existing = config ?? {
+        reviewer:  { provider: 'copilot' as const, model: 'claude-opus-4-5' },
+        validator: { provider: 'copilot' as const, model: 'github-copilot/gpt-5.4' },
+        writer:    { provider: 'copilot' as const, model: 'github-copilot/claude-haiku-4.5' },
+      };
+      await saveRmsConfig({ ...existing, validator: spec });
+      console.log(`${chalk.green('✓')} Validator set to ${chalk.yellow(`${spec.provider}:${spec.model}`)}`);
+      console.log(`  Config: ${getConfigPath()}`);
+    } catch {
+      console.log('Cancelled.');
+    }
+  });
+
+program
+  .command('writer')
+  .description('Set the writer agent model — interactive picker with variant tiers')
+  .action(async () => {
+    const config = await loadRmsConfig();
+    const current = config?.writer;
+    try {
+      const spec = await runModelPicker('writer', current);
+      const existing = config ?? {
+        reviewer:  { provider: 'copilot' as const, model: 'claude-opus-4-5' },
+        validator: { provider: 'copilot' as const, model: 'github-copilot/gpt-5.4' },
+        writer:    { provider: 'copilot' as const, model: 'github-copilot/claude-haiku-4.5' },
+      };
+      await saveRmsConfig({ ...existing, writer: spec });
+      console.log(`${chalk.green('✓')} Writer set to ${chalk.yellow(`${spec.provider}:${spec.model}`)}`);
+      console.log(`  Config: ${getConfigPath()}`);
+    } catch {
+      console.log('Cancelled.');
+    }
   });
 
 program.parse();

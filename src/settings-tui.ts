@@ -1,3 +1,8 @@
+/**
+ * @deprecated Phase 17: runSettingsTui() is no longer called from index.ts.
+ * Model selection is now handled by src/model-picker.ts via rms reviewer/validator/writer subcommands.
+ * This file is kept for reference only and will be deleted in a future cleanup.
+ */
 import { select } from '@inquirer/prompts';
 import { loadRmsConfig, saveRmsConfig, getConfigPath } from './config.js';
 import type { AgentModelSpec } from './schemas.js';
