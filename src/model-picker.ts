@@ -1,15 +1,20 @@
 import { select, input } from '@inquirer/prompts';
 import type { AgentModelSpec } from './schemas.js';
 
-type Provider = AgentModelSpec['provider'];
+type Variant = 'high_thinking' | 'no_thinking';
 type Tier = 'max' | 'high' | 'medium' | 'low';
 
-/** Per-provider tier → model mapping from CONTEXT.md design decisions */
-const TIER_MODELS: Record<Provider, Record<Tier, string>> = {
-  copilot:   { max: 'claude-opus-4-5',  high: 'claude-sonnet-4-5', medium: 'claude-haiku-3-5', low: 'claude-haiku-3-5' },
-  anthropic: { max: 'claude-opus-4-5',  high: 'claude-sonnet-4-5', medium: 'claude-haiku-3-5', low: 'claude-haiku-3-5' },
-  openai:    { max: 'o3',               high: 'gpt-4o',            medium: 'gpt-4o-mini',       low: 'gpt-4o-mini' },
-  google:    { max: 'gemini-2.5-pro',   high: 'gemini-2.0-pro',    medium: 'gemini-2.0-flash',  low: 'gemini-flash-1.5' },
+interface ModelEntry {
+  model: string;
+  variant: Variant;
+}
+
+/** Tier → model+variant mapping for the copilot provider (Phase 19 models) */
+const TIER_MODELS: Record<Tier, ModelEntry> = {
+  max:    { model: 'github-copilot/claude-opus-4.6',  variant: 'high_thinking' },
+  high:   { model: 'github-copilot/gpt-5.4',          variant: 'high_thinking' },
+  medium: { model: 'github-copilot/claude-sonnet-4.6', variant: 'high_thinking' },
+  low:    { model: 'github-copilot/claude-haiku-4.5', variant: 'no_thinking'   },
 };
 
 const TIERS: Tier[] = ['max', 'high', 'medium', 'low'];
@@ -20,10 +25,9 @@ const CUSTOM_VALUE = '__custom__';
  *
  * @param agent   - 'reviewer' | 'validator' | 'writer' (used for display only)
  * @param current - current AgentModelSpec (to annotate current selection), or undefined
- * @returns       resolved AgentModelSpec — always provider + model
+ * @returns       resolved AgentModelSpec — always model + optional variant
  *
- * Picker shows variant tiers (max/high/medium/low) for the copilot provider by default
- * since that's the configured default. Shows which model each tier maps to.
+ * Picker shows variant tiers (max/high/medium/low) mapped to copilot models.
  * Includes a 'Enter custom model…' option for advanced users.
  *
  * Throws ExitPromptError if non-TTY or user cancels — callers should handle.
@@ -32,17 +36,12 @@ export async function runModelPicker(
   agent: 'reviewer' | 'validator' | 'writer',
   current?: AgentModelSpec,
 ): Promise<AgentModelSpec> {
-  // Default to copilot provider tiers (the configured default provider)
-  const provider: Provider = 'copilot';
-  const tierMap = TIER_MODELS[provider];
-
   // Build choice list: tiers first, then custom
   const choices = TIERS.map((tier) => {
-    const model = tierMap[tier];
-    const isCurrent =
-      current?.provider === provider && current?.model === model;
+    const entry = TIER_MODELS[tier];
+    const isCurrent = current?.model === entry.model;
     return {
-      name: `${tier.padEnd(6)}  github-copilot/${model}${isCurrent ? '  (current)' : ''}`,
+      name: `${tier.padEnd(6)}  ${entry.model} [${entry.variant}]${isCurrent ? '  (current)' : ''}`,
       value: tier as string,
     };
   });
@@ -61,24 +60,24 @@ export async function runModelPicker(
 
   if (selection === CUSTOM_VALUE) {
     const raw = await input({
-      message: 'Model ID (e.g., github-copilot/my-model or anthropic:claude-opus-4-5):',
+      message: 'Model spec (e.g., github-copilot/my-model or github-copilot/my-model:high_thinking):',
     });
-    // github-copilot/model-id format → copilot provider
-    if (raw.startsWith('github-copilot/')) {
-      return { provider: 'copilot', model: raw.slice('github-copilot/'.length) };
+    // Parse variant suffix if present
+    const VALID_VARIANTS = ['high_thinking', 'no_thinking'];
+    const lastColon = raw.lastIndexOf(':');
+    if (lastColon !== -1) {
+      const suffix = raw.slice(lastColon + 1);
+      if (VALID_VARIANTS.includes(suffix)) {
+        const model = raw.slice(0, lastColon);
+        return { model, variant: suffix as Variant };
+      }
     }
-    // provider:model-id format
-    const colonIdx = raw.indexOf(':');
-    if (colonIdx !== -1) {
-      const p = raw.slice(0, colonIdx) as Provider;
-      const m = raw.slice(colonIdx + 1);
-      return { provider: p, model: m };
-    }
-    // bare model ID — default to copilot
-    return { provider: 'copilot', model: raw };
+    // No valid variant suffix — plain model ID
+    return { model: raw };
   }
 
   // Tier selection
   const selectedTier = selection as Tier;
-  return { provider, model: tierMap[selectedTier] };
+  const entry = TIER_MODELS[selectedTier];
+  return { model: entry.model, variant: entry.variant };
 }

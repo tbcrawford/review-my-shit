@@ -6,9 +6,9 @@ import { nanoid } from 'nanoid';
 import { select, input } from '@inquirer/prompts';
 import chalk from 'chalk';
 import { install } from './installer.js';
-import { loadRmsConfig, resolveAgentModel, getConfigPath, saveRmsConfig, ensureDefaultConfig } from './config.js';
+import { loadRmsConfig, resolveAgentModel, getConfigPath, saveRmsConfig, ensureDefaultConfig, DEFAULT_RMS_CONFIG } from './config.js';
 import { runModelPicker } from './model-picker.js';
-import type { AgentModelSpec } from './schemas.js';
+import type { AgentModelSpec, RmsConfig } from './schemas.js';
 import {
   getLocalDiff,
   getFullDiff,
@@ -31,13 +31,13 @@ import {
 } from './fixer.js';
 
 // ---------------------------------------------------------------------------
-// Model resolution (provider-agnostic, per-agent)
+// Model resolution (copilot-only, reads config.opencode)
 // ---------------------------------------------------------------------------
 
 /**
- * Resolves per-agent model instances from config or env var fallback.
+ * Resolves per-agent model instances from config.opencode section.
  *
- * Priority: ~/.config/rms/config.json > AI_SDK_PROVIDER + AI_SDK_MODEL env vars
+ * Priority: ~/.config/rms/config.json (opencode section) > DEFAULT_RMS_CONFIG.opencode
  * Throws if config exists but is invalid. Returns three model instances.
  */
 async function resolveModels(): Promise<{
@@ -46,23 +46,13 @@ async function resolveModels(): Promise<{
   writerModelId: string;
 }> {
   const config = await loadRmsConfig();
+  const opencode = config?.opencode ?? DEFAULT_RMS_CONFIG.opencode;
 
-  if (config) {
-    const reviewerModel = await resolveAgentModel(config.reviewer);
-    const validatorModel = await resolveAgentModel(config.validator);
-    const writerModelId = `${config.writer.provider}:${config.writer.model}`;
-    return { reviewerModel, validatorModel, writerModelId };
-  }
+  const reviewerModel = await resolveAgentModel(opencode.reviewer);
+  const validatorModel = await resolveAgentModel(opencode.validator);
+  const writerModelId = opencode.writer.model;
 
-  // Fallback: env vars (backward compat for users without config file)
-  const provider = process.env['AI_SDK_PROVIDER'] ?? 'openai';
-  const modelId = process.env['AI_SDK_MODEL'] ?? 'gpt-4o';
-  const fallbackSpec: AgentModelSpec = {
-    provider: provider as 'openai' | 'anthropic' | 'google',
-    model: modelId,
-  };
-  const model = await resolveAgentModel(fallbackSpec);
-  return { reviewerModel: model, validatorModel: model, writerModelId: modelId };
+  return { reviewerModel, validatorModel, writerModelId };
 }
 
 // ---------------------------------------------------------------------------
@@ -106,8 +96,6 @@ async function runLocalReview(opts: { projectRoot: string; focus?: string }): Pr
   });
 
   // Step 4: Run reviewer
-  // Model is resolved from config file or environment variables — provider agnostic (QUAL-03).
-  // Priority: ~/.config/rms/config.json > AI_SDK_PROVIDER + AI_SDK_MODEL env vars
   const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
   const reviewsDir = join(projectRoot, '.reviews');
 
@@ -379,6 +367,46 @@ async function runPrReview(opts: { projectRoot: string; prNumber: number; focus?
 }
 
 // ---------------------------------------------------------------------------
+// parseSpec helper — parses "model" or "model:variant" spec strings
+// ---------------------------------------------------------------------------
+
+/**
+ * Parses a model spec string into an AgentModelSpec.
+ *
+ * Format: "model" or "model:variant"
+ * The string is split on the LAST colon only if the right-hand side is exactly
+ * "high_thinking" or "no_thinking". Otherwise the entire string is the model ID.
+ *
+ * Examples:
+ *   "github-copilot/claude-opus-4.6:high_thinking" → { model: "github-copilot/claude-opus-4.6", variant: "high_thinking" }
+ *   "github-copilot/claude-opus-4.6"               → { model: "github-copilot/claude-opus-4.6" }
+ *   "claude-4.6-opus-high-thinking"                → { model: "claude-4.6-opus-high-thinking" }
+ */
+function parseSpec(raw: string, label: string): AgentModelSpec {
+  const VALID_VARIANTS = ['high_thinking', 'no_thinking'] as const;
+  const lastColon = raw.lastIndexOf(':');
+
+  if (lastColon !== -1) {
+    const suffix = raw.slice(lastColon + 1);
+    if ((VALID_VARIANTS as readonly string[]).includes(suffix)) {
+      const model = raw.slice(0, lastColon);
+      if (!model) {
+        console.error(`Invalid ${label} spec "${raw}": model ID cannot be empty`);
+        process.exit(1);
+      }
+      return { model, variant: suffix as 'high_thinking' | 'no_thinking' };
+    }
+  }
+
+  // No valid variant suffix — treat entire string as model ID
+  if (!raw.trim()) {
+    console.error(`Invalid ${label} spec: model ID cannot be empty`);
+    process.exit(1);
+  }
+  return { model: raw };
+}
+
+// ---------------------------------------------------------------------------
 // CLI program
 // ---------------------------------------------------------------------------
 
@@ -567,11 +595,13 @@ program
 program
   .command('settings')
   .description('View or set per-agent model configuration')
-  .option('--reviewer <spec>', 'Set reviewer model (format: provider:model or github-copilot/model-id)')
-  .option('--validator <spec>', 'Set validator model (format: provider:model or github-copilot/model-id)')
-  .option('--writer <spec>', 'Set writer model (format: provider:model or github-copilot/model-id)')
-  .option('--reset', 'Delete config file and revert to env var fallback')
-  .action(async (opts: { reviewer?: string; validator?: string; writer?: string; reset?: boolean }) => {
+  .option('--reviewer <spec>', 'Set reviewer model (format: model or model:variant)')
+  .option('--validator <spec>', 'Set validator model (format: model or model:variant)')
+  .option('--writer <spec>', 'Set writer model (format: model or model:variant)')
+  .option('--opencode', 'Scope to opencode section only')
+  .option('--cursor', 'Scope to cursor section only')
+  .option('--reset', 'Delete config file and revert to defaults')
+  .action(async (opts: { reviewer?: string; validator?: string; writer?: string; opencode?: boolean; cursor?: boolean; reset?: boolean }) => {
     const { unlink } = await import('node:fs/promises');
     const configPath = getConfigPath();
 
@@ -579,82 +609,63 @@ program
       try {
         await unlink(configPath);
         console.log(`Config deleted: ${configPath}`);
-        console.log('Reverted to AI_SDK_PROVIDER / AI_SDK_MODEL env vars.');
+        console.log('Reverted to DEFAULT_RMS_CONFIG on next run.');
       } catch {
-        console.log('No config file found — already using env var defaults.');
+        console.log('No config file found — already using defaults.');
       }
       return;
     }
 
-    // Parse a provider:model spec string (also accepts github-copilot/model-id format)
-    function parseSpec(raw: string, label: string): AgentModelSpec {
-      // Accept raw "github-copilot/model-id" from `opencode models` output
-      if (raw.startsWith('github-copilot/')) {
-        const model = raw.slice('github-copilot/'.length);
-        if (!model) {
-          console.error(`Invalid ${label} spec "${raw}": model ID cannot be empty`);
-          process.exit(1);
-        }
-        return { provider: 'copilot', model };
-      }
-
-      // Standard "provider:model-id" format
-      const colonIdx = raw.indexOf(':');
-      if (colonIdx === -1) {
-        console.error(
-          `Invalid ${label} spec "${raw}". Expected format: provider:model (e.g. anthropic:claude-opus-4-5) or github-copilot/model-id`,
-        );
-        process.exit(1);
-      }
-      const provider = raw.slice(0, colonIdx) as AgentModelSpec['provider'];
-      const model = raw.slice(colonIdx + 1);
-      if (!['openai', 'anthropic', 'google', 'copilot'].includes(provider)) {
-        console.error(
-          `Invalid provider "${provider}". Must be one of: openai, anthropic, google, copilot`,
-        );
-        process.exit(1);
-      }
-      if (!model) {
-        console.error(`Invalid ${label} spec "${raw}": model ID cannot be empty`);
-        process.exit(1);
-      }
-      return { provider, model };
-    }
-
-    // If any flags provided, update config
+    // If any model flags provided, update config
     if (opts.reviewer || opts.validator || opts.writer) {
       const existing = await loadRmsConfig();
-      const defaults = {
-        reviewer: { provider: 'openai' as const, model: 'gpt-4o' },
-        validator: { provider: 'openai' as const, model: 'gpt-4o' },
-        writer: { provider: 'openai' as const, model: 'gpt-4o' },
+      const base: RmsConfig = existing ?? DEFAULT_RMS_CONFIG;
+
+      // Determine which sections to update
+      // Default: update both sections if no scope flag given
+      const updateOpencode = !opts.cursor || opts.opencode;
+      const updateCursor = !opts.opencode || opts.cursor;
+
+      const reviewerSpec = opts.reviewer ? parseSpec(opts.reviewer, 'reviewer') : null;
+      const validatorSpec = opts.validator ? parseSpec(opts.validator, 'validator') : null;
+      const writerSpec = opts.writer ? parseSpec(opts.writer, 'writer') : null;
+
+      const updated: RmsConfig = {
+        opencode: updateOpencode ? {
+          reviewer:  reviewerSpec  ?? base.opencode.reviewer,
+          validator: validatorSpec ?? base.opencode.validator,
+          writer:    writerSpec    ?? base.opencode.writer,
+        } : base.opencode,
+        cursor: updateCursor ? {
+          reviewer:  reviewerSpec  ?? base.cursor.reviewer,
+          validator: validatorSpec ?? base.cursor.validator,
+          writer:    writerSpec    ?? base.cursor.writer,
+        } : base.cursor,
       };
-      const base = existing ?? defaults;
-      const updated = {
-        reviewer: opts.reviewer ? parseSpec(opts.reviewer, 'reviewer') : base.reviewer,
-        validator: opts.validator ? parseSpec(opts.validator, 'validator') : base.validator,
-        writer: opts.writer ? parseSpec(opts.writer, 'writer') : base.writer,
-      };
+
       await saveRmsConfig(updated);
       console.log(`Config saved to: ${configPath}`);
       console.log(JSON.stringify(updated, null, 2));
       return;
     }
 
-    // No flags: display current config overview
+    // No flags: display current config overview (both sections)
     const config = await loadRmsConfig();
-    if (!config) {
-      console.log(`No config found at ${configPath}`);
-      console.log('Using AI_SDK_PROVIDER + AI_SDK_MODEL env var fallback.');
-      console.log('');
-      console.log('Run `rms install` to create the default config.');
-      return;
-    }
-    console.log(`Config: ${configPath}`);
+    const effective = config ?? DEFAULT_RMS_CONFIG;
+    const source = config ? configPath : '(defaults — no config file)';
+
+    console.log(`Config: ${source}`);
     console.log('');
-    console.log(`  reviewer   ${chalk.yellow(`${config.reviewer.provider}:${config.reviewer.model}`)}`);
-    console.log(`  validator  ${chalk.yellow(`${config.validator.provider}:${config.validator.model}`)}`);
-    console.log(`  writer     ${chalk.yellow(`${config.writer.provider}:${config.writer.model}`)}`);
+    console.log('  opencode:');
+    for (const [agent, spec] of Object.entries(effective.opencode) as [string, AgentModelSpec][]) {
+      const variantTag = spec.variant ? chalk.gray(` [${spec.variant}]`) : '';
+      console.log(`    ${agent.padEnd(9)}  ${chalk.yellow(spec.model)}${variantTag}`);
+    }
+    console.log('');
+    console.log('  cursor:');
+    for (const [agent, spec] of Object.entries(effective.cursor) as [string, AgentModelSpec][]) {
+      console.log(`    ${agent.padEnd(9)}  ${chalk.yellow(spec.model)}`);
+    }
     console.log('');
     console.log('Change a model: /rms-reviewer  /rms-validator  /rms-writer');
     console.log('Reset config:   rms settings --reset');
@@ -663,19 +674,35 @@ program
 
 program
   .command('reviewer')
-  .description('Set the reviewer agent model — interactive picker with variant tiers')
-  .action(async () => {
+  .description('Set the reviewer agent model — interactive picker or direct spec')
+  .argument('[spec]', 'Model spec (format: model or model:variant) — omit for interactive picker')
+  .action(async (spec: string | undefined) => {
     const config = await loadRmsConfig();
-    const current = config?.reviewer;
-    try {
-      const spec = await runModelPicker('reviewer', current);
-      const existing = config ?? {
-        reviewer:  { provider: 'copilot' as const, model: 'claude-opus-4-5' },
-        validator: { provider: 'copilot' as const, model: 'github-copilot/gpt-5.4' },
-        writer:    { provider: 'copilot' as const, model: 'github-copilot/claude-haiku-4.5' },
+    const base: RmsConfig = config ?? DEFAULT_RMS_CONFIG;
+
+    if (spec) {
+      const parsed = parseSpec(spec, 'reviewer');
+      const updated: RmsConfig = {
+        opencode: { ...base.opencode, reviewer: parsed },
+        cursor:   { ...base.cursor,   reviewer: parsed },
       };
-      await saveRmsConfig({ ...existing, reviewer: spec });
-      console.log(`${chalk.green('✓')} Reviewer set to ${chalk.yellow(`${spec.provider}:${spec.model}`)}`);
+      await saveRmsConfig(updated);
+      const variantTag = parsed.variant ? ` [${parsed.variant}]` : '';
+      console.log(`${chalk.green('✓')} Reviewer set to ${chalk.yellow(`${parsed.model}${variantTag}`)}`);
+      console.log(`  Config: ${getConfigPath()}`);
+      return;
+    }
+
+    try {
+      const current = base.opencode.reviewer;
+      const pickedSpec = await runModelPicker('reviewer', current);
+      const updated: RmsConfig = {
+        opencode: { ...base.opencode, reviewer: pickedSpec },
+        cursor:   { ...base.cursor,   reviewer: pickedSpec },
+      };
+      await saveRmsConfig(updated);
+      const variantTag = pickedSpec.variant ? ` [${pickedSpec.variant}]` : '';
+      console.log(`${chalk.green('✓')} Reviewer set to ${chalk.yellow(`${pickedSpec.model}${variantTag}`)}`);
       console.log(`  Config: ${getConfigPath()}`);
     } catch {
       console.log('Cancelled.');
@@ -684,19 +711,35 @@ program
 
 program
   .command('validator')
-  .description('Set the validator agent model — interactive picker with variant tiers')
-  .action(async () => {
+  .description('Set the validator agent model — interactive picker or direct spec')
+  .argument('[spec]', 'Model spec (format: model or model:variant) — omit for interactive picker')
+  .action(async (spec: string | undefined) => {
     const config = await loadRmsConfig();
-    const current = config?.validator;
-    try {
-      const spec = await runModelPicker('validator', current);
-      const existing = config ?? {
-        reviewer:  { provider: 'copilot' as const, model: 'claude-opus-4-5' },
-        validator: { provider: 'copilot' as const, model: 'github-copilot/gpt-5.4' },
-        writer:    { provider: 'copilot' as const, model: 'github-copilot/claude-haiku-4.5' },
+    const base: RmsConfig = config ?? DEFAULT_RMS_CONFIG;
+
+    if (spec) {
+      const parsed = parseSpec(spec, 'validator');
+      const updated: RmsConfig = {
+        opencode: { ...base.opencode, validator: parsed },
+        cursor:   { ...base.cursor,   validator: parsed },
       };
-      await saveRmsConfig({ ...existing, validator: spec });
-      console.log(`${chalk.green('✓')} Validator set to ${chalk.yellow(`${spec.provider}:${spec.model}`)}`);
+      await saveRmsConfig(updated);
+      const variantTag = parsed.variant ? ` [${parsed.variant}]` : '';
+      console.log(`${chalk.green('✓')} Validator set to ${chalk.yellow(`${parsed.model}${variantTag}`)}`);
+      console.log(`  Config: ${getConfigPath()}`);
+      return;
+    }
+
+    try {
+      const current = base.opencode.validator;
+      const pickedSpec = await runModelPicker('validator', current);
+      const updated: RmsConfig = {
+        opencode: { ...base.opencode, validator: pickedSpec },
+        cursor:   { ...base.cursor,   validator: pickedSpec },
+      };
+      await saveRmsConfig(updated);
+      const variantTag = pickedSpec.variant ? ` [${pickedSpec.variant}]` : '';
+      console.log(`${chalk.green('✓')} Validator set to ${chalk.yellow(`${pickedSpec.model}${variantTag}`)}`);
       console.log(`  Config: ${getConfigPath()}`);
     } catch {
       console.log('Cancelled.');
@@ -705,19 +748,35 @@ program
 
 program
   .command('writer')
-  .description('Set the writer agent model — interactive picker with variant tiers')
-  .action(async () => {
+  .description('Set the writer agent model — interactive picker or direct spec')
+  .argument('[spec]', 'Model spec (format: model or model:variant) — omit for interactive picker')
+  .action(async (spec: string | undefined) => {
     const config = await loadRmsConfig();
-    const current = config?.writer;
-    try {
-      const spec = await runModelPicker('writer', current);
-      const existing = config ?? {
-        reviewer:  { provider: 'copilot' as const, model: 'claude-opus-4-5' },
-        validator: { provider: 'copilot' as const, model: 'github-copilot/gpt-5.4' },
-        writer:    { provider: 'copilot' as const, model: 'github-copilot/claude-haiku-4.5' },
+    const base: RmsConfig = config ?? DEFAULT_RMS_CONFIG;
+
+    if (spec) {
+      const parsed = parseSpec(spec, 'writer');
+      const updated: RmsConfig = {
+        opencode: { ...base.opencode, writer: parsed },
+        cursor:   { ...base.cursor,   writer: parsed },
       };
-      await saveRmsConfig({ ...existing, writer: spec });
-      console.log(`${chalk.green('✓')} Writer set to ${chalk.yellow(`${spec.provider}:${spec.model}`)}`);
+      await saveRmsConfig(updated);
+      const variantTag = parsed.variant ? ` [${parsed.variant}]` : '';
+      console.log(`${chalk.green('✓')} Writer set to ${chalk.yellow(`${parsed.model}${variantTag}`)}`);
+      console.log(`  Config: ${getConfigPath()}`);
+      return;
+    }
+
+    try {
+      const current = base.opencode.writer;
+      const pickedSpec = await runModelPicker('writer', current);
+      const updated: RmsConfig = {
+        opencode: { ...base.opencode, writer: pickedSpec },
+        cursor:   { ...base.cursor,   writer: pickedSpec },
+      };
+      await saveRmsConfig(updated);
+      const variantTag = pickedSpec.variant ? ` [${pickedSpec.variant}]` : '';
+      console.log(`${chalk.green('✓')} Writer set to ${chalk.yellow(`${pickedSpec.model}${variantTag}`)}`);
       console.log(`  Config: ${getConfigPath()}`);
     } catch {
       console.log('Cancelled.');

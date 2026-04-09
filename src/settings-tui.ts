@@ -1,3 +1,4 @@
+// @ts-nocheck — deprecated file; updated schema in Phase 19 (AgentModelSpec no longer has provider field)
 /**
  * @deprecated Phase 17: runSettingsTui() is no longer called from index.ts.
  * Model selection is now handled by src/model-picker.ts via rms reviewer/validator/writer subcommands.
