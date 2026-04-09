@@ -155,6 +155,9 @@ No DEP issues found.
 
 ## DOC
 No DOC issues found.
+
+## DSGN
+No DSGN issues found.
 `;
 
 const fixtureReviewerWithInvalidFinding = `---
@@ -207,6 +210,9 @@ No DEP issues found.
 
 ## DOC
 No DOC issues found.
+
+## DSGN
+No DSGN issues found.
 `;
 
 describe('parseReviewerOutput', () => {
@@ -249,11 +255,11 @@ describe('parseReviewerOutput', () => {
 
     const result = await parseReviewerOutput(fixturePath);
 
-    // All 11 dimension headers present in the fixture
+    // All 12 dimension headers present in the fixture
     expect(result.dimensionsCovered.includes('BUG')).toBeTruthy();
     expect(result.dimensionsCovered.includes('SEC')).toBeTruthy();
     expect(result.dimensionsCovered.includes('PERF')).toBeTruthy();
-    expect(result.dimensionsCovered.length).toBe(11);
+    expect(result.dimensionsCovered.length).toBe(12);
   });
 
   test('dimensionsWithFindings tracks only dimensions that have parsed findings', async () => {

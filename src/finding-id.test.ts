@@ -17,7 +17,7 @@ describe('DIMENSION_ABBREV', () => {
     expect(DIMENSION_ABBREV.includes('SEC')).toBeTruthy();
     expect(DIMENSION_ABBREV.includes('BUG')).toBeTruthy();
     expect(DIMENSION_ABBREV.includes('DOC')).toBeTruthy();
-    expect(DIMENSION_ABBREV.length).toBe(11);
+    expect(DIMENSION_ABBREV.length).toBe(12);
   });
 });
 

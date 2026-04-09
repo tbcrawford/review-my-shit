@@ -31,9 +31,9 @@ afterAll(async () => {
 // ---------------------------------------------------------------------------
 
 describe('REVIEWER_PROMPT — structure and language agnosticism', () => {
-  test('contains all 11 dimension names in DIMENSION DEFINITIONS', () => {
+  test('contains all 12 dimension names in DIMENSION DEFINITIONS', () => {
     const prompt = buildReviewerPrompt({ diff: 'sample diff', focus: undefined });
-    const dimensions = ['BUG', 'SEC', 'PERF', 'STYL', 'TEST', 'ARCH', 'ERR', 'DATA', 'API', 'DEP', 'DOC'];
+    const dimensions = ['BUG', 'SEC', 'PERF', 'STYL', 'TEST', 'ARCH', 'ERR', 'DATA', 'API', 'DEP', 'DOC', 'DSGN'];
     for (const dim of dimensions) {
       expect(
         prompt.includes(`- ${dim}:`),
@@ -156,6 +156,9 @@ No DEP issues found.
 
 ## DOC
 No DOC issues found.
+
+## DSGN
+No DSGN issues found.
 `;
 
 describe('runReviewer — output and ID assignment', () => {

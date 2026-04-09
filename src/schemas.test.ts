@@ -11,10 +11,11 @@ import {
 } from './schemas.js';
 
 describe('DIMENSIONS constant', () => {
-  test('has all 11 abbreviations', () => {
+  test('has all 12 abbreviations', () => {
     expect(DIMENSIONS).toEqual([
       'BUG', 'SEC', 'PERF', 'STYL', 'TEST',
       'ARCH', 'ERR', 'DATA', 'API', 'DEP', 'DOC',
+      'DSGN',
     ]);
   });
 });
