@@ -1,6 +1,5 @@
 ---
-description: "Run rms code review — prompts for scope (local diff or PR) if not specified"
-argument-hint: "[local | pr <pr-number> | full] [--focus <area>]"
+description: "Run rms code review — prompts for scope (local diff, PR, or full codebase)"
 subtask: true
 ---
 !rms review $ARGUMENTS
