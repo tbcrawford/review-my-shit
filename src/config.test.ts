@@ -10,6 +10,8 @@ import {
   saveRmsConfig,
   resolveAgentModel,
   resolveCopilotToken,
+  ensureDefaultConfig,
+  DEFAULT_RMS_CONFIG,
 } from './config.js';
 import type { RmsConfig } from './schemas.js';
 
@@ -230,5 +232,53 @@ describe('resolveAgentModel — copilot provider', () => {
         vi.unstubAllEnvs();
       }
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tests 15-17: ensureDefaultConfig
+// ---------------------------------------------------------------------------
+describe('ensureDefaultConfig', () => {
+  test('creates config file with DEFAULT_RMS_CONFIG when file does not exist', async () => {
+    const tmpDir = await makeTmpDir();
+    const configPath = join(tmpDir, 'config.json');
+
+    const result = await ensureDefaultConfig(configPath);
+    expect(result).toBe('created');
+    expect(existsSync(configPath)).toBeTruthy();
+
+    const loaded = await loadRmsConfig(configPath);
+    expect(loaded).toEqual(DEFAULT_RMS_CONFIG);
+
+    await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  test('returns "exists" and does not overwrite when file already exists', async () => {
+    const tmpDir = await makeTmpDir();
+    const configPath = join(tmpDir, 'config.json');
+
+    // Write a custom config first
+    const customConfig = {
+      reviewer:  { provider: 'openai' as const, model: 'gpt-4o' },
+      validator: { provider: 'anthropic' as const, model: 'claude-opus-4-5' },
+      writer:    { provider: 'google' as const, model: 'gemini-pro' },
+    };
+    await saveRmsConfig(customConfig, configPath);
+
+    // Call ensureDefaultConfig — should not overwrite
+    const result = await ensureDefaultConfig(configPath);
+    expect(result).toBe('exists');
+
+    // File content should be unchanged (custom config, not defaults)
+    const loaded = await loadRmsConfig(configPath);
+    expect(loaded).toEqual(customConfig);
+
+    await rm(tmpDir, { recursive: true, force: true });
+  });
+
+  test('DEFAULT_RMS_CONFIG has the exact confirmed defaults from CONTEXT.md', () => {
+    expect(DEFAULT_RMS_CONFIG.reviewer).toEqual({ provider: 'copilot', model: 'claude-opus-4-5' });
+    expect(DEFAULT_RMS_CONFIG.validator).toEqual({ provider: 'copilot', model: 'github-copilot/gpt-5.4' });
+    expect(DEFAULT_RMS_CONFIG.writer).toEqual({ provider: 'copilot', model: 'github-copilot/claude-haiku-4.5' });
   });
 });

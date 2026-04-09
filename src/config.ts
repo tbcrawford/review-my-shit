@@ -56,6 +56,30 @@ export async function saveRmsConfig(config: RmsConfig, configPath?: string): Pro
 }
 
 /**
+ * The confirmed default config from Phase 17.
+ * reviewer and validator intentionally use different model families
+ * (Anthropic vs OpenAI via Copilot) to reduce correlated errors.
+ */
+export const DEFAULT_RMS_CONFIG: RmsConfig = {
+  reviewer:  { provider: 'copilot', model: 'claude-opus-4-5' },
+  validator: { provider: 'copilot', model: 'github-copilot/gpt-5.4' },
+  writer:    { provider: 'copilot', model: 'github-copilot/claude-haiku-4.5' },
+};
+
+/**
+ * Creates ~/.config/rms/config.json with DEFAULT_RMS_CONFIG if it does not
+ * already exist. Safe to call on every install — never overwrites existing config.
+ *
+ * @returns 'created' if the file was written, 'exists' if it already existed.
+ */
+export async function ensureDefaultConfig(configPath?: string): Promise<'created' | 'exists'> {
+  const resolvedPath = configPath ?? getConfigPath();
+  if (existsSync(resolvedPath)) return 'exists';
+  await saveRmsConfig(DEFAULT_RMS_CONFIG, resolvedPath);
+  return 'created';
+}
+
+/**
  * Resolves a GitHub token for the copilot provider.
  *
  * Priority:
