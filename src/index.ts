@@ -10,6 +10,7 @@ import { loadRmsConfig, resolveAgentModel, getConfigPath, saveRmsConfig } from '
 import type { AgentModelSpec } from './schemas.js';
 import {
   getLocalDiff,
+  getFullDiff,
   getPrDiff,
   detectRepoSlug,
   writeInputFile,
@@ -106,6 +107,99 @@ async function runLocalReview(opts: { projectRoot: string; focus?: string }): Pr
   // Step 4: Run reviewer
   // Model is resolved from config file or environment variables — provider agnostic (QUAL-03).
   // Priority: ~/.config/rms/config.json > AI_SDK_PROVIDER + AI_SDK_MODEL env vars
+  const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
+  const reviewsDir = join(projectRoot, '.reviews');
+
+  console.log('Running reviewer...');
+  const result = await runReviewer({
+    session,
+    diff,
+    focus,
+    model: reviewerModel,
+    reviewsDir,
+  });
+
+  // Step 5: Run validator
+  const inputMdPath = join(session.sessionDir, 'INPUT.md');
+  await verifyFileExists(result.reviewerMdPath, 'REVIEWER.md');
+  console.log('Running validator...');
+  const validatorResult = await runValidator({
+    session,
+    reviewerMdPath: result.reviewerMdPath,
+    inputMdPath,
+    model: validatorModel,
+  });
+
+  // Step 6: Run writer (deterministic — no LLM call)
+  const modelId = writerModelId;
+  const inputMdContent = await readFile(inputMdPath, 'utf8');
+  await verifyFileExists(validatorResult.validatorMdPath, 'VALIDATOR.md');
+  console.log('Running writer...');
+  const writerResult = await runWriter({
+    session,
+    findings: result.findings,
+    verdicts: validatorResult.verdicts,
+    validatorRawContent: validatorResult.rawContent,
+    inputMdContent,
+    dimensionsCovered: result.dimensionsCovered,
+    modelId,
+    reviewsDir,
+  });
+
+  // Step 7: Report results
+  const challenged = validatorResult.verdicts.filter(v => v.verdict === 'challenged').length;
+  const escalated = validatorResult.verdicts.filter(v => v.verdict === 'escalated').length;
+  console.log(`\nReview complete:`);
+  console.log(`  Findings: ${result.findingCount}`);
+  console.log(`  Verdicts: ${validatorResult.verdictCount} (${challenged} challenged, ${escalated} escalated)`);
+  if (writerResult.counterFindingCount > 0) {
+    console.log(`  Counter-findings surfaced: ${writerResult.counterFindingCount}`);
+  }
+  console.log(`  Total findings in report: ${writerResult.findingCount}`);
+  console.log(`\nAudit trail:`);
+  console.log(`  INPUT.md:     .reviews/${session.reviewId}/INPUT.md`);
+  console.log(`  REVIEWER.md:  .reviews/${session.reviewId}/REVIEWER.md`);
+  console.log(`  VALIDATOR.md: .reviews/${session.reviewId}/VALIDATOR.md`);
+  console.log(`  REPORT.md:    .reviews/${session.reviewId}/REPORT.md`);
+}
+
+/**
+ * Runs the full-codebase review pipeline (empty tree → HEAD).
+ * Identical pipeline to runLocalReview — only diff source, session slug, and scope differ.
+ */
+async function runFullReview(opts: { projectRoot: string; focus?: string }): Promise<void> {
+  const { projectRoot, focus } = opts;
+
+  // Step 1: Get full-codebase diff (empty tree → HEAD)
+  const { diff, stats } = await getFullDiff(projectRoot);
+
+  if (!diff.trim()) {
+    console.error('No commits found in this repository.');
+    process.exit(1);
+  }
+
+  if (stats.strippedFiles.length > 0) {
+    console.log(
+      `Preprocessing stripped ${stats.strippedFiles.length} file(s): ${stats.strippedFiles.join(', ')}`,
+    );
+  }
+
+  // Step 2: Create session (nanoid suffix prevents same-day collision)
+  const session = await createSession(projectRoot, `full-${nanoid(4)}`);
+  console.log(`Review session: ${session.reviewId}`);
+  console.log(`Output: .reviews/${session.reviewId}/`);
+
+  // Step 3: Write INPUT.md
+  await writeInputFile({
+    sessionDir: session.sessionDir,
+    reviewId: session.reviewId,
+    timestamp: session.timestamp,
+    scope: 'full-diff',
+    focus,
+    diff,
+  });
+
+  // Step 4: Run reviewer
   const { reviewerModel, validatorModel, writerModelId } = await resolveModels();
   const reviewsDir = join(projectRoot, '.reviews');
 
@@ -345,6 +439,10 @@ program.command('review')
               name: 'pr     —  Review a GitHub Pull Request',
               value: 'pr',
             },
+            {
+              name: 'full   —  Review the entire codebase (root commit to HEAD)',
+              value: 'full',
+            },
           ],
         });
       } catch {
@@ -352,6 +450,7 @@ program.command('review')
         console.log('\nUsage:');
         console.log('  rms review local [--focus <area>]');
         console.log('  rms review pr <pr-number> [--focus <area>]');
+        console.log('  rms review full [--focus <area>]');
         return;
       }
 
@@ -378,6 +477,11 @@ program.command('review')
         return;
       }
 
+      if (chosenScope === 'full') {
+        await runFullReview({ projectRoot, focus: opts.focus });
+        return;
+      }
+
       return;
     }
 
@@ -400,7 +504,12 @@ program.command('review')
       return;
     }
 
-    console.error(`[rms] Unknown scope: "${scope}". Valid scopes are: local, pr`);
+    if (scope === 'full') {
+      await runFullReview({ projectRoot, focus: opts.focus });
+      return;
+    }
+
+    console.error(`[rms] Unknown scope: "${scope}". Valid scopes are: local, pr, full`);
     process.exit(1);
   });
 
