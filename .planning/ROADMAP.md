@@ -323,14 +323,14 @@ Plans:
 **Goal:** Replace the flat per-agent config shape (provider + model) with a nested shape that has separate `opencode` and `cursor` top-level sections, each with per-agent `model + optional variant` specs. Migrate existing flat configs on load. Pass `variant` as thinking config to the Copilot API. Update all 8 picker templates and the CLI settings command to read/write the new structure.
 **Requirements**: TBD
 **Depends on:** Phase 18
-**Plans:** 5 plans
+**Plans:** 5/5 plans complete
 
 Plans:
-- [ ] 19-01-PLAN.md — New AgentModelSpec (model + variant?), RmsConfig (opencode/cursor sections), FlatRmsConfig for migration — schemas.ts + schemas.test.ts
-- [ ] 19-02-PLAN.md — config.ts: migration in loadRmsConfig, new nested defaults, resolveAgentModel variant/thinking support + config.test.ts
-- [ ] 19-03-PLAN.md — index.ts: resolveModels() reads config.opencode, settings --opencode/--cursor scope flags, model[:variant] spec parsing
-- [ ] 19-04-PLAN.md — All 8 picker templates (4 OpenCode + 4 Cursor) updated with new spec format and editor-scoped settings commands
-- [ ] 19-05-PLAN.md — Build + test verification + human end-to-end checkpoint
+- [x] 19-01-PLAN.md — New AgentModelSpec (model + variant?), RmsConfig (opencode/cursor sections), FlatRmsConfig for migration — schemas.ts + schemas.test.ts
+- [x] 19-02-PLAN.md — config.ts: migration in loadRmsConfig, new nested defaults, resolveAgentModel variant/thinking support + config.test.ts
+- [x] 19-03-PLAN.md — index.ts: resolveModels() reads config.opencode, settings --opencode/--cursor scope flags, model[:variant] spec parsing
+- [x] 19-04-PLAN.md — All 8 picker templates (4 OpenCode + 4 Cursor) updated with new spec format and editor-scoped settings commands
+- [x] 19-05-PLAN.md — Build + test verification + human end-to-end checkpoint
 
 ---
 
