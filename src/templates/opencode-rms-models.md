@@ -9,73 +9,46 @@ tools:
 
 1. Run `!rms settings` to read the current config and show the user the currently configured models.
 
-2. Ask all three questions in a single call:
+2. **Call the `question` tool** with the following three questions — do not print this as text, invoke the tool:
 
-```
-question([
-  {
-    header: "Reviewer model",
-    question: "Select the reviewer model (analyzes the diff):",
-    options: [
-      { label: "github-copilot/claude-opus-4.6 — high thinking (default)", description: "Highest capability for deep analysis" },
-      { label: "github-copilot/claude-sonnet-4.6 — high thinking",          description: "Balanced capability and speed" },
-      { label: "github-copilot/gpt-5.4 — high thinking",                    description: "OpenAI high-capability model" }
-    ]
-  },
-  {
-    header: "Validator model",
-    question: "Select the validator model (challenges reviewer findings):",
-    options: [
-      { label: "github-copilot/gpt-5.4 — high thinking (default)",          description: "OpenAI high-capability model" },
-      { label: "github-copilot/claude-opus-4.6 — high thinking",            description: "Highest capability for deep analysis" },
-      { label: "github-copilot/claude-sonnet-4.6 — high thinking",          description: "Balanced capability and speed" }
-    ]
-  },
-  {
-    header: "Writer model",
-    question: "Select the writer model (merges findings into REPORT.md):",
-    options: [
-      { label: "github-copilot/claude-haiku-4.5 — no thinking (default)", description: "Fast, lightweight synthesis" },
-      { label: "github-copilot/gpt-5-mini — no thinking",                  description: "OpenAI lightweight model" },
-      { label: "github-copilot/gemini-3-flash-preview — no thinking",      description: "Google fast model" }
-    ]
-  }
-])
-```
+   - Header: `Reviewer model` | Question: `Select the reviewer model (analyzes the diff):` | Options:
+     - `github-copilot/claude-opus-4.6 — high thinking` (default) — Highest capability for deep analysis
+     - `github-copilot/claude-sonnet-4.6 — high thinking` — Balanced capability and speed
+     - `github-copilot/gpt-5.4 — high thinking` — OpenAI high-capability model
 
-3. Map each selection to a spec string:
+   - Header: `Validator model` | Question: `Select the validator model (challenges reviewer findings):` | Options:
+     - `github-copilot/gpt-5.4 — high thinking` (default) — OpenAI high-capability model
+     - `github-copilot/claude-opus-4.6 — high thinking` — Highest capability for deep analysis
+     - `github-copilot/claude-sonnet-4.6 — high thinking` — Balanced capability and speed
 
-   **Reviewer:**
-   - "github-copilot/claude-opus-4.6 — high thinking (default)" → `github-copilot/claude-opus-4.6`
-   - "github-copilot/claude-sonnet-4.6 — high thinking" → `github-copilot/claude-sonnet-4.6`
-   - "github-copilot/gpt-5.4 — high thinking" → `github-copilot/gpt-5.4`
-   - Any other typed value → use as-is
+   - Header: `Writer model` | Question: `Select the writer model (merges findings into REPORT.md):` | Options:
+     - `github-copilot/claude-haiku-4.5 — no thinking` (default) — Fast, lightweight synthesis
+     - `github-copilot/gpt-5-mini — no thinking` — OpenAI lightweight model
+     - `github-copilot/gemini-3-flash-preview — no thinking` — Google fast model
 
-   **Validator:**
-   - "github-copilot/gpt-5.4 — high thinking (default)" → `github-copilot/gpt-5.4`
-   - "github-copilot/claude-opus-4.6 — high thinking" → `github-copilot/claude-opus-4.6`
-   - "github-copilot/claude-sonnet-4.6 — high thinking" → `github-copilot/claude-sonnet-4.6`
-   - Any other typed value → use as-is
+3. Map each answer to a spec string:
 
-   **Writer:**
-   - "github-copilot/claude-haiku-4.5 — no thinking (default)" → `github-copilot/claude-haiku-4.5`
-   - "github-copilot/gpt-5-mini — no thinking" → `github-copilot/gpt-5-mini`
-   - "github-copilot/gemini-3-flash-preview — no thinking" → `github-copilot/gemini-3-flash-preview`
-   - Any other typed value → use as-is
+   | Answer | Spec |
+   |--------|------|
+   | github-copilot/claude-opus-4.6 — high thinking | `github-copilot/claude-opus-4.6` |
+   | github-copilot/claude-sonnet-4.6 — high thinking | `github-copilot/claude-sonnet-4.6` |
+   | github-copilot/gpt-5.4 — high thinking | `github-copilot/gpt-5.4` |
+   | github-copilot/claude-haiku-4.5 — no thinking | `github-copilot/claude-haiku-4.5` |
+   | github-copilot/gpt-5-mini — no thinking | `github-copilot/gpt-5-mini` |
+   | github-copilot/gemini-3-flash-preview — no thinking | `github-copilot/gemini-3-flash-preview` |
+   | Any other typed value | use as-is |
 
-4. Apply all three in a single command:
+4. Apply all three with a single bash command:
 
-   ```
-   !rms settings --reviewer <reviewer-spec> --validator <validator-spec> --writer <writer-spec>
-   ```
+   `!rms settings --reviewer <reviewer-spec> --validator <validator-spec> --writer <writer-spec>`
 
 5. Confirm with a summary:
 
    ```
    ✓ Models updated:
-     reviewer   github-copilot/claude-opus-4.6
-     validator  github-copilot/gpt-5.4
-     writer     github-copilot/claude-haiku-4.5
+     reviewer   <reviewer-spec>
+     validator  <validator-spec>
+     writer     <writer-spec>
 
    Config saved to ~/.config/rms/config.json.
    ```
