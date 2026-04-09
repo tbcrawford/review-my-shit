@@ -2,8 +2,13 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
-import { RmsConfigSchema, type RmsConfig, type AgentModelSpec } from './schemas.js';
-import { generateText } from 'ai';
+import {
+  RmsConfigSchema,
+  FlatRmsConfigSchema,
+  type RmsConfig,
+  type AgentModelSpec,
+} from './schemas.js';
+import { generateText, wrapLanguageModel, defaultSettingsMiddleware } from 'ai';
 
 /**
  * Returns the canonical config file path: ~/.config/rms/config.json
@@ -13,9 +18,30 @@ export function getConfigPath(): string {
 }
 
 /**
+ * Migrates an old flat config to the new nested shape.
+ * Both opencode and cursor sections get the same models from the flat config.
+ * Provider is discarded — variant defaults to undefined (best-effort migration).
+ */
+function migrateFromFlat(flat: { reviewer: { model: string }; validator: { model: string }; writer: { model: string } }): RmsConfig {
+  return {
+    opencode: {
+      reviewer:  { model: flat.reviewer.model },
+      validator: { model: flat.validator.model },
+      writer:    { model: flat.writer.model },
+    },
+    cursor: {
+      reviewer:  { model: flat.reviewer.model },
+      validator: { model: flat.validator.model },
+      writer:    { model: flat.writer.model },
+    },
+  };
+}
+
+/**
  * Loads rms config from the given path (defaults to ~/.config/rms/config.json).
  *
- * Returns null if the file does not exist — callers should fall back to env vars.
+ * Returns null if the file does not exist.
+ * Migrates old flat config shape (Phase 8 era) to the new nested shape on load.
  * Throws with a clear "Invalid rms config" message on parse or validation failure.
  */
 export async function loadRmsConfig(configPath?: string): Promise<RmsConfig | null> {
@@ -37,12 +63,20 @@ export async function loadRmsConfig(configPath?: string): Promise<RmsConfig | nu
     throw new Error(`Invalid rms config at ${resolvedPath}: malformed JSON`);
   }
 
-  const result = RmsConfigSchema.safeParse(parsed);
-  if (!result.success) {
-    throw new Error(`Invalid rms config at ${resolvedPath}: ${result.error.message}`);
+  // Try new nested shape first
+  const newResult = RmsConfigSchema.safeParse(parsed);
+  if (newResult.success) {
+    return newResult.data;
   }
 
-  return result.data;
+  // Try old flat shape — migrate silently
+  const flatResult = FlatRmsConfigSchema.safeParse(parsed);
+  if (flatResult.success) {
+    return migrateFromFlat(flatResult.data);
+  }
+
+  // Neither shape matched
+  throw new Error(`Invalid rms config at ${resolvedPath}: ${newResult.error.message}`);
 }
 
 /**
@@ -56,14 +90,21 @@ export async function saveRmsConfig(config: RmsConfig, configPath?: string): Pro
 }
 
 /**
- * The confirmed default config from Phase 17.
- * reviewer and validator intentionally use different model families
- * (Anthropic vs OpenAI via Copilot) to reduce correlated errors.
+ * The default config from Phase 19.
+ * OpenCode uses model + variant for thinking control.
+ * Cursor uses plain model IDs (thinking intent encoded in name).
  */
 export const DEFAULT_RMS_CONFIG: RmsConfig = {
-  reviewer:  { provider: 'copilot', model: 'claude-opus-4-5' },
-  validator: { provider: 'copilot', model: 'github-copilot/gpt-5.4' },
-  writer:    { provider: 'copilot', model: 'github-copilot/claude-haiku-4.5' },
+  opencode: {
+    reviewer:  { model: 'github-copilot/claude-opus-4.6',  variant: 'high_thinking' },
+    validator: { model: 'github-copilot/gpt-5.4',          variant: 'high_thinking' },
+    writer:    { model: 'github-copilot/claude-haiku-4.5', variant: 'no_thinking'   },
+  },
+  cursor: {
+    reviewer:  { model: 'claude-4.6-opus-high-thinking' },
+    validator: { model: 'gpt-5.4-high'                  },
+    writer:    { model: 'gpt-5.4-mini-none'             },
+  },
 };
 
 /**
@@ -113,29 +154,39 @@ export async function resolveCopilotToken(): Promise<string> {
 /**
  * Resolves a Vercel AI SDK LanguageModel instance from an AgentModelSpec.
  *
- * Mirrors the provider-switching logic in index.ts resolveModel(), but takes
- * an explicit spec rather than reading from environment variables.
+ * All models route through the GitHub Copilot provider.
+ * When spec.variant is set, providerOptions.thinking is passed to chatModel().
  */
 export async function resolveAgentModel(
   spec: AgentModelSpec,
 ): Promise<Parameters<typeof generateText>[0]['model']> {
-  if (spec.provider === 'copilot') {
-    const { createOpenAICompatible } = await import('@ai-sdk/openai-compatible');
-    const token = await resolveCopilotToken();
-    const copilot = createOpenAICompatible({
-      name: 'github-copilot',
-      baseURL: 'https://api.githubcopilot.com',
-      apiKey: token,
+  const { createOpenAICompatible } = await import('@ai-sdk/openai-compatible');
+  const token = await resolveCopilotToken();
+  const copilot = createOpenAICompatible({
+    name: 'github-copilot',
+    baseURL: 'https://api.githubcopilot.com',
+    apiKey: token,
+  });
+
+  const baseModel = copilot.chatModel(spec.model);
+
+  if (spec.variant === 'high_thinking') {
+    return wrapLanguageModel({
+      model: baseModel,
+      middleware: defaultSettingsMiddleware({
+        settings: { providerOptions: { thinking: { type: 'enabled', budgetTokens: 10000 } } },
+      }),
     });
-    return copilot.chatModel(spec.model);
-  } else if (spec.provider === 'anthropic') {
-    const { anthropic } = await import('@ai-sdk/anthropic');
-    return anthropic(spec.model);
-  } else if (spec.provider === 'google') {
-    const { google } = await import('@ai-sdk/google');
-    return google(spec.model);
-  } else {
-    const { openai } = await import('@ai-sdk/openai');
-    return openai(spec.model);
   }
+
+  if (spec.variant === 'no_thinking') {
+    return wrapLanguageModel({
+      model: baseModel,
+      middleware: defaultSettingsMiddleware({
+        settings: { providerOptions: { thinking: { type: 'disabled' } } },
+      }),
+    });
+  }
+
+  return baseModel;
 }

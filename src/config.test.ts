@@ -25,9 +25,16 @@ async function makeTmpDir(): Promise<string> {
 }
 
 const VALID_CONFIG: RmsConfig = {
-  reviewer: { provider: 'openai', model: 'gpt-4o' },
-  validator: { provider: 'anthropic', model: 'claude-opus-4-5' },
-  writer: { provider: 'google', model: 'gemini-pro' },
+  opencode: {
+    reviewer:  { model: 'github-copilot/claude-opus-4.6', variant: 'high_thinking' },
+    validator: { model: 'github-copilot/gpt-5.4',         variant: 'high_thinking' },
+    writer:    { model: 'github-copilot/claude-haiku-4.5', variant: 'no_thinking' },
+  },
+  cursor: {
+    reviewer:  { model: 'claude-4.6-opus-high-thinking' },
+    validator: { model: 'gpt-5.4-high' },
+    writer:    { model: 'gpt-5.4-mini-none' },
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -56,19 +63,18 @@ describe('loadRmsConfig', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Test 3: loadRmsConfig returns RmsConfig when valid config.json exists
+  // Test 3: loadRmsConfig returns RmsConfig when valid nested config.json exists
   // ---------------------------------------------------------------------------
-  test('returns typed RmsConfig when valid config.json exists', async () => {
+  test('returns typed RmsConfig when valid new-shape config.json exists', async () => {
     const tmpDir = await makeTmpDir();
     const configPath = join(tmpDir, 'config.json');
     await writeFile(configPath, JSON.stringify(VALID_CONFIG), 'utf8');
 
     const result = await loadRmsConfig(configPath);
     expect(result !== null).toBeTruthy();
-    expect(result!.reviewer.provider).toBe('openai');
-    expect(result!.reviewer.model).toBe('gpt-4o');
-    expect(result!.validator.provider).toBe('anthropic');
-    expect(result!.writer.provider).toBe('google');
+    expect(result!.opencode.reviewer.model).toBe('github-copilot/claude-opus-4.6');
+    expect(result!.opencode.reviewer.variant).toBe('high_thinking');
+    expect(result!.cursor.writer.model).toBe('gpt-5.4-mini-none');
     await rm(tmpDir, { recursive: true, force: true });
   });
 
@@ -90,16 +96,12 @@ describe('loadRmsConfig', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // Test 5: loadRmsConfig throws on schema violation (invalid provider)
+  // Test 5: loadRmsConfig throws on schema violation (completely invalid shape)
   // ---------------------------------------------------------------------------
-  test('throws Error containing "Invalid rms config" when provider is not in enum', async () => {
+  test('throws Error containing "Invalid rms config" when config has no recognizable shape', async () => {
     const tmpDir = await makeTmpDir();
     const configPath = join(tmpDir, 'config.json');
-    const badConfig = {
-      reviewer: { provider: 'bedrock', model: 'claude' }, // invalid provider
-      validator: { provider: 'anthropic', model: 'claude-opus-4-5' },
-      writer: { provider: 'google', model: 'gemini-pro' },
-    };
+    const badConfig = { foo: 'bar', baz: 42 };  // completely unrecognized shape
     await writeFile(configPath, JSON.stringify(badConfig), 'utf8');
 
     await expect(
@@ -110,11 +112,35 @@ describe('loadRmsConfig', () => {
     ).rejects.toThrow('Invalid rms config');
     await rm(tmpDir, { recursive: true, force: true });
   });
+
+  // ---------------------------------------------------------------------------
+  // Test 6: loadRmsConfig migrates flat config (old shape) to nested shape
+  // ---------------------------------------------------------------------------
+  test('migrates flat config to nested shape', async () => {
+    const tmpDir = await makeTmpDir();
+    const configPath = join(tmpDir, 'config.json');
+    const flatConfig = {
+      reviewer:  { provider: 'copilot', model: 'claude-opus-4-5' },
+      validator: { provider: 'copilot', model: 'gpt-5.4' },
+      writer:    { provider: 'copilot', model: 'claude-haiku-4.5' },
+    };
+    await writeFile(configPath, JSON.stringify(flatConfig), 'utf8');
+
+    const result = await loadRmsConfig(configPath);
+    expect(result !== null).toBeTruthy();
+    // Both opencode and cursor sections should have the migrated models
+    expect(result!.opencode.reviewer.model).toBe('claude-opus-4-5');
+    expect(result!.cursor.reviewer.model).toBe('claude-opus-4-5');
+    expect(result!.opencode.validator.model).toBe('gpt-5.4');
+    expect(result!.cursor.writer.model).toBe('claude-haiku-4.5');
+    // No variant set during migration (best-effort)
+    expect(result!.opencode.reviewer.variant).toBeUndefined();
+    await rm(tmpDir, { recursive: true, force: true });
+  });
 });
 
 // ---------------------------------------------------------------------------
-// Test 6: saveRmsConfig writes valid JSON (round-trip)
-// Test 7: saveRmsConfig creates parent directories
+// Test 7-8: saveRmsConfig writes valid JSON (round-trip) and creates parent dirs
 // ---------------------------------------------------------------------------
 describe('saveRmsConfig', () => {
   test('writes valid JSON round-trippable through loadRmsConfig', async () => {
@@ -146,27 +172,57 @@ describe('saveRmsConfig', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Tests 8-10: resolveAgentModel returns a truthy model instance
+// Tests: resolveAgentModel — copilot provider only
 // ---------------------------------------------------------------------------
 describe('resolveAgentModel', () => {
-  test('resolves openai provider to a truthy model object', async () => {
-    const model = await resolveAgentModel({ provider: 'openai', model: 'gpt-4o' });
-    expect(model).toBeTruthy();
+  test('resolves spec with no variant to a truthy model object when GITHUB_TOKEN is set', async () => {
+    const hasToken = !!process.env['GITHUB_TOKEN'];
+    if (!hasToken) {
+      vi.stubEnv('GITHUB_TOKEN', 'gho_test_fake_token');
+    }
+    try {
+      const model = await resolveAgentModel({ model: 'github-copilot/claude-opus-4.6' });
+      expect(model).toBeTruthy();
+    } finally {
+      if (!hasToken) {
+        vi.unstubAllEnvs();
+      }
+    }
   });
 
-  test('resolves anthropic provider to a truthy model object', async () => {
-    const model = await resolveAgentModel({ provider: 'anthropic', model: 'claude-opus-4-5' });
-    expect(model).toBeTruthy();
+  test('resolves spec with high_thinking variant to a truthy model object', async () => {
+    const hasToken = !!process.env['GITHUB_TOKEN'];
+    if (!hasToken) {
+      vi.stubEnv('GITHUB_TOKEN', 'gho_test_fake_token');
+    }
+    try {
+      const model = await resolveAgentModel({ model: 'github-copilot/claude-opus-4.6', variant: 'high_thinking' });
+      expect(model).toBeTruthy();
+    } finally {
+      if (!hasToken) {
+        vi.unstubAllEnvs();
+      }
+    }
   });
 
-  test('resolves google provider to a truthy model object', async () => {
-    const model = await resolveAgentModel({ provider: 'google', model: 'gemini-pro' });
-    expect(model).toBeTruthy();
+  test('resolves spec with no_thinking variant to a truthy model object', async () => {
+    const hasToken = !!process.env['GITHUB_TOKEN'];
+    if (!hasToken) {
+      vi.stubEnv('GITHUB_TOKEN', 'gho_test_fake_token');
+    }
+    try {
+      const model = await resolveAgentModel({ model: 'github-copilot/claude-haiku-4.5', variant: 'no_thinking' });
+      expect(model).toBeTruthy();
+    } finally {
+      if (!hasToken) {
+        vi.unstubAllEnvs();
+      }
+    }
   });
 });
 
 // ---------------------------------------------------------------------------
-// Tests 11-13: resolveCopilotToken
+// Tests: resolveCopilotToken
 // ---------------------------------------------------------------------------
 describe('resolveCopilotToken', () => {
   test('returns GITHUB_TOKEN when set in env', async () => {
@@ -216,27 +272,7 @@ describe('resolveCopilotToken', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Test 14: resolveAgentModel with copilot provider
-// ---------------------------------------------------------------------------
-describe('resolveAgentModel — copilot provider', () => {
-  test('resolves copilot provider to a truthy model object when GITHUB_TOKEN is set', async () => {
-    const hasToken = !!process.env['GITHUB_TOKEN'];
-    if (!hasToken) {
-      vi.stubEnv('GITHUB_TOKEN', 'gho_test_fake_token');
-    }
-    try {
-      const model = await resolveAgentModel({ provider: 'copilot', model: 'gpt-4o' });
-      expect(model).toBeTruthy();
-    } finally {
-      if (!hasToken) {
-        vi.unstubAllEnvs();
-      }
-    }
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Tests 15-17: ensureDefaultConfig
+// Tests: ensureDefaultConfig
 // ---------------------------------------------------------------------------
 describe('ensureDefaultConfig', () => {
   test('creates config file with DEFAULT_RMS_CONFIG when file does not exist', async () => {
@@ -258,27 +294,31 @@ describe('ensureDefaultConfig', () => {
     const configPath = join(tmpDir, 'config.json');
 
     // Write a custom config first
-    const customConfig = {
-      reviewer:  { provider: 'openai' as const, model: 'gpt-4o' },
-      validator: { provider: 'anthropic' as const, model: 'claude-opus-4-5' },
-      writer:    { provider: 'google' as const, model: 'gemini-pro' },
-    };
-    await saveRmsConfig(customConfig, configPath);
+    await saveRmsConfig(VALID_CONFIG, configPath);
 
     // Call ensureDefaultConfig — should not overwrite
     const result = await ensureDefaultConfig(configPath);
     expect(result).toBe('exists');
 
-    // File content should be unchanged (custom config, not defaults)
+    // File content should be unchanged (VALID_CONFIG, not defaults)
     const loaded = await loadRmsConfig(configPath);
-    expect(loaded).toEqual(customConfig);
+    expect(loaded).toEqual(VALID_CONFIG);
 
     await rm(tmpDir, { recursive: true, force: true });
   });
 
-  test('DEFAULT_RMS_CONFIG has the exact confirmed defaults from CONTEXT.md', () => {
-    expect(DEFAULT_RMS_CONFIG.reviewer).toEqual({ provider: 'copilot', model: 'claude-opus-4-5' });
-    expect(DEFAULT_RMS_CONFIG.validator).toEqual({ provider: 'copilot', model: 'github-copilot/gpt-5.4' });
-    expect(DEFAULT_RMS_CONFIG.writer).toEqual({ provider: 'copilot', model: 'github-copilot/claude-haiku-4.5' });
+  test('DEFAULT_RMS_CONFIG has correct opencode and cursor sections', () => {
+    // opencode section
+    expect(DEFAULT_RMS_CONFIG.opencode.reviewer.model).toBe('github-copilot/claude-opus-4.6');
+    expect(DEFAULT_RMS_CONFIG.opencode.reviewer.variant).toBe('high_thinking');
+    expect(DEFAULT_RMS_CONFIG.opencode.validator.model).toBe('github-copilot/gpt-5.4');
+    expect(DEFAULT_RMS_CONFIG.opencode.validator.variant).toBe('high_thinking');
+    expect(DEFAULT_RMS_CONFIG.opencode.writer.model).toBe('github-copilot/claude-haiku-4.5');
+    expect(DEFAULT_RMS_CONFIG.opencode.writer.variant).toBe('no_thinking');
+    // cursor section
+    expect(DEFAULT_RMS_CONFIG.cursor.reviewer.model).toBe('claude-4.6-opus-high-thinking');
+    expect(DEFAULT_RMS_CONFIG.cursor.validator.model).toBe('gpt-5.4-high');
+    expect(DEFAULT_RMS_CONFIG.cursor.writer.model).toBe('gpt-5.4-mini-none');
+    expect(DEFAULT_RMS_CONFIG.cursor.writer.variant).toBeUndefined();
   });
 });
