@@ -8,6 +8,7 @@ import {
   ValidatorFileSchema,
   ReportFileSchema,
   DIMENSIONS,
+  AgentModelSpecSchema,
 } from './schemas.js';
 
 describe('DIMENSIONS constant', () => {
@@ -161,5 +162,27 @@ describe('ReportFileSchema', () => {
         findingCount: 'seven',
       }),
     ).toThrow(ZodError);
+  });
+});
+
+describe('AgentModelSpecSchema', () => {
+  test('accepts copilot as a valid provider', () => {
+    const result = AgentModelSpecSchema.parse({ provider: 'copilot', model: 'claude-opus-4.6' });
+    expect(result.provider).toBe('copilot');
+    expect(result.model).toBe('claude-opus-4.6');
+  });
+
+  test('accepts existing openai provider (no regression)', () => {
+    const result = AgentModelSpecSchema.parse({ provider: 'openai', model: 'gpt-4o' });
+    expect(result.provider).toBe('openai');
+    expect(result.model).toBe('gpt-4o');
+  });
+
+  test('throws ZodError for unknown provider "bedrock"', () => {
+    expect(() => AgentModelSpecSchema.parse({ provider: 'bedrock', model: 'x' })).toThrow(ZodError);
+  });
+
+  test('throws ZodError for "github-copilot" (raw prefix is not a valid provider value)', () => {
+    expect(() => AgentModelSpecSchema.parse({ provider: 'github-copilot', model: 'x' })).toThrow(ZodError);
   });
 });

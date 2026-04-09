@@ -127,7 +127,7 @@ export type ReportFile = z.infer<typeof ReportFileSchema>;
  * Specification for a single agent's model: provider + model ID.
  */
 export const AgentModelSpecSchema = z.object({
-  provider: z.enum(['openai', 'anthropic', 'google']),
+  provider: z.enum(['openai', 'anthropic', 'google', 'copilot']),
   model: z.string().min(1),
 });
 export type AgentModelSpec = z.infer<typeof AgentModelSpecSchema>;
