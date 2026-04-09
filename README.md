@@ -208,15 +208,12 @@ just compile       # type-check without emitting
 just build         # full lifecycle: assemble + check
 ```
 
-**Testing local changes with `bunx`:**
+**Testing local changes:**
 
 ```bash
-just assemble         # compile your changes first
-bun link              # register the local package as "review-my-shit"
-bunx review-my-shit   # runs your local build instead of the published version
+just preview   # assemble, link locally, and run the installer via bunx
+just unlink    # unlink the local package when done
 ```
-
-To unlink when done: `bun unlink review-my-shit`
 
 Alternatively, invoke the compiled entry points directly without linking:
 

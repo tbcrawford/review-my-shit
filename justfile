@@ -63,3 +63,14 @@ install:
 
 # Assemble then install rms commands into editor config dirs
 publish: assemble install
+
+# ── Development ───────────────────────────────────────────────────────────────
+
+# Assemble, link locally, and run the installer via bunx for dev testing
+preview: assemble
+    bun link
+    bunx review-my-shit
+
+# Unlink the local package when done previewing
+unlink:
+    bun unlink review-my-shit
