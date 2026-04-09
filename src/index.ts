@@ -416,6 +416,7 @@ program
     console.log(`\n  ${chalk.bold.white('Commands')}`);
     console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-review')}`);
     console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-fix')}`);
+    console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-models')}`);
     console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-reviewer')}`);
     console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-validator')}`);
     console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-writer')}`);
