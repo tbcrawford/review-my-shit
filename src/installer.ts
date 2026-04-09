@@ -3,6 +3,7 @@ import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import chalk from 'chalk';
+import { ensureDefaultConfig, getConfigPath } from './config.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const TEMPLATES_DIR = join(__dirname, 'templates');
@@ -12,9 +13,12 @@ const TEMPLATES_DIR = join(__dirname, 'templates');
  * Path: ~/.config/opencode/command/ (confirmed global OpenCode command dir).
  */
 const GLOBAL_INSTALLS = [
-  { template: 'opencode-review.md',   dest: 'rms-review.md' },
-  { template: 'opencode-rms-fix.md',  dest: 'rms-fix.md' },
-  { template: 'opencode-settings.md', dest: 'rms-settings.md' },
+  { template: 'opencode-review.md',          dest: 'rms-review.md' },
+  { template: 'opencode-rms-fix.md',         dest: 'rms-fix.md' },
+  { template: 'opencode-settings.md',        dest: 'rms-settings.md' },
+  { template: 'opencode-rms-reviewer.md',    dest: 'rms-reviewer.md' },
+  { template: 'opencode-rms-validator.md',   dest: 'rms-validator.md' },
+  { template: 'opencode-rms-writer.md',      dest: 'rms-writer.md' },
 ];
 
 /**
@@ -23,9 +27,12 @@ const GLOBAL_INSTALLS = [
  * Each entry is a skill directory containing a SKILL.md with name: frontmatter.
  */
 const CURSOR_SKILL_INSTALLS = [
-  { templateDir: 'cursor-rms-review',   skillName: 'rms-review' },
-  { templateDir: 'cursor-rms-fix',      skillName: 'rms-fix' },
-  { templateDir: 'cursor-rms-settings', skillName: 'rms-settings' },
+  { templateDir: 'cursor-rms-review',    skillName: 'rms-review' },
+  { templateDir: 'cursor-rms-fix',       skillName: 'rms-fix' },
+  { templateDir: 'cursor-rms-settings',  skillName: 'rms-settings' },
+  { templateDir: 'cursor-rms-reviewer',  skillName: 'rms-reviewer' },
+  { templateDir: 'cursor-rms-validator', skillName: 'rms-validator' },
+  { templateDir: 'cursor-rms-writer',    skillName: 'rms-writer' },
 ];
 
 export async function install(
@@ -62,6 +69,12 @@ export async function install(
       await writeFile(destPath, content, 'utf-8');
       console.log(`  ${chalk.green('›')} ${skillName}/SKILL.md`);
     }
+  }
+
+  // Create default config if it doesn't already exist
+  const configResult = await ensureDefaultConfig();
+  if (configResult === 'created') {
+    console.log(`\n  ${chalk.green('✓')} Default config created at ${chalk.gray(getConfigPath())}`);
   }
 
 }

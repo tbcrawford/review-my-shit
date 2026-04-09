@@ -17,6 +17,7 @@ import { checkbox } from '@inquirer/prompts';
 import { ExitPromptError } from '@inquirer/core';
 import chalk from 'chalk';
 import { install } from './installer.js';
+import { ensureDefaultConfig, getConfigPath } from './config.js';
 
 const VERSION = '0.3.0';
 
@@ -137,11 +138,20 @@ async function main(): Promise<void> {
   const projectRoot = process.cwd();
   await install(projectRoot, { editors });
 
+  // Create default config if this is a fresh install
+  const configResult = await ensureDefaultConfig();
+  if (configResult === 'created') {
+    console.log(`\n  ${chalk.green('✓')} Default config created at ${chalk.gray(getConfigPath())}`);
+  }
+
   // Completion message
   console.log('');
   console.log(`  ${chalk.bold.white('Commands')}`);
   console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-review')}`);
   console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-fix')}`);
+  console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-reviewer')}`);
+  console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-validator')}`);
+  console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-writer')}`);
   console.log(`  ${chalk.green('›')} ${chalk.yellow('/rms-settings')}`);
   console.log('');
   console.log(`  ${chalk.gray('Restart your editor to pick up the new commands.')}`);
