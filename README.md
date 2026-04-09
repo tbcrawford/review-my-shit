@@ -9,7 +9,7 @@ A three-agent AI code review pipeline for OpenCode and Cursor. The reviewer catc
 Every review runs three agents in strict sequence, each in a fully isolated context window:
 
 ```
-/rms-review [local | pr <number>]
+/rms-review [local | pr <number> | full]
         │
         ▼
   ┌─────────────┐
@@ -91,7 +91,7 @@ export GITHUB_TOKEN=ghp_...
 
 ## Commands
 
-### `/rms-review [local | pr <number>] [--focus <area>]`
+### `/rms-review [local | pr <number> | full] [--focus <area>]`
 
 Unified review entry point. Prompts for scope if called with no arguments.
 
@@ -100,6 +100,8 @@ Unified review entry point. Prompts for scope if called with no arguments.
 /rms-review local         # review staged + unstaged git changes
 /rms-review pr 42         # review GitHub PR #42
 /rms-review local --focus security
+/rms-review full          # review entire codebase (root to HEAD)
+/rms-review full --focus security
 ```
 
 ### `/rms-fix [<finding-id>] [--session <id>]`
@@ -185,7 +187,7 @@ The counter persists in `.reviews/.counter` across sessions. IDs are stable with
 
 ```bash
 # Unified review command (prompts for scope if none given)
-rms review [local | pr <pr-number>] [--focus <area>]
+rms review [local | pr <pr-number> | full] [--focus <area>]
 
 # Show or apply a finding
 rms fix [<finding-id>] [--session <id>]
