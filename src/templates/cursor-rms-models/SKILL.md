@@ -3,11 +3,13 @@ name: rms-models
 description: "Set reviewer, validator, and writer models — single picker for all three"
 ---
 
-## Set Agent Models
+## Set Agent Models (Cursor)
 
-1. Run `rms settings` in the terminal and show the current config to the user.
+> **Note:** This configures the Cursor section. For OpenCode, use `/rms-reviewer`, `/rms-validator`, or `/rms-writer`.
 
-2. Present all three model choices conversationally:
+1. Run `rms settings` in the terminal and show the current config to the user — both opencode and cursor sections.
+
+2. Present all three model choices conversationally for the **Cursor** section:
 
 **Reviewer** — analyzes the diff across 12 dimensions:
 
@@ -35,36 +37,36 @@ description: "Set reviewer, validator, and writer models — single picker for a
 
 Ask the user to pick one for each, then confirm their three choices before applying.
 
-3. Map each selection to a spec string:
+3. Map each selection to a spec string (Cursor models use plain IDs — no :variant suffix):
 
    **Reviewer:**
-   - claude-4.6-opus-high-thinking → `copilot:claude-4.6-opus-high-thinking`
-   - claude-4.6-sonnet-medium-thinking → `copilot:claude-4.6-sonnet-medium-thinking`
-   - gpt-5.4-high → `copilot:gpt-5.4-high`
+   - claude-4.6-opus-high-thinking → `claude-4.6-opus-high-thinking`
+   - claude-4.6-sonnet-medium-thinking → `claude-4.6-sonnet-medium-thinking`
+   - gpt-5.4-high → `gpt-5.4-high`
    - Any other typed value → use as-is
 
    **Validator:**
-   - gpt-5.4-high → `copilot:gpt-5.4-high`
-   - claude-4.6-opus-high-thinking → `copilot:claude-4.6-opus-high-thinking`
-   - claude-4.6-sonnet-medium-thinking → `copilot:claude-4.6-sonnet-medium-thinking`
+   - gpt-5.4-high → `gpt-5.4-high`
+   - claude-4.6-opus-high-thinking → `claude-4.6-opus-high-thinking`
+   - claude-4.6-sonnet-medium-thinking → `claude-4.6-sonnet-medium-thinking`
    - Any other typed value → use as-is
 
    **Writer:**
-   - gpt-5.4-mini-none → `copilot:gpt-5.4-mini-none`
-   - gpt-5.4-nano-low → `copilot:gpt-5.4-nano-low`
-   - gemini-3-flash → `copilot:gemini-3-flash`
+   - gpt-5.4-mini-none → `gpt-5.4-mini-none`
+   - gpt-5.4-nano-low → `gpt-5.4-nano-low`
+   - gemini-3-flash → `gemini-3-flash`
    - Any other typed value → use as-is
 
-4. Apply all three in a single terminal command:
+4. Apply all three in a single terminal command scoped to the cursor section:
 
    ```
-   rms settings --reviewer <reviewer-spec> --validator <validator-spec> --writer <writer-spec>
+   rms settings --reviewer <reviewer-spec> --validator <validator-spec> --writer <writer-spec> --cursor
    ```
 
 5. Confirm with a summary:
 
    ```
-   ✓ Models updated:
+   ✓ Cursor models updated:
      reviewer   <reviewer-spec>
      validator  <validator-spec>
      writer     <writer-spec>

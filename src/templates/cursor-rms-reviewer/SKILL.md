@@ -3,13 +3,13 @@ name: rms-reviewer
 description: "Set the reviewer agent model — interactive picker"
 ---
 
-## Set Reviewer Model
+## Set Reviewer Model (Cursor)
 
-1. Run `rms settings` in the terminal and show the current config to the user.
+> **Note:** This configures the Cursor section only. Run `rms settings` to see both sections.
 
-2. Present the **current reviewer model** from the output.
+1. Run `rms settings` in the terminal and show the current config to the user — specifically the `cursor:` section's reviewer model.
 
-3. Present these options for the user to choose from:
+2. Present these options for the user to choose from:
 
 | Model | Notes |
 |-------|-------|
@@ -17,17 +17,17 @@ description: "Set the reviewer agent model — interactive picker"
 | claude-4.6-sonnet-medium-thinking | Balanced capability and speed |
 | gpt-5.4-high | OpenAI high-capability model |
 
-4. After the user chooses, map their selection to a spec string:
-   - claude-4.6-opus-high-thinking → `copilot:claude-4.6-opus-high-thinking`
-   - claude-4.6-sonnet-medium-thinking → `copilot:claude-4.6-sonnet-medium-thinking`
-   - gpt-5.4-high → `copilot:gpt-5.4-high`
+3. After the user chooses, map their selection to a spec string:
+   - claude-4.6-opus-high-thinking → `claude-4.6-opus-high-thinking`
+   - claude-4.6-sonnet-medium-thinking → `claude-4.6-sonnet-medium-thinking`
+   - gpt-5.4-high → `gpt-5.4-high`
    - Any other typed value → use as-is
 
-5. Run in the terminal:
+4. Run in the terminal (scoped to cursor section):
    ```
-   rms settings --reviewer <resolved-spec>
+   rms settings --reviewer <resolved-spec> --cursor
    ```
 
-6. Confirm: "✓ Reviewer set to `<resolved-spec>`. Config saved to ~/.config/rms/config.json."
+5. Confirm: "✓ Cursor reviewer set to `<resolved-spec>`. Config saved to ~/.config/rms/config.json."
 
 If `rms settings` fails, instruct the user to check that `rms` is installed (`npx review-my-shit`) and the config is valid.
