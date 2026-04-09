@@ -50,6 +50,29 @@ export async function getLocalDiff(projectRoot: string): Promise<LocalDiffResult
 }
 
 // ---------------------------------------------------------------------------
+// getFullDiff
+// ---------------------------------------------------------------------------
+
+export interface FullDiffResult {
+  diff: string;
+  stats: DiffStats;
+}
+
+/**
+ * Computes a full-codebase diff from the git empty tree to HEAD.
+ * Uses the well-known empty tree SHA (4b825dc642cb6eb9a060e54bf8d69288fbee4904)
+ * to ensure all files — including those introduced in the initial commit — are captured.
+ * Misses nothing that `root..HEAD` would skip (files never modified since initial commit).
+ */
+export async function getFullDiff(projectRoot: string): Promise<FullDiffResult> {
+  const git = simpleGit({ baseDir: projectRoot });
+  const GIT_EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
+  const rawDiff = await git.diff([GIT_EMPTY_TREE, 'HEAD']);
+  const { diff, stats } = preprocessDiff(rawDiff);
+  return { diff, stats };
+}
+
+// ---------------------------------------------------------------------------
 // writeInputFile
 // ---------------------------------------------------------------------------
 
@@ -59,7 +82,7 @@ export interface WriteInputOptions {
   reviewId: string;
   /** ISO 8601 timestamp */
   timestamp: string;
-  scope: 'local-diff' | 'pr-diff';
+  scope: 'local-diff' | 'pr-diff' | 'full-diff';
   /** Optional focus area — omitted from frontmatter if not set */
   focus?: string;
   /** Preprocessed diff content — written verbatim, no escaping */

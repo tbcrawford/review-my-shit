@@ -86,7 +86,7 @@ export type ValidationVerdict = z.infer<typeof ValidationVerdictSchema>;
 export const InputFileSchema = z.object({
   reviewId: z.string(),
   timestamp: z.string(),
-  scope: z.enum(['local-diff', 'pr-diff']),
+  scope: z.enum(['local-diff', 'pr-diff', 'full-diff']),
   focus: z.string().optional(),
 });
 export type InputFile = z.infer<typeof InputFileSchema>;
