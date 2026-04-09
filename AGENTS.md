@@ -13,7 +13,7 @@ User invokes /rms-review
          │
          ▼
   ┌─────────────┐
-  │  Reviewer   │  Analyzes the diff across 11 dimensions.
+  │  Reviewer   │  Analyzes the diff across 12 dimensions.
   │  (isolated) │  Writes REVIEWER.md. Assigns no IDs.
   └──────┬──────┘
          │

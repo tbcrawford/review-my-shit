@@ -132,7 +132,7 @@ Supported providers: `openai`, `anthropic`, `google`
 
 ## Review dimensions
 
-The reviewer analyzes code across 11 dimensions:
+The reviewer analyzes code across 12 dimensions:
 
 1. Bugs & logic errors
 2. Security
@@ -145,6 +145,7 @@ The reviewer analyzes code across 11 dimensions:
 9. API & interface contracts
 10. Dependency & environment risk
 11. Code & documentation consistency
+12. API & interface design quality
 
 Findings are grouped by severity in the final report: **Critical → High → Medium → Low → Info**.
 
