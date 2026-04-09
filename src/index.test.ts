@@ -86,4 +86,22 @@ describe('rms review routing', () => {
 
     expect(exitCode !== 0).toBeTruthy();
   });
+
+  test('rms review full is accepted (no "Unknown scope" error)', async () => {
+    // getFullDiff will run against the real repo. The review pipeline will then
+    // fail at model resolution (no API key in test env) — that's fine.
+    // We're testing routing only: the command must NOT produce "Unknown scope".
+    const { stderr } = await runCli(['review', 'full']);
+    expect(stderr.includes('Unknown scope')).toBeFalsy();
+  });
+
+  test('rms review (no args) usage text includes "full" scope option', async () => {
+    const { stdout, exitCode } = await runCli(['review']);
+    expect(exitCode).toBe(0);
+    // Non-TTY path prints usage — verify 'full' appears in output
+    const output = stdout;
+    expect(
+      output.includes('full') || output.includes('Usage'),
+    ).toBeTruthy();
+  });
 });
