@@ -9,6 +9,7 @@ import {
   verifyFileExists,
   getPrDiff,
   detectRepoSlug,
+  getFullDiff,
 } from './pipeline-io.js';
 
 // ---------------------------------------------------------------------------
@@ -97,6 +98,23 @@ describe('writeInputFile', () => {
     expect(content.includes('<diff>')).toBeTruthy();
     expect(content.includes('</diff>')).toBeTruthy();
     expect(content.includes(diffContent)).toBeTruthy();
+  });
+
+  test('full-diff scope: scope appears in frontmatter and XML body', async () => {
+    const sessionDir = join(tempDir, 'session-full-diff');
+    await mkdir(sessionDir, { recursive: true });
+
+    await writeInputFile({
+      sessionDir,
+      reviewId: 'test-review-full',
+      timestamp: '2026-04-09T00:00:00.000Z',
+      scope: 'full-diff',
+      diff: '+const x = 1;\n',
+    });
+
+    const content = await readFile(join(sessionDir, 'INPUT.md'), 'utf8');
+    expect(content.includes('scope: full-diff')).toBeTruthy();
+    expect(content.includes('<scope>full-diff</scope>')).toBeTruthy();
   });
 });
 
@@ -622,5 +640,33 @@ describe('detectRepoSlug', () => {
     } finally {
       await rm(tmpRepo, { recursive: true, force: true });
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getFullDiff tests
+// ---------------------------------------------------------------------------
+
+describe('getFullDiff', () => {
+  test('returns non-empty diff and stats for a repo with commits', async () => {
+    const projectRoot = join(__dirname, '..');
+    const result = await getFullDiff(projectRoot);
+
+    // This repo has many source files — diff must be non-empty
+    expect(result.diff.length > 0).toBeTruthy();
+
+    // Must look like a real git diff
+    expect(result.diff.includes('diff --git')).toBeTruthy();
+
+    // Stats must be present
+    expect(typeof result.stats.originalLines).toBe('number');
+    expect(Array.isArray(result.stats.strippedFiles)).toBeTruthy();
+  });
+
+  test('preprocessor runs: stats.strippedFiles is always defined', async () => {
+    const projectRoot = join(__dirname, '..');
+    const result = await getFullDiff(projectRoot);
+    // strippedFiles is defined (may be empty if no lock files/binaries)
+    expect(result.stats.strippedFiles).toBeDefined();
   });
 });
