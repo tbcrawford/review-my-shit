@@ -201,17 +201,18 @@ rms install
 ## Development
 
 ```bash
-bun install       # install dependencies
-bun run build     # compile TypeScript → dist/
-bun run test      # run tests (Node.js built-in test runner, no extra deps)
-bun run typecheck # type-check without emitting
+just dependencies  # install dependencies
+just assemble      # compile TypeScript → dist/
+just test          # run tests
+just compile       # type-check without emitting
+just build         # full lifecycle: assemble + check
 ```
 
 **Testing local changes with `bunx`:**
 
 ```bash
-bun run build     # compile your changes first
-bun link          # register the local package as "review-my-shit"
+just assemble         # compile your changes first
+bun link              # register the local package as "review-my-shit"
 bunx review-my-shit   # runs your local build instead of the published version
 ```
 
@@ -220,8 +221,8 @@ To unlink when done: `bun unlink review-my-shit`
 Alternatively, invoke the compiled entry points directly without linking:
 
 ```bash
-node dist/index.js review local      # run a local diff review
-node dist/index.js install           # install slash commands
+just run review local  # run a local diff review
+just install           # install slash commands (interactive)
 ```
 
 Tests cover: diff preprocessing, reviewer prompt structure, validator isolation, writer output, finding ID generation, pipeline I/O, session management, and config loading.

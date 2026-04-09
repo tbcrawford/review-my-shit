@@ -69,7 +69,7 @@ OpenCode commands use `subtask: true` in frontmatter, which forces execution in 
 
 ### Cursor
 
-Skills are installed globally to `~/.cursor/skills/` via `node dist/index.js install`. Each command becomes a skill directory (`rms-review/SKILL.md`, `rms-fix/SKILL.md`, `rms-settings/SKILL.md`) — available in all projects automatically.
+Skills are installed globally to `~/.cursor/skills/` via `just install`. Each command becomes a skill directory (`rms-review/SKILL.md`, `rms-fix/SKILL.md`, `rms-settings/SKILL.md`) — available in all projects automatically.
 
 | Command | Description | Isolation |
 |---------|-------------|-----------|
@@ -130,7 +130,7 @@ Re-run `rms install` after upgrading to pick up the new `/rms-settings` command.
 
 - **Terminal execution:** Cursor skills run `rms <subcommand> $ARGUMENTS` via the terminal tool. The agent then reads the REPORT.md output and presents it to the user.
 
-- **Build requirement:** `dist/` must exist before any command runs. If not present, run `bun run build` first. The commands do not auto-build.
+- **Build requirement:** `dist/` must exist before any command runs. If not present, run `just assemble` first. The commands do not auto-build.
 
 ---
 
@@ -138,16 +138,16 @@ Re-run `rms install` after upgrading to pick up the new `/rms-settings` command.
 
 ```bash
 # Build (required before running any command)
-bun run build
+just assemble
 
 # Run all tests
-bun run test
+just test
 
 # Install commands into ~/.config/opencode/command/ and ~/.cursor/skills/
-node dist/index.js install
+just install
 ```
 
-**Test framework:** [Vitest](https://vitest.dev) — `bun run test` invokes `vitest run`.
+**Test framework:** [Vitest](https://vitest.dev) — `just test` invokes `vitest run`.
 
 **Tests must pass before committing.** The test suite covers: diff preprocessing, reviewer prompt structure, validator isolation, writer output, finding ID generation, pipeline I/O parsing, and session management.
 
