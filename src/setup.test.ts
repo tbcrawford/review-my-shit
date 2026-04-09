@@ -100,7 +100,8 @@ describe('promptEditorSelection — ExitPromptError handling', () => {
 describe('BANNER_STRING', () => {
   it('Test 7: banner contains subtitle and version after stripping ANSI', () => {
     const plain = stripAnsi(BANNER_STRING);
-    expect(plain.includes('review-my-shit')).toBeTruthy();
+    // The banner subtitle is "Review My Shit" (mixed case, spaced) not "review-my-shit"
+    expect(plain.includes('Review My Shit')).toBeTruthy();
     expect(plain.includes('v0.3.0')).toBeTruthy();
   });
 
@@ -108,7 +109,7 @@ describe('BANNER_STRING', () => {
     // The banner should contain chalk color calls — either ANSI codes in color envs
     // or plain text in no-color envs. Either way, plain text content must be intact.
     const plain = stripAnsi(BANNER_STRING);
-    expect(plain).toContain('review-my-shit');
+    expect(plain).toContain('Review My Shit');
     expect(plain).toContain('v0.3.0');
     // Block-letter art uses box-drawing / block chars
     expect(plain).toContain('██');

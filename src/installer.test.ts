@@ -34,14 +34,17 @@ describe('install', () => {
     }
   });
 
-  test('writes all 3 OpenCode templates to globalDir', async () => {
+  test('writes all 6 OpenCode templates to globalDir', async () => {
     const tmpRoot = await mkdtemp(join(tmpdir(), 'rms-test-'));
     const globalDir = join(tmpRoot, 'global');
     const projectRoot = join(tmpRoot, 'project');
     const cursorSkillsDir = join(tmpRoot, 'cursor-skills');
     try {
       await install(projectRoot, { globalDir, cursorSkillsDir });
-      for (const name of ['rms-review.md', 'rms-fix.md', 'rms-settings.md']) {
+      for (const name of [
+        'rms-review.md', 'rms-fix.md', 'rms-settings.md',
+        'rms-reviewer.md', 'rms-validator.md', 'rms-writer.md',
+      ]) {
         const s = await stat(join(globalDir, name));
         expect(s.isFile()).toBeTruthy();
       }
@@ -50,14 +53,17 @@ describe('install', () => {
     }
   });
 
-  test('writes all 3 Cursor skill directories to cursorSkillsDir', async () => {
+  test('writes all 6 Cursor skill directories to cursorSkillsDir', async () => {
     const tmpRoot = await mkdtemp(join(tmpdir(), 'rms-test-'));
     const globalDir = join(tmpRoot, 'global');
     const projectRoot = join(tmpRoot, 'project');
     const cursorSkillsDir = join(tmpRoot, 'cursor-skills');
     try {
       await install(projectRoot, { globalDir, cursorSkillsDir });
-      for (const name of ['rms-review', 'rms-fix', 'rms-settings']) {
+      for (const name of [
+        'rms-review', 'rms-fix', 'rms-settings',
+        'rms-reviewer', 'rms-validator', 'rms-writer',
+      ]) {
         const s = await stat(join(cursorSkillsDir, name, 'SKILL.md'));
         expect(s.isFile()).toBeTruthy();
       }
@@ -110,16 +116,21 @@ describe('install', () => {
 });
 
 describe('selective install', () => {
-  test('editors: opencode only — writes OpenCode files, skips Cursor', async () => {
+  test('editors: opencode only — writes 6 OpenCode files, skips Cursor', async () => {
     const tmpRoot = await mkdtemp(join(tmpdir(), 'rms-test-'));
     const globalDir = join(tmpRoot, 'global');
     const cursorSkillsDir = join(tmpRoot, 'cursor-skills');
     const projectRoot = join(tmpRoot, 'project');
     try {
       await install(projectRoot, { editors: ['opencode'], globalDir, cursorSkillsDir });
-      // OpenCode file must exist
-      const s = await stat(join(globalDir, 'rms-review.md'));
-      expect(s.isFile()).toBeTruthy();
+      // All 6 OpenCode files must exist
+      for (const name of [
+        'rms-review.md', 'rms-fix.md', 'rms-settings.md',
+        'rms-reviewer.md', 'rms-validator.md', 'rms-writer.md',
+      ]) {
+        const s = await stat(join(globalDir, name));
+        expect(s.isFile()).toBeTruthy();
+      }
       // Cursor skill must NOT exist
       let cursorFound = false;
       try { await stat(join(cursorSkillsDir, 'rms-review', 'SKILL.md')); cursorFound = true; } catch { /* expected */ }
@@ -129,16 +140,21 @@ describe('selective install', () => {
     }
   });
 
-  test('editors: cursor only — writes Cursor files, skips OpenCode', async () => {
+  test('editors: cursor only — writes 6 Cursor files, skips OpenCode', async () => {
     const tmpRoot = await mkdtemp(join(tmpdir(), 'rms-test-'));
     const globalDir = join(tmpRoot, 'global');
     const cursorSkillsDir = join(tmpRoot, 'cursor-skills');
     const projectRoot = join(tmpRoot, 'project');
     try {
       await install(projectRoot, { editors: ['cursor'], globalDir, cursorSkillsDir });
-      // Cursor skill must exist
-      const s = await stat(join(cursorSkillsDir, 'rms-review', 'SKILL.md'));
-      expect(s.isFile()).toBeTruthy();
+      // All 6 Cursor skills must exist
+      for (const name of [
+        'rms-review', 'rms-fix', 'rms-settings',
+        'rms-reviewer', 'rms-validator', 'rms-writer',
+      ]) {
+        const s = await stat(join(cursorSkillsDir, name, 'SKILL.md'));
+        expect(s.isFile()).toBeTruthy();
+      }
       // OpenCode file must NOT exist
       let ocFound = false;
       try { await stat(join(globalDir, 'rms-review.md')); ocFound = true; } catch { /* expected */ }
@@ -148,16 +164,16 @@ describe('selective install', () => {
     }
   });
 
-  test('editors: both — writes all OpenCode and Cursor files', async () => {
+  test('editors: both — writes all 6 OpenCode and 6 Cursor files', async () => {
     const tmpRoot = await mkdtemp(join(tmpdir(), 'rms-test-'));
     const globalDir = join(tmpRoot, 'global');
     const cursorSkillsDir = join(tmpRoot, 'cursor-skills');
     const projectRoot = join(tmpRoot, 'project');
     try {
       await install(projectRoot, { editors: ['opencode', 'cursor'], globalDir, cursorSkillsDir });
-      const oc = await stat(join(globalDir, 'rms-review.md'));
+      const oc = await stat(join(globalDir, 'rms-reviewer.md'));
       expect(oc.isFile()).toBeTruthy();
-      const cu = await stat(join(cursorSkillsDir, 'rms-review', 'SKILL.md'));
+      const cu = await stat(join(cursorSkillsDir, 'rms-reviewer', 'SKILL.md'));
       expect(cu.isFile()).toBeTruthy();
     } finally {
       await rm(tmpRoot, { recursive: true });

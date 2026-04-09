@@ -168,4 +168,41 @@ describe('rms settings parseSpec routing', () => {
     expect(exitCode !== 0).toBeTruthy();
     expect(stderr).toContain('Invalid provider');
   });
+
+  test('rms settings (no args) exits 0 — shows config overview, no interactive picker', async () => {
+    const { stdout, exitCode } = await runCli(['settings']);
+    expect(exitCode).toBe(0);
+    // Should NOT mention interactive or picker in the overview output
+    expect(stdout.toLowerCase()).not.toContain('interactive');
+    expect(stdout.toLowerCase()).not.toContain('picker');
+  });
+});
+
+describe('rms reviewer/validator/writer subcommands', () => {
+  test('program includes "reviewer", "validator", "writer" subcommands', async () => {
+    // Invoke --help to list registered commands without running interactive picker
+    const { stdout } = await runCli(['--help']);
+    expect(stdout).toContain('reviewer');
+    expect(stdout).toContain('validator');
+    expect(stdout).toContain('writer');
+  });
+
+  test('rms reviewer (non-TTY) exits 0 and prints "Cancelled."', async () => {
+    // In non-TTY env the picker throws and the catch block logs "Cancelled."
+    const { stdout, exitCode } = await runCli(['reviewer']);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('Cancelled.');
+  });
+
+  test('rms validator (non-TTY) exits 0 and prints "Cancelled."', async () => {
+    const { stdout, exitCode } = await runCli(['validator']);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('Cancelled.');
+  });
+
+  test('rms writer (non-TTY) exits 0 and prints "Cancelled."', async () => {
+    const { stdout, exitCode } = await runCli(['writer']);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('Cancelled.');
+  });
 });
