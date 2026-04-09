@@ -1,7 +1,7 @@
 /**
  * Reviewer agent — the primary reviewer in the rms pipeline.
  *
- * Builds an 11-dimension review prompt, calls the Vercel AI SDK generateText,
+ * Builds a 12-dimension review prompt, calls the Vercel AI SDK generateText,
  * writes REVIEWER.md, parses the output, and assigns finding IDs.
  *
  * The reviewer is isolated: a single generateText call with no shared session
@@ -19,7 +19,7 @@ import type { Dimension, Finding } from './schemas.js';
 import type { SessionInfo } from './session.js';
 
 // ---------------------------------------------------------------------------
-// Reviewer prompt (language agnostic, 11-dimension)
+// Reviewer prompt (language agnostic, 12-dimension)
 // ---------------------------------------------------------------------------
 
 /**
@@ -45,6 +45,7 @@ DIMENSION DEFINITIONS:
 - API: Breaking changes to public interfaces, inconsistent signatures, missing parameter validation
 - DEP: Outdated or vulnerable dependencies, pinned versions, implicit platform assumptions
 - DOC: Misleading comments, missing docs for exported symbols, incorrect examples, stale docstrings
+- DSGN: Poor API design (unintuitive library interfaces, CLI flag/subcommand inconsistencies, REST/GraphQL/gRPC anti-patterns), violation of Single Responsibility Principle (classes/functions/modules doing more than one thing)
 
 OUTPUT FORMAT:
 For each dimension, write a level-2 header: ## {DIMENSION}
@@ -64,9 +65,9 @@ RULES:
 - Do NOT generate IDs — leave the id field absent from <finding> blocks
 - Do NOT include analysis prose, reasoning steps, or chain-of-thought outside explanation/suggestion
 - Every finding must have all 6 fields: severity, file, line, dimension, explanation, suggestion
-- All 11 dimension headers must be present in the output, even if no issues found
+- All 12 dimension headers must be present in the output, even if no issues found
 - severity must be one of: critical, high, medium, low, info
-- dimension must be one of: BUG, SEC, PERF, STYL, TEST, ARCH, ERR, DATA, API, DEP, DOC
+- dimension must be one of: BUG, SEC, PERF, STYL, TEST, ARCH, ERR, DATA, API, DEP, DOC, DSGN
 - Be language agnostic — do not assume any specific stack, framework, or toolchain`;
 
 // ---------------------------------------------------------------------------

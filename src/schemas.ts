@@ -5,7 +5,7 @@ import { z } from 'zod';
 // ---------------------------------------------------------------------------
 
 /**
- * All 11 review dimension abbreviations.
+ * All 12 review dimension abbreviations.
  * Used as the dimension prefix in Finding IDs (e.g. "SEC-00001").
  */
 export const DIMENSIONS = [
@@ -20,6 +20,7 @@ export const DIMENSIONS = [
   'API',
   'DEP',
   'DOC',
+  'DSGN',
 ] as const;
 
 export type Dimension = (typeof DIMENSIONS)[number];
