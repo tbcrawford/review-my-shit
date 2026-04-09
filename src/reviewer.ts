@@ -45,7 +45,7 @@ DIMENSION DEFINITIONS:
 - API: Breaking changes to public interfaces, inconsistent signatures, missing parameter validation
 - DEP: Outdated or vulnerable dependencies, pinned versions, implicit platform assumptions
 - DOC: Misleading comments, missing docs for exported symbols, incorrect examples, stale docstrings
-- DSGN: Poor API design (unintuitive library interfaces, CLI flag/subcommand inconsistencies, REST/GraphQL/gRPC anti-patterns), violation of Single Responsibility Principle (classes/functions/modules doing more than one thing)
+- DSGN: Architectural and interface design quality issues: unintuitive or unidiomatic REST/GraphQL/gRPC endpoints (wrong verbs, confusing resource naming, non-standard status codes, semantics that don't match what the endpoint does); unintuitive or unidiomatic library interfaces (awkward call sites, inconsistent return shapes, leaky abstractions); unintuitive or unidiomatic CLI design (inconsistent flag names, subcommand structures that don't match mental models, missing --help conventions); violation of Single Responsibility Principle (classes/functions/modules doing more than one thing)
 
 OUTPUT FORMAT:
 For each dimension, write a level-2 header: ## {DIMENSION}
