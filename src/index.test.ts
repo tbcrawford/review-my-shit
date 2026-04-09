@@ -55,6 +55,39 @@ function runCli(args: string[]): Promise<{ stdout: string; stderr: string; exitC
   });
 }
 
+/**
+ * Runs `rms <args>` via tsx with GITHUB_TOKEN set (for copilot tests).
+ */
+function runCliWithToken(args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(
+      process.execPath,
+      ['--import', 'tsx/esm', INDEX_TS, ...args],
+      {
+        env: {
+          ...process.env,
+          GITHUB_TOKEN: 'gho_test_token_for_cli_test',
+        },
+        cwd: join(__dirname, '..'),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
+
+    proc.stdin.end();
+
+    let stdout = '';
+    let stderr = '';
+
+    proc.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString(); });
+    proc.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString(); });
+
+    proc.on('error', reject);
+    proc.on('close', (code) => {
+      resolve({ stdout, stderr, exitCode: code ?? 1 });
+    });
+  });
+}
+
 describe('rms review routing', () => {
   test('rms review (no args) exits 0 and prints scope prompt or usage', async () => {
     const { stdout, exitCode } = await runCli(['review']);
@@ -103,5 +136,36 @@ describe('rms review routing', () => {
     expect(
       output.includes('full') || output.includes('Usage'),
     ).toBeTruthy();
+  });
+});
+
+describe('rms settings parseSpec routing', () => {
+  test('rms settings --reviewer github-copilot/claude-opus-4.6 exits 0 and saves copilot spec', async () => {
+    const { stdout, exitCode } = await runCliWithToken([
+      'settings',
+      '--reviewer', 'github-copilot/claude-opus-4.6',
+    ]);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('"provider": "copilot"');
+    expect(stdout).toContain('"model": "claude-opus-4.6"');
+    // Reset config after test to avoid polluting state
+    await runCliWithToken(['settings', '--reset']);
+  });
+
+  test('rms settings --reviewer copilot:gpt-4o exits 0 and saves copilot spec', async () => {
+    const { stdout, exitCode } = await runCliWithToken([
+      'settings',
+      '--reviewer', 'copilot:gpt-4o',
+    ]);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('"provider": "copilot"');
+    // Reset config after test
+    await runCliWithToken(['settings', '--reset']);
+  });
+
+  test('rms settings --reviewer bedrock:x exits non-zero and stderr contains "Invalid provider"', async () => {
+    const { stderr, exitCode } = await runCli(['settings', '--reviewer', 'bedrock:x']);
+    expect(exitCode !== 0).toBeTruthy();
+    expect(stderr).toContain('Invalid provider');
   });
 });

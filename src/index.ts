@@ -559,9 +559,9 @@ program
 program
   .command('settings')
   .description('View or set per-agent model configuration')
-  .option('--reviewer <spec>', 'Set reviewer model (format: provider:model, e.g. anthropic:claude-opus-4-5)')
-  .option('--validator <spec>', 'Set validator model (format: provider:model)')
-  .option('--writer <spec>', 'Set writer model (format: provider:model)')
+  .option('--reviewer <spec>', 'Set reviewer model (format: provider:model or github-copilot/model-id)')
+  .option('--validator <spec>', 'Set validator model (format: provider:model or github-copilot/model-id)')
+  .option('--writer <spec>', 'Set writer model (format: provider:model or github-copilot/model-id)')
   .option('--reset', 'Delete config file and revert to env var fallback')
   .action(async (opts: { reviewer?: string; validator?: string; writer?: string; reset?: boolean }) => {
     const { unlink } = await import('node:fs/promises');
@@ -578,17 +578,32 @@ program
       return;
     }
 
-    // Parse a provider:model spec string
+    // Parse a provider:model spec string (also accepts github-copilot/model-id format)
     function parseSpec(raw: string, label: string): AgentModelSpec {
+      // Accept raw "github-copilot/model-id" from `opencode models` output
+      if (raw.startsWith('github-copilot/')) {
+        const model = raw.slice('github-copilot/'.length);
+        if (!model) {
+          console.error(`Invalid ${label} spec "${raw}": model ID cannot be empty`);
+          process.exit(1);
+        }
+        return { provider: 'copilot', model };
+      }
+
+      // Standard "provider:model-id" format
       const colonIdx = raw.indexOf(':');
       if (colonIdx === -1) {
-        console.error(`Invalid ${label} spec "${raw}". Expected format: provider:model (e.g. anthropic:claude-opus-4-5)`);
+        console.error(
+          `Invalid ${label} spec "${raw}". Expected format: provider:model (e.g. anthropic:claude-opus-4-5) or github-copilot/model-id`,
+        );
         process.exit(1);
       }
       const provider = raw.slice(0, colonIdx) as AgentModelSpec['provider'];
       const model = raw.slice(colonIdx + 1);
-      if (!['openai', 'anthropic', 'google'].includes(provider)) {
-        console.error(`Invalid provider "${provider}". Must be one of: openai, anthropic, google`);
+      if (!['openai', 'anthropic', 'google', 'copilot'].includes(provider)) {
+        console.error(
+          `Invalid provider "${provider}". Must be one of: openai, anthropic, google, copilot`,
+        );
         process.exit(1);
       }
       if (!model) {
@@ -631,6 +646,8 @@ program
       console.log(`  AI_SDK_MODEL    = ${process.env['AI_SDK_MODEL'] ?? 'gpt-4o (default)'}`);
       console.log('');
       console.log('To configure per-agent models:');
+      console.log('  rms settings --reviewer copilot:claude-opus-4.6');
+      console.log('  rms settings --reviewer github-copilot/claude-opus-4.6  (copy-paste from opencode models)');
       console.log('  rms settings --reviewer anthropic:claude-opus-4-5');
       console.log('  rms settings --validator anthropic:claude-sonnet-4-5');
       console.log('  rms settings --writer openai:gpt-4o');
