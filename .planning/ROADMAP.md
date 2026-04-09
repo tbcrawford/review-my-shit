@@ -158,6 +158,7 @@ Plans:
 | 13. Dependency Updates | 2/2 | Complete   | 2026-04-08 |
 | 14. Vitest Migration | 2/2 | Complete   | 2026-04-08 |
 | 15. Colored Banner + Inquirer | 2/2 | Complete    | 2026-04-08 |
+| 16. GitHub Copilot Provider + TUI Settings | 2/2 | Complete    | 2026-04-09 |
 
 ---
 
@@ -281,7 +282,18 @@ Plans:
 - [x] 15-01-PLAN.md — Add chalk v5, colorize RMS banner in setup.ts, update banner test
 - [x] 15-02-PLAN.md — Add @inquirer/prompts, replace readline selector in setup.ts + scope prompt in index.ts (has human checkpoint)
 
+### Phase 16: GitHub Copilot provider + TUI settings picker
+
+**Goal:** Add `copilot` as a fourth rms provider (backed by `api.githubcopilot.com` via `@ai-sdk/openai-compatible`), accept raw `github-copilot/model-id` copy-paste strings from `opencode models`, resolve the token from `GITHUB_TOKEN` or opencode auth.json, and add an interactive `@inquirer/prompts` TUI picker when `rms settings` is invoked with no arguments.
+**Requirements**: QUAL-03
+**Depends on:** Phase 15
+**Plans:** 2/2 plans complete
+
+Plans:
+- [x] 16-01-PLAN.md — Core provider support: schemas, config, index, package.json, tests
+- [x] 16-02-PLAN.md — TUI picker: settings-tui.ts, wire into index.ts, template updates
+
 ---
 
 *Roadmap created: 2026-04-03*
-*Last updated: 2026-04-08 after Phase 15 complete (banner color + inquirer selector — human checkpoint approved)*
+*Last updated: 2026-04-09 after Phase 16 planned (GitHub Copilot provider + TUI settings picker)*
