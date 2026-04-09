@@ -1,21 +1,46 @@
 ---
 name: rms-reviewer
-description: "Set the reviewer agent model — opens an interactive picker with variant tiers (max/high/medium/low)"
+description: "Set the reviewer agent model — interactive picker"
 ---
-Run the following command in the terminal:
 
-```
-rms reviewer
-```
+## Set Reviewer Model
 
-The command opens an interactive model picker. Guide the user through the selection:
-- **max** — Best available model (highest capability, highest cost)
-- **high** — High capability model
-- **medium** — Balanced capability and cost
-- **low** — Fast and lightweight
-- **Enter custom model…** — Enter a raw model ID (e.g., `github-copilot/my-model`)
+1. Run `rms settings` in the terminal and show the current config to the user.
 
-After the selection, confirm the saved model to the user.
-Config is saved to ~/.config/rms/config.json.
+2. Present the **current reviewer model** from the output.
 
-If the command fails with a TTY error, instruct the user to run `rms settings --reviewer <spec>` in a real terminal instead.
+3. Present these options for the user to choose from:
+
+**Copilot provider (recommended):**
+
+| Tier | Model | Notes |
+|------|-------|-------|
+| max | github-copilot/claude-opus-4-5 | Best capability, highest cost |
+| high | github-copilot/claude-sonnet-4-5 | High capability |
+| medium | github-copilot/claude-haiku-3-5 | Balanced capability and cost |
+| low | github-copilot/claude-haiku-3-5 | Fast and lightweight |
+
+**Other providers (requires API key):**
+
+| Spec | Notes |
+|------|-------|
+| anthropic:claude-opus-4-5 | Requires ANTHROPIC_API_KEY |
+| openai:gpt-4o | Requires OPENAI_API_KEY |
+| google:gemini-2.5-pro | Requires GOOGLE_GENERATIVE_AI_API_KEY |
+| custom | User provides raw spec in `provider:model-id` or `github-copilot/model-id` format |
+
+4. After the user chooses, map their selection to a spec string:
+   - max → `copilot:claude-opus-4-5`
+   - high → `copilot:claude-sonnet-4-5`
+   - medium or low → `copilot:claude-haiku-3-5`
+   - Other provider specs (anthropic:..., openai:..., google:...) → use as-is
+   - custom → ask the user to type their spec string
+
+5. Run in the terminal:
+   ```
+   rms settings --reviewer <resolved-spec>
+   ```
+
+6. Confirm: "✓ Reviewer set to `<resolved-spec>`. Config saved to ~/.config/rms/config.json."
+
+If `rms settings` fails, instruct the user to check that `rms` is installed (`npx review-my-shit`) and the config is valid.
