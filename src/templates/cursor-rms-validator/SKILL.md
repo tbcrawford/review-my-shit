@@ -11,30 +11,17 @@ description: "Set the validator agent model — interactive picker"
 
 3. Present these options for the user to choose from:
 
-**Copilot provider (recommended):**
-
-| Tier | Model | Notes |
-|------|-------|-------|
-| max | github-copilot/claude-opus-4-5 | Best capability, highest cost |
-| high | github-copilot/claude-sonnet-4-5 | High capability |
-| medium | github-copilot/claude-haiku-3-5 | Balanced capability and cost |
-| low | github-copilot/claude-haiku-3-5 | Fast and lightweight |
-
-**Other providers (requires API key):**
-
-| Spec | Notes |
-|------|-------|
-| anthropic:claude-opus-4-5 | Requires ANTHROPIC_API_KEY |
-| openai:gpt-4o | Requires OPENAI_API_KEY |
-| google:gemini-2.5-pro | Requires GOOGLE_GENERATIVE_AI_API_KEY |
-| custom | User provides raw spec in `provider:model-id` or `github-copilot/model-id` format |
+| Model | Notes |
+|-------|-------|
+| gpt-5.4-high (default) | OpenAI high-capability model |
+| claude-4.6-opus-high-thinking | Highest capability for deep analysis |
+| claude-4.6-sonnet-medium-thinking | Balanced capability and speed |
 
 4. After the user chooses, map their selection to a spec string:
-   - max → `copilot:claude-opus-4-5`
-   - high → `copilot:claude-sonnet-4-5`
-   - medium or low → `copilot:claude-haiku-3-5`
-   - Other provider specs (anthropic:..., openai:..., google:...) → use as-is
-   - custom → ask the user to type their spec string
+   - gpt-5.4-high → `copilot:gpt-5.4-high`
+   - claude-4.6-opus-high-thinking → `copilot:claude-4.6-opus-high-thinking`
+   - claude-4.6-sonnet-medium-thinking → `copilot:claude-4.6-sonnet-medium-thinking`
+   - Any other typed value → use as-is
 
 5. Run in the terminal:
    ```

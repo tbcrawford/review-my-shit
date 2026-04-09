@@ -2,20 +2,20 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-04-09T16:20:08.142Z"
+status: executing
+last_updated: "2026-04-09T19:14:46.053Z"
 progress:
-  total_phases: 16
-  completed_phases: 12
-  total_plans: 32
-  completed_plans: 28
-  percent: 88
+  total_phases: 18
+  completed_phases: 13
+  total_plans: 39
+  completed_plans: 32
+  percent: 82
 ---
 
 # STATE: review-my-shit (rms)
 
 **Last updated:** 2026-04-08
-**Status:** Milestone complete
+**Status:** Ready to execute
 
 ---
 
@@ -33,8 +33,8 @@ progress:
 
 ## Current Position
 
-Phase: 16
-Plan: Not started
+Phase: 17 (Command UX overhaul: flag-free, intelligent routing, interactive model picker, variants) — EXECUTING
+Plan: 1 of 4
 Phase 15 fully verified: block-letter banner, checkbox multi-selector, Ctrl+C exit all confirmed working.
 
 | Field | Value |
@@ -117,6 +117,9 @@ Progress: [██████████] 100% (30/30 plans)
 - Phase 13 added: update all dependencies to the latest stable versions. For node, make sure to update to the latest lts. Make sure the build works by the end.
 - Phase 14 added: use vitest for tests, if possible
 - Phase 15 added: color the RMS ascii art banner and switch the multi selector to ink or inquirer
+- Phase 16 added: GitHub Copilot provider + TUI settings picker
+- Phase 17 added: Command UX overhaul: flag-free, intelligent routing, interactive model picker, variants
+- Phase 18 added: Agent-presented model picker for OpenCode and Cursor
 
 ### Key Decisions Made
 
